@@ -1,3 +1,6 @@
 public/app.css
 .wrangler/
 node_modules/
+coverage/
+.vitest/
+.codex
