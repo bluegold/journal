@@ -1,6 +1,6 @@
+import type { Child } from 'hono/jsx'
 import { CalendarMonth } from './calendar-month'
 import { EntryCard } from './entry-card'
-import { EntryDetailPanel } from './entry-detail-panel'
 import { JournalHeader } from './journal-header'
 import type { CalendarMonthView } from './calendar-month'
 import type { JournalEntryRow, JournalUserRow } from '../types/journal'
@@ -12,6 +12,8 @@ type JournalWorkspaceProps = {
   selectedDateLabel: string | null
   selectedEntry: JournalEntryRow | null
   dayEntryHref: (entry: JournalEntryRow) => string
+  newEntryHref: string
+  detailPane: Child
   menuItems: Array<{
     label: string
     href: string
@@ -25,6 +27,8 @@ export const JournalWorkspace = ({
   selectedDateLabel,
   selectedEntry,
   dayEntryHref,
+  newEntryHref,
+  detailPane,
   menuItems,
 }: JournalWorkspaceProps) => {
   const selectedDateKey = selectedDateLabel?.trim() ?? null
@@ -47,7 +51,11 @@ export const JournalWorkspace = ({
                   </h2>
                 </div>
                 <a
-                  href="/entries/new"
+                  href={newEntryHref}
+                  hx-get={newEntryHref}
+                  hx-target="#journal-workspace"
+                  hx-swap="outerHTML"
+                  hx-push-url="true"
                   class="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition hover:border-cyan-300/40 hover:bg-cyan-400/15"
                 >
                   New entry
@@ -82,7 +90,7 @@ export const JournalWorkspace = ({
               </p>
             </div>
 
-            <EntryDetailPanel entry={selectedEntry} />
+            {detailPane}
           </section>
         </div>
       </main>

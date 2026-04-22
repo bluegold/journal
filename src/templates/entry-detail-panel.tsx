@@ -2,9 +2,10 @@ import type { JournalEntryRow } from '../types/journal'
 
 type EntryDetailPanelProps = {
   entry: JournalEntryRow | null
+  body: string | null
 }
 
-export const EntryDetailPanel = ({ entry }: EntryDetailPanelProps) => {
+export const EntryDetailPanel = ({ entry, body }: EntryDetailPanelProps) => {
   if (!entry) {
     return (
       <section class="rounded-3xl border border-dashed border-white/10 bg-slate-950/70 p-6 text-slate-300">
@@ -48,15 +49,21 @@ export const EntryDetailPanel = ({ entry }: EntryDetailPanelProps) => {
 
         <div class="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
           <p class="text-xs font-semibold tracking-[0.18em] text-cyan-200/75 uppercase">Markdown body</p>
-          <div class="mt-3 space-y-3 text-sm leading-6 text-slate-300">
-            <div class="h-3 w-4/5 rounded-full bg-white/10" />
-            <div class="h-3 w-full rounded-full bg-white/10" />
-            <div class="h-3 w-3/4 rounded-full bg-white/10" />
-            <div class="h-3 w-5/6 rounded-full bg-white/10" />
-            <div class="h-28 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 font-mono text-xs text-slate-500">
-              R2 body preview will appear here.
+          {body ? (
+            <pre class="mt-3 overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/80 p-4 text-sm leading-6 text-slate-200 whitespace-pre-wrap">
+              {body}
+            </pre>
+          ) : (
+            <div class="mt-3 space-y-3 text-sm leading-6 text-slate-300">
+              <div class="h-3 w-4/5 rounded-full bg-white/10" />
+              <div class="h-3 w-full rounded-full bg-white/10" />
+              <div class="h-3 w-3/4 rounded-full bg-white/10" />
+              <div class="h-3 w-5/6 rounded-full bg-white/10" />
+              <div class="h-28 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 font-mono text-xs text-slate-500">
+                R2 body preview will appear here.
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -87,7 +94,7 @@ export const EntryDetailPanel = ({ entry }: EntryDetailPanelProps) => {
           <label class="block space-y-2">
             <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">Markdown</span>
             <textarea class="textarea min-h-60 w-full font-mono text-sm leading-6" readOnly>
-              {`# ${entry.title || 'Untitled'}\n\nWrite markdown here.\n\n- task 1\n- task 2`}
+              {body ?? `# ${entry.title || 'Untitled'}\n\n`}
             </textarea>
           </label>
 

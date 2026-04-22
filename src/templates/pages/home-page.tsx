@@ -1,8 +1,11 @@
 import { JournalWorkspace } from '../journal-workspace'
 import { buildCalendarMonthView } from '../calendar-month'
+import { EntryDetailPanel } from '../entry-detail-panel'
 import {
   buildEntriesHref,
+  buildNewEntryHref,
   buildTodayEntriesHref,
+  formatDateKey,
   formatMonthKey,
   shiftMonth,
 } from '../../lib/entries-navigation'
@@ -32,6 +35,8 @@ export const HomePage = ({ currentUser }: HomePageProps) => {
       selectedDateLabel={null}
       selectedEntry={null}
       dayEntryHref={() => '/entries'}
+      newEntryHref={buildNewEntryHref({ monthKey: formatMonthKey(monthDate), dateKey: formatDateKey(monthDate) })}
+      detailPane={<EntryDetailPanel entry={null} body={null} />}
       menuItems={[
         { label: 'Entries', href: '/entries' },
         { label: 'Search', href: '/entries' },
