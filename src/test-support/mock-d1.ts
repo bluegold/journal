@@ -43,10 +43,20 @@ const findTagByName = (state: MockD1State, name: string): TagRow | undefined => 
   return state.tags.find((tag) => tag.name === name)
 }
 
+const parseStoredDate = (value: string | null): number => {
+  if (value == null || value.length === 0) {
+    return 0
+  }
+
+  const normalized = value.includes('T') ? value : value.replace(' ', 'T')
+  const parsed = new Date(normalized).getTime()
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
 const sortByCreatedAtDesc = <T extends { created_at: string | null; id: number | string }>(items: T[]): T[] => {
   return [...items].sort((a, b) => {
-    const timeA = new Date((a.created_at ?? '').replace(' ', 'T') + 'Z').getTime()
-    const timeB = new Date((b.created_at ?? '').replace(' ', 'T') + 'Z').getTime()
+    const timeA = parseStoredDate(a.created_at)
+    const timeB = parseStoredDate(b.created_at)
     if (timeA !== timeB) {
       return timeB - timeA
     }
@@ -89,36 +99,33 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
       return { success: true, meta: { changes: 0 } }
     }
 
-    const updated = [...state.entries]
-    const index = updated.findIndex((entry) => entry.id === entryId)
-
     if (normalizedSql.includes('deleted_at = ?')) {
       current.deleted_at = params[0] != null ? String(params[0]) : null
       current.updated_at = params[1] != null ? String(params[1]) : current.updated_at
       return { success: true, meta: { changes: 1 } }
     }
 
-    if (normalizedSql.includes('summary = ?') && normalizedSql.includes('ai_summary = ?')) {
-      current.title = params[0] != null ? String(params[0]) : current.title
-      current.summary = params[1] != null ? String(params[1]) : null
-      current.ai_summary = params[2] != null ? String(params[2]) : null
-      current.body_key = params[3] != null ? String(params[3]) : current.body_key
-      current.status = params[4] != null ? String(params[4]) : current.status
-      current.updated_at = params[5] != null ? String(params[5]) : current.updated_at
-      return { success: true, meta: { changes: 1 } }
-    }
-
-    if (normalizedSql.includes('title = ?') && normalizedSql.includes('body_key = ?')) {
-      current.journal_date = params[0] != null ? String(params[0]) : current.journal_date
-      current.title = params[1] != null ? String(params[1]) : current.title
+    if (
+      normalizedSql ===
+      'UPDATE entries SET summary = ?, ai_summary = ?, body_key = ?, status = ?, updated_at = ? WHERE id = ?'
+    ) {
+      current.summary = params[0] != null ? String(params[0]) : null
+      current.ai_summary = params[1] != null ? String(params[1]) : null
       current.body_key = params[2] != null ? String(params[2]) : current.body_key
       current.status = params[3] != null ? String(params[3]) : current.status
       current.updated_at = params[4] != null ? String(params[4]) : current.updated_at
       return { success: true, meta: { changes: 1 } }
     }
 
-    if (index >= 0) {
-      state.entries[index] = current
+    if (
+      normalizedSql ===
+      'UPDATE entries SET journal_date = ?, title = ?, body_key = ?, status = ?, updated_at = ? WHERE id = ?'
+    ) {
+      current.journal_date = params[0] != null ? String(params[0]) : current.journal_date
+      current.title = params[1] != null ? String(params[1]) : current.title
+      current.body_key = params[2] != null ? String(params[2]) : current.body_key
+      current.status = params[3] != null ? String(params[3]) : current.status
+      current.updated_at = params[4] != null ? String(params[4]) : current.updated_at
       return { success: true, meta: { changes: 1 } }
     }
   }
@@ -181,6 +188,26 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
     state.entryAiTagCandidates = [...state.entryAiTagCandidates, candidate]
     state.nextCandidateId += 1
     return { success: true, meta: { changes: 1 } }
+  }
+
+  if (normalizedSql.startsWith('DELETE FROM entry_ai_tag_candidates')) {
+    const entryId = String(params[0] ?? '')
+    const tagName = params[1] != null ? String(params[1]) : null
+    const before = state.entryAiTagCandidates.length
+
+    state.entryAiTagCandidates = state.entryAiTagCandidates.filter((candidate) => {
+      if (candidate.entry_id !== entryId) {
+        return true
+      }
+
+      if (tagName == null) {
+        return false
+      }
+
+      return candidate.tag_name !== tagName
+    })
+
+    return { success: true, meta: { changes: before - state.entryAiTagCandidates.length } }
   }
 
   return { success: true, meta: { changes: 0 } }

@@ -10,23 +10,33 @@ export type MockEnvOptions = {
   r2?: MockR2Options
 }
 
+export type MockQueueState = {
+  messages: unknown[]
+}
+
+export type MockQueue = Queue & {
+  state: MockQueueState
+}
+
 export type MockEnv = {
   DB: MockD1Database
   JOURNAL_BUCKET: MockR2Bucket
-  AI_QUEUE: Queue
+  AI_QUEUE: MockQueue
 }
 
-export const createMockQueue = (): Queue => {
-  const messages: unknown[] = []
+export const createMockQueue = (): MockQueue => {
+  const state: MockQueueState = {
+    messages: [],
+  }
 
   return {
-    messages,
+    state,
     async send(message: unknown) {
-      messages.push(message)
+      state.messages.push(message)
     },
     async sendBatch(batch: Array<{ body: unknown }>) {
       for (const item of batch) {
-        messages.push(item.body)
+        state.messages.push(item.body)
       }
     },
   } as never
