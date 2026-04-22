@@ -17,6 +17,19 @@ describe('home route', () => {
     expect(body).toContain('Select a journal entry')
   })
 
+  it('falls back to the default avatar image when Access avatar is missing', async () => {
+    const { response, body } = await requestApp('/', {
+      init: {
+        headers: {
+          'cf-access-authenticated-user-avatar': '',
+        },
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('src="/unknown_avatar.png"')
+  })
+
   it('rejects requests without a Cloudflare Access email header', async () => {
     const { response, body } = await requestApp('/', {
       init: {
