@@ -17,9 +17,10 @@ type EntryEditPageProps = {
   entries: JournalEntryRow[]
   entry: JournalEntryRow
   body: string
+  tagsText: string
 }
 
-export const EntryEditPage = ({ currentUser, entries, entry, body }: EntryEditPageProps) => {
+export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText }: EntryEditPageProps) => {
   const entryDate = parseDateKey(entry.journal_date) ?? new Date()
   const selection = resolveEntriesSelection(entries, {
     month: formatMonthKey(entryDate),
@@ -61,6 +62,7 @@ export const EntryEditPage = ({ currentUser, entries, entry, body }: EntryEditPa
         <EntryEditPanel
           entry={entry}
           body={body}
+          tagsText={tagsText}
           updateHref={`/entries/${entry.id}`}
           cancelHref={buildEntriesHref({
             monthKey: selection.monthKey,

@@ -4,11 +4,12 @@ import { createWorkspaceLinkAttrs } from '../lib/htmx'
 type EntryDetailPanelProps = {
   entry: JournalEntryRow | null
   renderedBodyHtml: string | null
+  entryTags: string[]
   editHref?: string | null
   deleteHref?: string | null
 }
 
-export const EntryDetailPanel = ({ entry, renderedBodyHtml, editHref, deleteHref }: EntryDetailPanelProps) => {
+export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref, deleteHref }: EntryDetailPanelProps) => {
   if (!entry) {
     return (
       <section class="rounded-3xl border border-dashed border-white/10 bg-slate-950/70 p-6 text-slate-300">
@@ -72,6 +73,21 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, editHref, deleteHref
           <p class="text-[10px] tracking-[0.2em] text-slate-500 uppercase">Updated</p>
           <p class="mt-1 text-sm text-slate-100">{entry.updated_at}</p>
         </div>
+      </div>
+
+      <div class="mt-4 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+        <p class="text-xs font-semibold tracking-[0.18em] text-cyan-200/75 uppercase">Tags</p>
+        {entryTags.length > 0 ? (
+          <div class="mt-3 flex flex-wrap gap-2">
+            {entryTags.map((tagName) => (
+              <span class="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">
+                {tagName}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p class="mt-3 text-sm text-slate-500">No approved tags yet.</p>
+        )}
       </div>
 
       <div class="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-4">

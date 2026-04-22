@@ -248,6 +248,21 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
     return { success: true, meta: { changes: before - state.entries.length } }
   }
 
+  if (normalizedSql.startsWith('DELETE FROM tags WHERE id = ?')) {
+    const tagId = Number(params[0] ?? 0)
+    const before = state.tags.length
+    state.tags = state.tags.filter((tag) => tag.id !== tagId)
+    state.entryTags = state.entryTags.filter((entryTag) => entryTag.tag_id !== tagId)
+    return { success: true, meta: { changes: before - state.tags.length } }
+  }
+
+  if (normalizedSql.startsWith('DELETE FROM entry_tags WHERE entry_id = ?')) {
+    const entryId = String(params[0] ?? '')
+    const before = state.entryTags.length
+    state.entryTags = state.entryTags.filter((entryTag) => entryTag.entry_id !== entryId)
+    return { success: true, meta: { changes: before - state.entryTags.length } }
+  }
+
   if (normalizedSql.startsWith('INSERT INTO tags')) {
     const userId = String(params.length >= 3 ? params[0] ?? '' : '')
     const name = String(params.length >= 3 ? params[1] ?? '' : params[0] ?? '').trim()

@@ -1,6 +1,13 @@
 import app from '../app'
 import { describe, expect, it } from 'vitest'
-import { createEntryRow, createUserRow, createMockEnv, requestApp } from '../test-support'
+import {
+  createEntryRow,
+  createEntryTagRow,
+  createMockEnv,
+  createTagRow,
+  createUserRow,
+  requestApp,
+} from '../test-support'
 
 const accessHeaders = {
   'cf-access-authenticated-user-email': 'tester@example.com',
@@ -14,6 +21,12 @@ describe('entries route', () => {
     const { response, body } = await requestApp('/entries?month=2026-04&date=2026-04-22&entry=entry-2', {
       db: {
         initialUsers: [createUserRow()],
+        initialTags: [
+          createTagRow({
+            id: 1,
+            name: 'travel',
+          }),
+        ],
         initialEntries: [
           createEntryRow({
             title: 'Morning entry',
@@ -46,6 +59,12 @@ describe('entries route', () => {
             deleted_at: '2026-04-21T09:00:00.000Z',
           }),
         ],
+        initialEntryTags: [
+          createEntryTagRow({
+            entry_id: 'entry-2',
+            tag_id: 1,
+          }),
+        ],
       },
       r2: {
         initialObjects: [
@@ -67,6 +86,8 @@ describe('entries route', () => {
     expect(body).toContain('Calendar')
     expect(body).toContain('Selected day')
     expect(body).toContain('2026-04-22')
+    expect(body).toContain('Tags')
+    expect(body).toContain('travel')
     expect(body).toContain('Article detail and editor')
     expect(body).toContain('Selected article')
     expect(body).toContain('Morning entry')
@@ -111,6 +132,16 @@ describe('entries route', () => {
     const { response, body } = await requestApp('/entries/entry-2/edit?month=2026-04&date=2026-04-22', {
       db: {
         initialUsers: [createUserRow()],
+        initialTags: [
+          createTagRow({
+            id: 1,
+            name: 'work',
+          }),
+          createTagRow({
+            id: 2,
+            name: 'ideas',
+          }),
+        ],
         initialEntries: [
           createEntryRow({
             id: 'entry-2',
@@ -122,6 +153,16 @@ describe('entries route', () => {
             body_key: 'entries/entry-2.md',
             created_at: '2026-04-22T18:00:00.000Z',
             updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+        initialEntryTags: [
+          createEntryTagRow({
+            entry_id: 'entry-2',
+            tag_id: 1,
+          }),
+          createEntryTagRow({
+            entry_id: 'entry-2',
+            tag_id: 2,
           }),
         ],
       },
@@ -141,6 +182,8 @@ describe('entries route', () => {
     expect(body).toContain('value="2026-04-22"')
     expect(body).toContain('Editable entry')
     expect(body).toContain('Original body.')
+    expect(body).toContain('name="tags"')
+    expect(body).toContain('work, ideas')
     expect(body).toContain('Save changes')
     expect(body).toContain('Preview')
     expect(body).toContain('Cancel')
@@ -155,6 +198,16 @@ describe('entries route', () => {
       },
       db: {
         initialUsers: [createUserRow()],
+        initialTags: [
+          createTagRow({
+            id: 1,
+            name: 'work',
+          }),
+          createTagRow({
+            id: 2,
+            name: 'ideas',
+          }),
+        ],
         initialEntries: [
           createEntryRow({
             id: 'entry-2',
@@ -166,6 +219,12 @@ describe('entries route', () => {
             body_key: 'entries/entry-2.md',
             created_at: '2026-04-22T18:00:00.000Z',
             updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+        initialEntryTags: [
+          createEntryTagRow({
+            entry_id: 'entry-2',
+            tag_id: 1,
           }),
         ],
       },
@@ -263,6 +322,16 @@ describe('entries route', () => {
     const env = await createMockEnv({
       db: {
         initialUsers: [createUserRow()],
+        initialTags: [
+          createTagRow({
+            id: 1,
+            name: 'work',
+          }),
+          createTagRow({
+            id: 2,
+            name: 'ideas',
+          }),
+        ],
         initialEntries: [
           createEntryRow({
             id: 'entry-2',
@@ -274,6 +343,12 @@ describe('entries route', () => {
             body_key: 'entries/entry-2.md',
             created_at: '2026-04-22T18:00:00.000Z',
             updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+        initialEntryTags: [
+          createEntryTagRow({
+            entry_id: 'entry-2',
+            tag_id: 1,
           }),
         ],
       },
@@ -291,6 +366,7 @@ describe('entries route', () => {
       journal_date: '2026-04-23',
       title: 'Updated entry',
       summary: 'Updated summary',
+      tags: 'Ideas, personal',
       body: '# Updated entry\n\nUpdated body.',
     })
 
@@ -316,6 +392,8 @@ describe('entries route', () => {
       summary: 'Updated summary',
       body_key: 'entries/2026/04/23/entry-2.md',
     })
+    expect(env.DB.state.tags.map((tag) => tag.name).sort()).toEqual(['ideas', 'personal', 'work'])
+    expect(env.DB.state.entryTags.map((entryTag) => entryTag.tag_id).sort()).toEqual([2, 3])
     expect(await env.JOURNAL_BUCKET.get('entries/entry-2.md')).toBeNull()
     const movedBody = await env.JOURNAL_BUCKET.get('entries/2026/04/23/entry-2.md')
     expect(await movedBody!.text()).toBe('# Updated entry\n\nUpdated body.')
@@ -485,6 +563,7 @@ describe('entries route', () => {
           journal_date: 'not-a-real-date',
           title: '   ',
           summary: '   ',
+          tags: 'Ideas, Work, ideas',
         }),
       },
       env
@@ -502,6 +581,8 @@ describe('entries route', () => {
       summary: null,
       status: 'private',
     })
+    expect(env.DB.state.tags.map((tag) => tag.name)).toEqual(['ideas', 'work'])
+    expect(env.DB.state.entryTags).toHaveLength(2)
     const bodyObject = await env.JOURNAL_BUCKET.get(env.DB.state.entries[0].body_key)
     expect(await bodyObject!.text()).toBe('# Untitled\n')
     expect(env.DB.state.entries[0].journal_date).toMatch(/^\d{4}-\d{2}-\d{2}$/)

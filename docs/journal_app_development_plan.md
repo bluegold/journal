@@ -101,14 +101,16 @@ Approved tag vocabulary.
 Suggested columns:
 
 - `id INTEGER PRIMARY KEY AUTOINCREMENT`
+- `user_id TEXT NOT NULL`
 - `name TEXT NOT NULL UNIQUE`
 - `created_at TEXT NOT NULL`
 
 Normalization rule:
 
 - trim surrounding whitespace
-- preserve a display form or define canonical casing rules early
+- define canonical casing rules early; this app currently lower-cases tag names on save
 - prevent empty tags
+- accept comma-separated or newline-separated input when editing tags
 
 #### `entry_tags`
 

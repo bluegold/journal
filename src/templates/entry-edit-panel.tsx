@@ -5,11 +5,12 @@ import { JournalContentPane } from './journal-content-pane'
 type EntryEditPanelProps = {
   entry: JournalEntryRow
   body: string
+  tagsText: string
   updateHref: string
   cancelHref: string
 }
 
-export const EntryEditPanel = ({ entry, body, updateHref, cancelHref }: EntryEditPanelProps) => {
+export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }: EntryEditPanelProps) => {
   return (
     <section class="rounded-3xl border border-white/10 bg-slate-950/75 p-5 shadow-[0_18px_60px_-34px_rgba(2,6,23,0.9)]">
       <div class="flex items-center justify-between gap-3">
@@ -59,6 +60,14 @@ export const EntryEditPanel = ({ entry, body, updateHref, cancelHref }: EntryEdi
           <textarea class="textarea min-h-28 w-full" name="summary" placeholder="Short summary">
             {entry.summary ?? ''}
           </textarea>
+        </label>
+
+        <label class="block space-y-2">
+          <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">Tags</span>
+          <textarea class="textarea min-h-20 w-full" name="tags" placeholder="work, ideas, project">
+            {tagsText}
+          </textarea>
+          <p class="text-xs text-slate-500">Comma or newline separated. Lower-cased and deduplicated on save.</p>
         </label>
 
         <label class="block space-y-2">

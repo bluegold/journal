@@ -12,6 +12,26 @@ export type JournalEntryRow = {
   deleted_at: string | null
 }
 
+export type JournalTagRow = {
+  id: number
+  user_id: string
+  name: string
+  created_at: string | null
+}
+
+export type JournalEntryTagRow = {
+  entry_id: string
+  tag_id: number
+  created_at: string | null
+}
+
+export type JournalEntryAiTagCandidateRow = {
+  id: number
+  entry_id: string
+  tag_name: string
+  created_at: string
+}
+
 export type JournalUserRow = {
   id: string
   access_subject: string

@@ -38,7 +38,7 @@ export const HomePage = ({ currentUser }: HomePageProps) => {
       selectedEntry={null}
       dayEntryHref={() => '/entries'}
       newEntryHref={buildNewEntryHref({ monthKey: formatMonthKey(monthDate), dateKey: formatDateKey(monthDate) })}
-      detailPane={<EntryDetailPanel entry={null} renderedBodyHtml={null} />}
+      detailPane={<EntryDetailPanel entry={null} renderedBodyHtml={null} entryTags={[]} />}
       menuItems={[
         { label: 'Entries', href: '/entries' },
         { label: 'Search', href: '/entries' },

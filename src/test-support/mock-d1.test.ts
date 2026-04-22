@@ -303,6 +303,27 @@ describe('mock D1 database', () => {
         created_at: '2026-04-22T01:15:00.000Z',
       },
     ])
+
+    await db.prepare('DELETE FROM entry_tags WHERE entry_id = ?').bind('entry-2').run()
+
+    const clearedEntryTags = await db.prepare('SELECT * FROM entry_tags').all<{
+      entry_id: string
+      tag_id: number
+      created_at: string | null
+    }>()
+
+    expect(clearedEntryTags.results).toEqual([])
+
+    await db.prepare('DELETE FROM tags WHERE id = ?').bind(1).run()
+
+    const remainingTags = await db.prepare('SELECT * FROM tags').all<{
+      id: number
+      user_id: string
+      name: string
+      created_at: string | null
+    }>()
+
+    expect(remainingTags.results.map((tag) => tag.name)).toEqual(['cloudflare'])
   })
 
   it('filters entries by user id in list queries', async () => {

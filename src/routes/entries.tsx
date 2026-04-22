@@ -10,6 +10,8 @@ import {
 } from '../lib/entries-navigation'
 import { buildEntryBodyKey } from '../lib/entry-body-key'
 import { loadEntryBody } from '../lib/entry-body'
+import { loadEntryTagNames, replaceEntryTags } from '../lib/entry-tags'
+import { formatTagList } from '../lib/tags'
 import { renderMarkdown } from '../lib/render-markdown'
 import { resolveEntriesSelection } from '../lib/entries-selection'
 import { EntryEditContentPane } from '../templates/entry-edit-panel'
@@ -63,12 +65,16 @@ entriesRoutes.get('/entries', async (c) => {
   const selectedEntryBody = selection.selectedEntry
     ? await loadEntryBody(c.env.JOURNAL_BUCKET, selection.selectedEntry.body_key)
     : null
+  const selectedEntryTagNames = selection.selectedEntry
+    ? await loadEntryTagNames(c.env.DB, c.var.currentUser.id, selection.selectedEntry.id)
+    : []
   const selectedEntryBodyHtml = selectedEntryBody ? await renderMarkdown(selectedEntryBody) : null
   const page = (
     <EntriesPage
       currentUser={c.var.currentUser}
       entries={entries}
       selectedEntryBodyHtml={selectedEntryBodyHtml}
+      selectedEntryTagNames={selectedEntryTagNames}
       query={{
         month: c.req.query('month'),
         date: c.req.query('date'),
@@ -115,12 +121,14 @@ entriesRoutes.get('/entries/:id/edit', async (c) => {
   }
 
   const body = (await loadEntryBody(c.env.JOURNAL_BUCKET, entry.body_key)) ?? ''
+  const tagNames = await loadEntryTagNames(c.env.DB, c.var.currentUser.id, entry.id)
 
   if (isHtmxRequest(c.req.raw)) {
     return c.html(
       <EntryEditContentPane
         entry={entry}
         body={body}
+        tagsText={formatTagList(tagNames)}
         updateHref={`/entries/${entry.id}`}
         cancelHref={buildEntriesHref({
           monthKey: formatMonthKey(parseDateKey(entry.journal_date) ?? new Date()),
@@ -132,7 +140,13 @@ entriesRoutes.get('/entries/:id/edit', async (c) => {
   }
 
   return c.render(
-    <EntryEditPage currentUser={c.var.currentUser} entries={entries} entry={entry} body={body} />
+    <EntryEditPage
+      currentUser={c.var.currentUser}
+      entries={entries}
+      entry={entry}
+      body={body}
+      tagsText={formatTagList(tagNames)}
+    />
   )
 })
 
@@ -141,6 +155,7 @@ entriesRoutes.post('/entries', async (c) => {
   const journalDate = parseJournalDate(typeof form.journal_date === 'string' ? form.journal_date : c.req.query('date'))
   const title = typeof form.title === 'string' ? form.title.trim() : ''
   const summaryValue = typeof form.summary === 'string' ? form.summary.trim() : ''
+  const tagsValue = typeof form.tags === 'string' ? form.tags : ''
   const bodyValue = typeof form.body === 'string' ? form.body : ''
   const body = normalizeBody(title, bodyValue)
   const entryId = generateUuidv7()
@@ -172,6 +187,20 @@ entriesRoutes.post('/entries', async (c) => {
       )
       .run()
   } catch (error) {
+    await c.env.JOURNAL_BUCKET.delete(bodyKey)
+    throw error
+  }
+
+  try {
+    await replaceEntryTags({
+      db: c.env.DB,
+      userId: c.var.currentUser.id,
+      entryId,
+      tagText: tagsValue,
+      timestamp,
+    })
+  } catch (error) {
+    await c.env.DB.prepare('DELETE FROM entries WHERE id = ?').bind(entryId).run()
     await c.env.JOURNAL_BUCKET.delete(bodyKey)
     throw error
   }
@@ -215,6 +244,7 @@ entriesRoutes.post('/entries/:id', async (c) => {
   const previousBodyKey = currentEntry.body_key
   const nextTitle = typeof form.title === 'string' ? form.title.trim() : currentEntry.title
   const nextSummary = typeof form.summary === 'string' ? form.summary.trim() : currentEntry.summary ?? ''
+  const tagsValue = typeof form.tags === 'string' ? form.tags : ''
   const nextBody = normalizeBody(nextTitle, typeof form.body === 'string' ? form.body : '')
   const nextBodyKey = buildEntryBodyKey(nextJournalDate, currentEntry.id)
   const timestamp = new Date().toISOString()
@@ -242,6 +272,45 @@ entriesRoutes.post('/entries/:id', async (c) => {
   } catch (error) {
     await c.env.JOURNAL_BUCKET.delete(nextBodyKey)
     if (nextBodyKey === previousBodyKey) {
+      await c.env.JOURNAL_BUCKET.put(previousBodyKey, previousBody, {
+        httpMetadata: {
+          contentType: 'text/markdown; charset=utf-8',
+        },
+      })
+    }
+    throw error
+  }
+
+  try {
+    await replaceEntryTags({
+      db: c.env.DB,
+      userId: c.var.currentUser.id,
+      entryId: currentEntry.id,
+      tagText: tagsValue,
+      timestamp,
+    })
+  } catch (error) {
+    await c.env.DB.prepare(
+      'UPDATE entries SET journal_date = ?, title = ?, summary = ?, body_key = ?, updated_at = ? WHERE id = ?'
+    )
+      .bind(
+        currentEntry.journal_date,
+        currentEntry.title,
+        currentEntry.summary,
+        currentEntry.body_key,
+        currentEntry.updated_at,
+        currentEntry.id
+      )
+      .run()
+
+    await c.env.JOURNAL_BUCKET.delete(nextBodyKey)
+    if (nextBodyKey === previousBodyKey) {
+      await c.env.JOURNAL_BUCKET.put(previousBodyKey, previousBody, {
+        httpMetadata: {
+          contentType: 'text/markdown; charset=utf-8',
+        },
+      })
+    } else {
       await c.env.JOURNAL_BUCKET.put(previousBodyKey, previousBody, {
         httpMetadata: {
           contentType: 'text/markdown; charset=utf-8',

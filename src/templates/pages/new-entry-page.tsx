@@ -54,6 +54,7 @@ export const NewEntryPage = ({ currentUser, entries, query }: NewEntryPageProps)
           journalDate={selection.selectedDateKey ?? formatDateKey(selection.monthDate)}
           title=""
           summary=""
+          tagsText=""
           body={`# ${selection.selectedDateKey ?? formatDateKey(selection.monthDate)}\n\n`}
           cancelHref={buildEntriesHref({
             monthKey: selection.monthKey,
@@ -75,6 +76,7 @@ export const NewEntryContentPane = ({ journalDate }: { journalDate: string }) =>
       journalDate={journalDate}
       title=""
       summary=""
+      tagsText=""
       body={`# ${journalDate}\n\n`}
       cancelHref={buildEntriesHref({
         monthKey: journalDate.slice(0, 7),

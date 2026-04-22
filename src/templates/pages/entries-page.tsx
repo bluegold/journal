@@ -17,6 +17,7 @@ type EntriesPageProps = {
   currentUser: JournalUserRow
   entries: JournalEntryRow[]
   selectedEntryBodyHtml: string | null
+  selectedEntryTagNames: string[]
   query?: {
     month?: string | null
     date?: string | null
@@ -24,7 +25,7 @@ type EntriesPageProps = {
   }
 }
 
-export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, query }: EntriesPageProps) => {
+export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, selectedEntryTagNames, query }: EntriesPageProps) => {
   const selection = resolveEntriesSelection(entries, query)
 
   const calendarView = buildCalendarMonthView(
@@ -59,6 +60,7 @@ export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, query
         <EntryDetailPanel
           entry={selection.selectedEntry}
           renderedBodyHtml={selectedEntryBodyHtml}
+          entryTags={selectedEntryTagNames}
           editHref={
             selection.selectedEntry
               ? buildEntryEditHref(selection.selectedEntry.id, {
