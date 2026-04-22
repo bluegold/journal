@@ -1,14 +1,12 @@
-import { renderMarkdown } from '../lib/render-markdown'
-
 type EntryPreviewOverlayProps = {
-  body: string
+  renderedBodyHtml: string
 }
 
 export const EntryPreviewSlot = () => {
   return <div id="entry-preview-overlay" class="hidden" aria-hidden="true" />
 }
 
-export const EntryPreviewOverlay = ({ body }: EntryPreviewOverlayProps) => {
+export const EntryPreviewOverlay = ({ renderedBodyHtml }: EntryPreviewOverlayProps) => {
   return (
     <section
       id="entry-preview-overlay"
@@ -47,7 +45,7 @@ export const EntryPreviewOverlay = ({ body }: EntryPreviewOverlayProps) => {
 
         <div
           class="markdown-body mt-4 max-h-[calc(100vh-10rem)] overflow-x-auto overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/80 p-4"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
+          dangerouslySetInnerHTML={{ __html: renderedBodyHtml }}
         />
       </div>
 

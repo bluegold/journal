@@ -230,6 +230,16 @@ button:not(:disabled) {
   border-radius: 0.9rem;
 }
 
+.markdown-body .mermaid {
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.markdown-body .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
 .markdown-body hr {
   margin: 1.15rem 0;
   border-color: rgba(148, 163, 184, 0.18);

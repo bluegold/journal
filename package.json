@@ -26,7 +26,8 @@
     "basecoat-css": "^0.3.11",
     "hono": "^4.12.14",
     "markdown-it": "^14.1.1",
-    "markdown-it-task-lists": "^2.1.1"
+    "markdown-it-task-lists": "^2.1.1",
+    "shiki": "^4.0.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260422.1",

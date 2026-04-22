@@ -10,6 +10,7 @@ import {
 } from '../lib/entries-navigation'
 import { buildEntryBodyKey } from '../lib/entry-body-key'
 import { loadEntryBody } from '../lib/entry-body'
+import { renderMarkdown } from '../lib/render-markdown'
 import { resolveEntriesSelection } from '../lib/entries-selection'
 import { EntryEditContentPane } from '../templates/entry-edit-panel'
 import { EntryEditPage } from '../templates/pages/entry-edit-page'
@@ -62,11 +63,12 @@ entriesRoutes.get('/entries', async (c) => {
   const selectedEntryBody = selection.selectedEntry
     ? await loadEntryBody(c.env.JOURNAL_BUCKET, selection.selectedEntry.body_key)
     : null
+  const selectedEntryBodyHtml = selectedEntryBody ? await renderMarkdown(selectedEntryBody) : null
   const page = (
     <EntriesPage
       currentUser={c.var.currentUser}
       entries={entries}
-      selectedEntryBody={selectedEntryBody}
+      selectedEntryBodyHtml={selectedEntryBodyHtml}
       query={{
         month: c.req.query('month'),
         date: c.req.query('date'),
@@ -188,8 +190,9 @@ entriesRoutes.post('/entries/preview', async (c) => {
   const form = await c.req.parseBody()
   const title = typeof form.title === 'string' ? form.title.trim() : ''
   const body = normalizeBody(title, typeof form.body === 'string' ? form.body : '')
+  const renderedBodyHtml = await renderMarkdown(body)
 
-  return c.html(<EntryPreviewOverlay body={body} />)
+  return c.html(<EntryPreviewOverlay renderedBodyHtml={renderedBodyHtml} />)
 })
 
 entriesRoutes.get('/entries/preview/close', async (c) => {

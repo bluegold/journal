@@ -1,15 +1,14 @@
 import type { JournalEntryRow } from '../types/journal'
-import { renderMarkdown } from '../lib/render-markdown'
 import { createWorkspaceLinkAttrs } from '../lib/htmx'
 
 type EntryDetailPanelProps = {
   entry: JournalEntryRow | null
-  body: string | null
+  renderedBodyHtml: string | null
   editHref?: string | null
   deleteHref?: string | null
 }
 
-export const EntryDetailPanel = ({ entry, body, editHref, deleteHref }: EntryDetailPanelProps) => {
+export const EntryDetailPanel = ({ entry, renderedBodyHtml, editHref, deleteHref }: EntryDetailPanelProps) => {
   if (!entry) {
     return (
       <section class="rounded-3xl border border-dashed border-white/10 bg-slate-950/70 p-6 text-slate-300">
@@ -77,10 +76,10 @@ export const EntryDetailPanel = ({ entry, body, editHref, deleteHref }: EntryDet
 
       <div class="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
         <p class="text-xs font-semibold tracking-[0.18em] text-cyan-200/75 uppercase">Markdown body</p>
-        {body ? (
+        {renderedBodyHtml ? (
           <div
             class="markdown-body mt-3 overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/80 p-4"
-            dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
+            dangerouslySetInnerHTML={{ __html: renderedBodyHtml }}
           />
         ) : (
           <div class="mt-3 space-y-3 text-sm leading-6 text-slate-300">
