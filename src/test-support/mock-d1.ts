@@ -4,6 +4,7 @@ import type {
   EntryTagRow,
   MockD1Options,
   MockD1State,
+  UserRow,
   TagRow,
 } from './mock-d1-types'
 
@@ -18,25 +19,55 @@ const normalizeSql = (sql: string): string => {
 }
 
 const cloneEntry = (entry: EntryRow): EntryRow => ({ ...entry })
+const cloneUser = (user: UserRow): UserRow => ({ ...user })
 const cloneTag = (tag: TagRow): TagRow => ({ ...tag })
 const cloneEntryTag = (entryTag: EntryTagRow): EntryTagRow => ({ ...entryTag })
 const cloneCandidate = (candidate: EntryAiTagCandidateRow): EntryAiTagCandidateRow => ({ ...candidate })
 
+const deriveNextNumericId = (ids: string[]): number => {
+  let max = 0
+
+  for (const id of ids) {
+    const match = id.match(/(\d+)$/)
+    if (!match) {
+      continue
+    }
+
+    const value = Number(match[1])
+    if (!Number.isNaN(value)) {
+      max = Math.max(max, value)
+    }
+  }
+
+  return max + 1
+}
+
 const createInitialState = (options: MockD1Options): MockD1State => {
+  const users = [...(options.initialUsers ?? [])].map(cloneUser)
   const entries = [...(options.initialEntries ?? [])].map(cloneEntry)
   const tags = [...(options.initialTags ?? [])].map(cloneTag)
   const entryTags = [...(options.initialEntryTags ?? [])].map(cloneEntryTag)
   const entryAiTagCandidates = [...(options.initialEntryAiTagCandidates ?? [])].map(cloneCandidate)
 
   return {
+    users,
     entries,
     tags,
     entryTags,
     entryAiTagCandidates,
+    nextUserId: deriveNextNumericId(users.map((user) => user.id)),
     nextTagId: tags.reduce((max, tag) => Math.max(max, tag.id), 0) + 1,
     nextCandidateId: entryAiTagCandidates.reduce((max, candidate) => Math.max(max, candidate.id), 0) + 1,
     queries: [],
   }
+}
+
+const findUserByAccessSubject = (state: MockD1State, accessSubject: string): UserRow | undefined => {
+  return state.users.find((user) => user.access_subject === accessSubject)
+}
+
+const findUserByEmail = (state: MockD1State, email: string): UserRow | undefined => {
+  return state.users.find((user) => user.email === email)
 }
 
 const findTagByName = (state: MockD1State, name: string): TagRow | undefined => {
@@ -73,18 +104,41 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
   const normalizedSql = normalizeSql(sql)
   state.queries.push({ sql: normalizedSql, params: [...params] })
 
+  if (normalizedSql.startsWith('INSERT INTO users')) {
+    const user: UserRow = {
+      id: String(params[0] ?? `user-${state.nextUserId}`),
+      access_subject: String(params[1] ?? ''),
+      email: String(params[2] ?? ''),
+      name: params[3] != null ? String(params[3]) : '',
+      avatar_url: params[4] != null ? String(params[4]) : null,
+      created_at: params[5] != null ? String(params[5]) : '',
+      updated_at: params[6] != null ? String(params[6]) : '',
+    }
+
+    const existingByAccessSubject = findUserByAccessSubject(state, user.access_subject)
+    const existingByEmail = findUserByEmail(state, user.email)
+    if (existingByAccessSubject || existingByEmail) {
+      return { success: true, meta: { changes: 0 } }
+    }
+
+    state.users = [...state.users, user]
+    return { success: true, meta: { changes: 1 } }
+  }
+
   if (normalizedSql.startsWith('INSERT INTO entries')) {
+    const userId = String(params[1] ?? params[0] ?? '')
     const entry: EntryRow = {
       id: String(params[0] ?? ''),
-      journal_date: String(params[1] ?? ''),
-      title: String(params[2] ?? ''),
-      summary: params[3] != null ? String(params[3]) : null,
-      ai_summary: params[4] != null ? String(params[4]) : null,
-      body_key: String(params[5] ?? ''),
-      status: String(params[6] ?? 'private'),
-      created_at: String(params[7] ?? ''),
-      updated_at: String(params[8] ?? ''),
-      deleted_at: params[9] != null ? String(params[9]) : null,
+      user_id: params.length >= 11 ? String(params[1] ?? '') : userId,
+      journal_date: String(params[params.length >= 11 ? 2 : 1] ?? ''),
+      title: String(params[params.length >= 11 ? 3 : 2] ?? ''),
+      summary: params[params.length >= 11 ? 4 : 3] != null ? String(params[params.length >= 11 ? 4 : 3]) : null,
+      ai_summary: params[params.length >= 11 ? 5 : 4] != null ? String(params[params.length >= 11 ? 5 : 4]) : null,
+      body_key: String(params[params.length >= 11 ? 6 : 5] ?? ''),
+      status: String(params[params.length >= 11 ? 7 : 6] ?? 'private'),
+      created_at: String(params[params.length >= 11 ? 8 : 7] ?? ''),
+      updated_at: String(params[params.length >= 11 ? 9 : 8] ?? ''),
+      deleted_at: params[params.length >= 11 ? 10 : 9] != null ? String(params[params.length >= 11 ? 10 : 9]) : null,
     }
 
     state.entries = [...state.entries.filter((current) => current.id !== entry.id), entry]
@@ -140,14 +194,15 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
   }
 
   if (normalizedSql.startsWith('INSERT INTO tags')) {
-    const name = String(params[0] ?? '').trim()
-    const createdAt = params[1] != null ? String(params[1]) : null
-    const existing = findTagByName(state, name)
+    const userId = String(params.length >= 3 ? params[0] ?? '' : '')
+    const name = String(params.length >= 3 ? params[1] ?? '' : params[0] ?? '').trim()
+    const createdAt = params.length >= 3 ? (params[2] != null ? String(params[2]) : null) : params[1] != null ? String(params[1]) : null
+    const existing = state.tags.find((tag) => tag.user_id === userId && tag.name === name)
     if (existing) {
       return { success: true, meta: { changes: 0 } }
     }
 
-    state.tags = [...state.tags, { id: state.nextTagId, name, created_at: createdAt }]
+    state.tags = [...state.tags, { id: state.nextTagId, user_id: userId, name, created_at: createdAt }]
     state.nextTagId += 1
     return { success: true, meta: { changes: 1 } }
   }
@@ -221,6 +276,10 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
     return { results: sortByCreatedAtDesc(state.entries) as T[] }
   }
 
+  if (normalizedSql.startsWith('SELECT * FROM users')) {
+    return { results: sortByCreatedAtDesc(state.users) as T[] }
+  }
+
   if (normalizedSql.startsWith('SELECT * FROM tags')) {
     return { results: sortByCreatedAtDesc(state.tags) as T[] }
   }
@@ -243,6 +302,21 @@ const firstStatement = <T>(sql: string, params: unknown[], state: MockD1State) =
   if (normalizedSql.startsWith('SELECT * FROM entries WHERE id = ? LIMIT 1')) {
     const entryId = String(params[0] ?? '')
     return (state.entries.find((entry) => entry.id === entryId) ?? null) as T | null
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM users WHERE id = ? LIMIT 1')) {
+    const userId = String(params[0] ?? '')
+    return (state.users.find((user) => user.id === userId) ?? null) as T | null
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM users WHERE access_subject = ? LIMIT 1')) {
+    const accessSubject = String(params[0] ?? '')
+    return (state.users.find((user) => user.access_subject === accessSubject) ?? null) as T | null
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM users WHERE email = ? LIMIT 1')) {
+    const email = String(params[0] ?? '')
+    return (state.users.find((user) => user.email === email) ?? null) as T | null
   }
 
   if (normalizedSql.startsWith('SELECT * FROM tags WHERE id = ? LIMIT 1')) {

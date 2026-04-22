@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { createEntryRow, requestApp } from '../test-support'
+import { createEntryRow, createUserRow, requestApp } from '../test-support'
 
 describe('search route', () => {
   it('filters entries by title and summary', async () => {
     const { response, body } = await requestApp('/search?q=apple', {
       db: {
+        initialUsers: [createUserRow()],
         initialEntries: [
           createEntryRow({
             title: 'Apple notes',
@@ -15,6 +16,7 @@ describe('search route', () => {
           }),
           createEntryRow({
             id: 'entry-2',
+            user_id: 'user-1',
             journal_date: '2026-04-21',
             title: 'Banana notes',
             summary: 'Weekend thoughts',

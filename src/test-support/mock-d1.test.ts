@@ -1,17 +1,52 @@
 import { describe, expect, it } from 'vitest'
-import { createEntryRow } from './fixtures'
+import { createEntryRow, createTagRow, createUserRow } from './fixtures'
 import { createMockD1 } from './mock-d1'
 
 describe('mock D1 database', () => {
-  it('stores entries, updates them, and deletes them through query-shaped statements', async () => {
-    const db = createMockD1()
+  it('stores users, entries, updates them, and deletes them through query-shaped statements', async () => {
+    const db = createMockD1({
+      initialUsers: [createUserRow()],
+    })
 
     await db
       .prepare(
-        'INSERT INTO entries (id, journal_date, title, summary, ai_summary, body_key, status, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO users (id, access_subject, email, name, avatar_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      )
+      .bind(
+        'user-2',
+        'access-subject-2',
+        'writer@example.com',
+        'Writer',
+        'https://example.com/writer.png',
+        '2026-04-22T00:00:00.000Z',
+        '2026-04-22T00:00:00.000Z'
+      )
+      .run()
+
+    const insertedUser = await db.prepare('SELECT * FROM users WHERE id = ? LIMIT 1').bind('user-2').first<{
+      id: string
+      access_subject: string
+      email: string
+      avatar_url: string | null
+    }>()
+
+    expect(insertedUser).toEqual({
+      id: 'user-2',
+      access_subject: 'access-subject-2',
+      email: 'writer@example.com',
+      name: 'Writer',
+      avatar_url: 'https://example.com/writer.png',
+      created_at: '2026-04-22T00:00:00.000Z',
+      updated_at: '2026-04-22T00:00:00.000Z',
+    })
+
+    await db
+      .prepare(
+        'INSERT INTO entries (id, user_id, journal_date, title, summary, ai_summary, body_key, status, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
       )
       .bind(
         'entry-1',
+        'user-2',
         '2026-04-22',
         'First entry',
         'summary',
@@ -40,6 +75,7 @@ describe('mock D1 database', () => {
 
     expect(updated).toMatchObject({
       id: 'entry-1',
+      user_id: 'user-2',
       summary: 'updated summary',
       ai_summary: 'updated ai',
       body_key: 'entries/entry-1-v2.md',
@@ -70,32 +106,57 @@ describe('mock D1 database', () => {
 
   it('deduplicates tags, links entries, and exposes lookup queries', async () => {
     const db = createMockD1({
+      initialUsers: [createUserRow()],
       initialEntries: [
-        createEntryRow({ id: 'entry-2', title: 'Taggable', created_at: '2026-04-22T01:00:00.000Z' }),
+        createEntryRow({
+          id: 'entry-2',
+          user_id: 'user-1',
+          title: 'Taggable',
+          created_at: '2026-04-22T01:00:00.000Z',
+        }),
       ],
     })
 
-    await db.prepare('INSERT INTO tags (name, created_at) VALUES (?, ?)').bind('journal', '2026-04-22T01:00:00.000Z').run()
-    await db.prepare('INSERT INTO tags (name, created_at) VALUES (?, ?)').bind('journal', '2026-04-22T01:05:00.000Z').run()
-    await db.prepare('INSERT INTO tags (name, created_at) VALUES (?, ?)').bind('cloudflare', '2026-04-22T01:10:00.000Z').run()
+    await db
+      .prepare('INSERT INTO tags (user_id, name, created_at) VALUES (?, ?, ?)')
+      .bind('user-1', 'journal', '2026-04-22T01:00:00.000Z')
+      .run()
+    await db
+      .prepare('INSERT INTO tags (user_id, name, created_at) VALUES (?, ?, ?)')
+      .bind('user-1', 'journal', '2026-04-22T01:05:00.000Z')
+      .run()
+    await db
+      .prepare('INSERT INTO tags (user_id, name, created_at) VALUES (?, ?, ?)')
+      .bind('user-1', 'cloudflare', '2026-04-22T01:10:00.000Z')
+      .run()
 
     const tagById = await db.prepare('SELECT * FROM tags WHERE id = ? LIMIT 1').bind(2).first<{
       id: number
+      user_id: string
       name: string
       created_at: string | null
     }>()
     const tagByName = await db.prepare('SELECT * FROM tags WHERE name = ? LIMIT 1').bind('journal').first<{
       id: number
+      user_id: string
       name: string
     }>()
 
     expect(tagById).toEqual({
       id: 2,
+      user_id: 'user-1',
       name: 'cloudflare',
       created_at: '2026-04-22T01:10:00.000Z',
     })
     expect(tagByName).toEqual({
       id: 1,
+      user_id: 'user-1',
+      name: 'journal',
+      created_at: '2026-04-22T01:00:00.000Z',
+    })
+    expect(db.state.tags[0]).toEqual({
+      id: 1,
+      user_id: 'user-1',
       name: 'journal',
       created_at: '2026-04-22T01:00:00.000Z',
     })
@@ -122,9 +183,10 @@ describe('mock D1 database', () => {
 
   it('tracks AI tag candidates and sorts list queries by created_at descending', async () => {
     const db = createMockD1({
+      initialUsers: [createUserRow()],
       initialEntries: [
-        createEntryRow({ id: 'entry-3', created_at: '2026-04-22T03:00:00.000Z', title: 'Later' }),
-        createEntryRow({ id: 'entry-4', created_at: '2026-04-22T02:00:00.000Z', title: 'Earlier' }),
+        createEntryRow({ id: 'entry-3', user_id: 'user-1', created_at: '2026-04-22T03:00:00.000Z', title: 'Later' }),
+        createEntryRow({ id: 'entry-4', user_id: 'user-1', created_at: '2026-04-22T02:00:00.000Z', title: 'Earlier' }),
       ],
     })
 
@@ -204,7 +266,7 @@ describe('mock D1 database', () => {
   })
 
   it('clones initial state so tests can mutate their fixtures safely', async () => {
-    const initialEntries = [createEntryRow({ id: 'entry-5', title: 'Original' })]
+    const initialEntries = [createEntryRow({ id: 'entry-5', user_id: 'user-1', title: 'Original' })]
     const db = createMockD1({ initialEntries })
 
     initialEntries[0].title = 'Mutated'

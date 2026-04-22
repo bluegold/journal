@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createEntryRow } from './fixtures'
+import { createEntryRow, createUserRow } from './fixtures'
 import { createMockEnv, createMockQueue } from './mock-env'
 
 describe('mock env', () => {
@@ -22,12 +22,9 @@ describe('mock env', () => {
   it('builds isolated D1 and R2 fixtures from options', async () => {
     const env = await createMockEnv({
       db: {
+        initialUsers: [createUserRow()],
         initialEntries: [
-          createEntryRow({
-            title: 'Fixture entry',
-            summary: null,
-            ai_summary: null,
-          }),
+          createEntryRow({ user_id: 'user-1', title: 'Fixture entry', summary: null, ai_summary: null }),
         ],
       },
       r2: {

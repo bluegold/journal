@@ -1,5 +1,6 @@
 export type EntryRow = {
   id: string
+  user_id: string
   journal_date: string
   title: string
   summary: string | null
@@ -11,8 +12,19 @@ export type EntryRow = {
   deleted_at: string | null
 }
 
+export type UserRow = {
+  id: string
+  access_subject: string
+  email: string
+  name: string
+  avatar_url: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type TagRow = {
   id: number
+  user_id: string
   name: string
   created_at: string | null
 }
@@ -31,6 +43,7 @@ export type EntryAiTagCandidateRow = {
 }
 
 export type MockD1Options = {
+  initialUsers?: UserRow[]
   initialEntries?: EntryRow[]
   initialTags?: TagRow[]
   initialEntryTags?: EntryTagRow[]
@@ -38,10 +51,12 @@ export type MockD1Options = {
 }
 
 export type MockD1State = {
+  users: UserRow[]
   entries: EntryRow[]
   tags: TagRow[]
   entryTags: EntryTagRow[]
   entryAiTagCandidates: EntryAiTagCandidateRow[]
+  nextUserId: number
   nextTagId: number
   nextCandidateId: number
   queries: Array<{ sql: string; params: unknown[] }>

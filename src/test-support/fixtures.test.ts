@@ -3,6 +3,7 @@ import {
   createEntryAiTagCandidateRow,
   createEntryRow,
   createEntryTagRow,
+  createUserRow,
   createTagRow,
 } from './fixtures'
 
@@ -10,6 +11,7 @@ describe('test fixtures', () => {
   it('builds journal row fixtures with stable defaults and overrides', () => {
     expect(createEntryRow()).toEqual({
       id: 'entry-1',
+      user_id: 'user-1',
       journal_date: '2026-04-22',
       title: 'First entry',
       summary: 'summary',
@@ -21,8 +23,19 @@ describe('test fixtures', () => {
       deleted_at: null,
     })
 
-    expect(createTagRow({ id: 7, name: 'cloudflare' })).toEqual({
+    expect(createUserRow({ id: 'user-7', email: 'cloudflare@example.com', avatar_url: 'https://example.com/avatar.png' })).toEqual({
+      id: 'user-7',
+      access_subject: 'access-subject-1',
+      email: 'cloudflare@example.com',
+      name: 'Tester',
+      avatar_url: 'https://example.com/avatar.png',
+      created_at: '2026-04-22T00:00:00.000Z',
+      updated_at: '2026-04-22T00:00:00.000Z',
+    })
+
+    expect(createTagRow({ id: 7, user_id: 'user-7', name: 'cloudflare' })).toEqual({
       id: 7,
+      user_id: 'user-7',
       name: 'cloudflare',
       created_at: '2026-04-22T00:00:00.000Z',
     })
