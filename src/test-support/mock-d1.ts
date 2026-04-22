@@ -1,0 +1,266 @@
+import type {
+  EntryAiTagCandidateRow,
+  EntryRow,
+  EntryTagRow,
+  MockD1Options,
+  MockD1State,
+  TagRow,
+} from './mock-d1-types'
+
+export type { MockD1Options } from './mock-d1-types'
+
+export type MockD1Database = D1Database & {
+  state: MockD1State
+}
+
+const normalizeSql = (sql: string): string => {
+  return sql.trim().replace(/\s+/g, ' ')
+}
+
+const cloneEntry = (entry: EntryRow): EntryRow => ({ ...entry })
+const cloneTag = (tag: TagRow): TagRow => ({ ...tag })
+const cloneEntryTag = (entryTag: EntryTagRow): EntryTagRow => ({ ...entryTag })
+const cloneCandidate = (candidate: EntryAiTagCandidateRow): EntryAiTagCandidateRow => ({ ...candidate })
+
+const createInitialState = (options: MockD1Options): MockD1State => {
+  const entries = [...(options.initialEntries ?? [])].map(cloneEntry)
+  const tags = [...(options.initialTags ?? [])].map(cloneTag)
+  const entryTags = [...(options.initialEntryTags ?? [])].map(cloneEntryTag)
+  const entryAiTagCandidates = [...(options.initialEntryAiTagCandidates ?? [])].map(cloneCandidate)
+
+  return {
+    entries,
+    tags,
+    entryTags,
+    entryAiTagCandidates,
+    nextTagId: tags.reduce((max, tag) => Math.max(max, tag.id), 0) + 1,
+    nextCandidateId: entryAiTagCandidates.reduce((max, candidate) => Math.max(max, candidate.id), 0) + 1,
+    queries: [],
+  }
+}
+
+const findTagByName = (state: MockD1State, name: string): TagRow | undefined => {
+  return state.tags.find((tag) => tag.name === name)
+}
+
+const sortByCreatedAtDesc = <T extends { created_at: string | null; id: number | string }>(items: T[]): T[] => {
+  return [...items].sort((a, b) => {
+    const timeA = new Date((a.created_at ?? '').replace(' ', 'T') + 'Z').getTime()
+    const timeB = new Date((b.created_at ?? '').replace(' ', 'T') + 'Z').getTime()
+    if (timeA !== timeB) {
+      return timeB - timeA
+    }
+
+    if (typeof a.id === 'number' && typeof b.id === 'number') {
+      return b.id - a.id
+    }
+
+    return String(b.id).localeCompare(String(a.id))
+  })
+}
+
+const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
+  const normalizedSql = normalizeSql(sql)
+  state.queries.push({ sql: normalizedSql, params: [...params] })
+
+  if (normalizedSql.startsWith('INSERT INTO entries')) {
+    const entry: EntryRow = {
+      id: String(params[0] ?? ''),
+      journal_date: String(params[1] ?? ''),
+      title: String(params[2] ?? ''),
+      summary: params[3] != null ? String(params[3]) : null,
+      ai_summary: params[4] != null ? String(params[4]) : null,
+      body_key: String(params[5] ?? ''),
+      status: String(params[6] ?? 'private'),
+      created_at: String(params[7] ?? ''),
+      updated_at: String(params[8] ?? ''),
+      deleted_at: params[9] != null ? String(params[9]) : null,
+    }
+
+    state.entries = [...state.entries.filter((current) => current.id !== entry.id), entry]
+    return { success: true, meta: { changes: 1 } }
+  }
+
+  if (normalizedSql.startsWith('UPDATE entries SET')) {
+    const entryId = String(params[params.length - 1] ?? '')
+    const current = state.entries.find((entry) => entry.id === entryId)
+
+    if (!current) {
+      return { success: true, meta: { changes: 0 } }
+    }
+
+    const updated = [...state.entries]
+    const index = updated.findIndex((entry) => entry.id === entryId)
+
+    if (normalizedSql.includes('deleted_at = ?')) {
+      current.deleted_at = params[0] != null ? String(params[0]) : null
+      current.updated_at = params[1] != null ? String(params[1]) : current.updated_at
+      return { success: true, meta: { changes: 1 } }
+    }
+
+    if (normalizedSql.includes('summary = ?') && normalizedSql.includes('ai_summary = ?')) {
+      current.title = params[0] != null ? String(params[0]) : current.title
+      current.summary = params[1] != null ? String(params[1]) : null
+      current.ai_summary = params[2] != null ? String(params[2]) : null
+      current.body_key = params[3] != null ? String(params[3]) : current.body_key
+      current.status = params[4] != null ? String(params[4]) : current.status
+      current.updated_at = params[5] != null ? String(params[5]) : current.updated_at
+      return { success: true, meta: { changes: 1 } }
+    }
+
+    if (normalizedSql.includes('title = ?') && normalizedSql.includes('body_key = ?')) {
+      current.journal_date = params[0] != null ? String(params[0]) : current.journal_date
+      current.title = params[1] != null ? String(params[1]) : current.title
+      current.body_key = params[2] != null ? String(params[2]) : current.body_key
+      current.status = params[3] != null ? String(params[3]) : current.status
+      current.updated_at = params[4] != null ? String(params[4]) : current.updated_at
+      return { success: true, meta: { changes: 1 } }
+    }
+
+    if (index >= 0) {
+      state.entries[index] = current
+      return { success: true, meta: { changes: 1 } }
+    }
+  }
+
+  if (normalizedSql.startsWith('DELETE FROM entries')) {
+    const entryId = String(params[0] ?? '')
+    const before = state.entries.length
+    state.entries = state.entries.filter((entry) => entry.id !== entryId)
+    state.entryTags = state.entryTags.filter((entryTag) => entryTag.entry_id !== entryId)
+    state.entryAiTagCandidates = state.entryAiTagCandidates.filter((candidate) => candidate.entry_id !== entryId)
+    return { success: true, meta: { changes: before - state.entries.length } }
+  }
+
+  if (normalizedSql.startsWith('INSERT INTO tags')) {
+    const name = String(params[0] ?? '').trim()
+    const createdAt = params[1] != null ? String(params[1]) : null
+    const existing = findTagByName(state, name)
+    if (existing) {
+      return { success: true, meta: { changes: 0 } }
+    }
+
+    state.tags = [...state.tags, { id: state.nextTagId, name, created_at: createdAt }]
+    state.nextTagId += 1
+    return { success: true, meta: { changes: 1 } }
+  }
+
+  if (normalizedSql.startsWith('INSERT INTO entry_tags')) {
+    const entryTag: EntryTagRow = {
+      entry_id: String(params[0] ?? ''),
+      tag_id: Number(params[1] ?? 0),
+      created_at: params[2] != null ? String(params[2]) : null,
+    }
+
+    const existing = state.entryTags.find(
+      (current) => current.entry_id === entryTag.entry_id && current.tag_id === entryTag.tag_id
+    )
+    if (existing) {
+      return { success: true, meta: { changes: 0 } }
+    }
+
+    state.entryTags = [...state.entryTags, entryTag]
+    return { success: true, meta: { changes: 1 } }
+  }
+
+  if (normalizedSql.startsWith('INSERT INTO entry_ai_tag_candidates')) {
+    const candidate: EntryAiTagCandidateRow = {
+      id: state.nextCandidateId,
+      entry_id: String(params[0] ?? ''),
+      tag_name: String(params[1] ?? ''),
+      created_at: params[2] != null ? String(params[2]) : '',
+    }
+
+    const existing = state.entryAiTagCandidates.find(
+      (current) => current.entry_id === candidate.entry_id && current.tag_name === candidate.tag_name
+    )
+    if (existing) {
+      return { success: true, meta: { changes: 0 } }
+    }
+
+    state.entryAiTagCandidates = [...state.entryAiTagCandidates, candidate]
+    state.nextCandidateId += 1
+    return { success: true, meta: { changes: 1 } }
+  }
+
+  return { success: true, meta: { changes: 0 } }
+}
+
+const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => {
+  const normalizedSql = normalizeSql(sql)
+  state.queries.push({ sql: normalizedSql, params: [...params] })
+
+  if (normalizedSql.startsWith('SELECT * FROM entries')) {
+    return { results: sortByCreatedAtDesc(state.entries) as T[] }
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM tags')) {
+    return { results: sortByCreatedAtDesc(state.tags) as T[] }
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM entry_tags')) {
+    return { results: [...state.entryTags] as T[] }
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM entry_ai_tag_candidates')) {
+    return { results: sortByCreatedAtDesc(state.entryAiTagCandidates) as T[] }
+  }
+
+  return { results: [] as T[] }
+}
+
+const firstStatement = <T>(sql: string, params: unknown[], state: MockD1State) => {
+  const normalizedSql = normalizeSql(sql)
+  state.queries.push({ sql: normalizedSql, params: [...params] })
+
+  if (normalizedSql.startsWith('SELECT * FROM entries WHERE id = ? LIMIT 1')) {
+    const entryId = String(params[0] ?? '')
+    return (state.entries.find((entry) => entry.id === entryId) ?? null) as T | null
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM tags WHERE id = ? LIMIT 1')) {
+    const tagId = Number(params[0] ?? 0)
+    return (state.tags.find((tag) => tag.id === tagId) ?? null) as T | null
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM tags WHERE name = ? LIMIT 1')) {
+    const tagName = String(params[0] ?? '')
+    return (state.tags.find((tag) => tag.name === tagName) ?? null) as T | null
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM entry_ai_tag_candidates WHERE entry_id = ? LIMIT 1')) {
+    const entryId = String(params[0] ?? '')
+    return (state.entryAiTagCandidates.find((candidate) => candidate.entry_id === entryId) ?? null) as T | null
+  }
+
+  return null
+}
+
+export const createMockD1 = (options: MockD1Options = {}): MockD1Database => {
+  const state = createInitialState(options)
+
+  const database: MockD1Database = {
+    state,
+    prepare(sql: string) {
+      let boundParams: unknown[] = []
+
+      return {
+        bind(...params: unknown[]) {
+          boundParams = params
+          return this
+        },
+        async run() {
+          return runStatement(sql, boundParams, state)
+        },
+        async all<T>() {
+          return allStatement<T>(sql, boundParams, state)
+        },
+        async first<T>() {
+          return firstStatement<T>(sql, boundParams, state)
+        },
+      }
+    },
+  } as MockD1Database
+
+  return database
+}
