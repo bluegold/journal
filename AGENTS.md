@@ -129,6 +129,36 @@ For Mermaid / PlantUML in early phases:
 - preserve source fences
 - do not block release on special rendering support
 
+
+## UI Stack Rules
+
+Use **Tailwind CSS + Basecoat UI** as the default styling stack.
+
+### Expectations
+
+- Prefer Tailwind utility classes in server-rendered templates.
+- Use Basecoat UI where it provides simple, durable primitives that fit htmx-driven pages.
+- Keep the UI readable for long markdown entries and metadata-heavy editing screens.
+
+### Do not introduce without explicit need
+
+- another general-purpose CSS framework
+- a React-only UI kit as the main UI foundation
+- CSS-in-JS for routine styling
+- bespoke design system abstractions before the core app is stable
+
+### Reuse strategy
+
+- Extract small server-side partials or helpers for repeated UI fragments.
+- Reuse class patterns intentionally, but do not over-abstract styling too early.
+- Preserve compatibility with Hono SSR and htmx partial replacement.
+
+### Visual rules
+
+- Approved tags and AI candidate tags must look different at a glance.
+- Editing screens should favor clarity over decorative density.
+- Markdown reading views must preserve code block, table, and image usability.
+
 ## Queue / AI Guidance
 
 - Queue payloads should be small and explicit.

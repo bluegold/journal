@@ -194,6 +194,65 @@ Export can synthesize front matter from D1 metadata.
 
 ---
 
+
+## UI Styling Stack
+
+### Chosen stack
+
+Use **Tailwind CSS + Basecoat UI** for the initial UI layer.
+
+Rationale:
+
+- Tailwind keeps styling local and predictable in server-rendered templates.
+- Basecoat UI provides a small set of prebuilt patterns without pushing the project toward SPA-style component architecture.
+- The combination is suitable for Hono SSR + htmx partial rendering.
+
+### Scope of usage
+
+Use Tailwind for:
+
+- layout
+- spacing
+- typography
+- responsive behavior
+- state styling
+- markdown-adjacent utility styling
+
+Use Basecoat UI for:
+
+- buttons
+- inputs
+- textareas
+- dialogs / drawers if needed
+- cards / panels
+- badges / tag chips
+- dropdowns and other lightweight UI primitives where it clearly reduces custom CSS
+
+### Constraints
+
+- Do not introduce a second component framework for general UI.
+- Do not pivot the app toward a React-only component model just to consume UI components.
+- Keep SSR HTML and htmx partials as the primary rendering model.
+- Prefer stable utility classes and small reusable server-side view helpers over large front-end widget abstractions.
+
+### Theming guidance
+
+Initial target:
+
+- clean reading-oriented UI
+- comfortable typography for long-form markdown
+- dark mode support is desirable, but may follow after the first usable version if it slows delivery
+- visual distinction between approved metadata and AI-generated candidate metadata must be explicit
+
+### Markdown rendering note
+
+Tailwind Typography may be added later if it helps markdown display, but markdown rendering correctness matters more than visual polish.
+
+If typography helpers are introduced:
+
+- avoid styles that break code fences, tables, or images
+- keep rendered markdown readable in both editor-adjacent views and dedicated reading views
+
 ## Search Strategy
 
 ### Phase 1 search scope
@@ -499,4 +558,6 @@ Add non-core features only after the core workflow is stable.
 ### Rule
 
 No Phase 6 work should delay or destabilize Phases 1 through 4.
+
+---
 
