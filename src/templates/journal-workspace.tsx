@@ -1,37 +1,36 @@
-import { CalendarMonth, buildCalendarMonthView } from './calendar-month'
+import { CalendarMonth } from './calendar-month'
 import { EntryCard } from './entry-card'
 import { EntryDetailPanel } from './entry-detail-panel'
 import { JournalHeader } from './journal-header'
+import type { CalendarMonthView } from './calendar-month'
 import type { JournalEntryRow, JournalUserRow } from '../types/journal'
 
 type JournalWorkspaceProps = {
   currentUser: JournalUserRow
-  monthDate: Date
-  journalEntries: JournalEntryRow[]
+  calendarView: CalendarMonthView
+  dayEntries: JournalEntryRow[]
+  selectedDateLabel: string | null
   selectedEntry: JournalEntryRow | null
+  dayEntryHref: (entry: JournalEntryRow) => string
   menuItems: Array<{
     label: string
     href: string
   }>
 }
 
-const normalizeDateKey = (date: string): string => {
-  return date.trim()
-}
-
 export const JournalWorkspace = ({
   currentUser,
-  monthDate,
-  journalEntries,
+  calendarView,
+  dayEntries,
+  selectedDateLabel,
   selectedEntry,
+  dayEntryHref,
   menuItems,
 }: JournalWorkspaceProps) => {
-  const journalDateKeys = journalEntries.map((entry) => normalizeDateKey(entry.journal_date))
-  const selectedDateKey = selectedEntry ? normalizeDateKey(selectedEntry.journal_date) : null
-  const calendarView = buildCalendarMonthView(monthDate, journalDateKeys, selectedDateKey)
+  const selectedDateKey = selectedDateLabel?.trim() ?? null
 
   return (
-    <div class="min-h-screen">
+    <div id="journal-workspace" class="min-h-screen">
       <JournalHeader currentUser={currentUser} menuItems={menuItems} />
 
       <main class="mx-auto w-full max-w-[1600px] px-4 py-4 lg:px-6">
@@ -44,7 +43,7 @@ export const JournalWorkspace = ({
                 <div>
                   <p class="text-xs font-semibold tracking-[0.24em] text-cyan-200/80 uppercase">Selected day</p>
                   <h2 class="mt-1 text-lg font-semibold text-slate-100">
-                    {selectedEntry ? selectedEntry.journal_date : 'No entry selected'}
+                    {selectedDateKey || 'No entry selected'}
                   </h2>
                 </div>
                 <a
@@ -56,11 +55,17 @@ export const JournalWorkspace = ({
               </div>
 
               <div class="mt-4 space-y-2">
-                {journalEntries.length > 0 ? (
-                  journalEntries.map((entry) => <EntryCard entry={entry} active={selectedEntry?.id === entry.id} />)
+                {dayEntries.length > 0 ? (
+                  dayEntries.map((entry) => (
+                    <EntryCard
+                      entry={entry}
+                      active={selectedEntry?.id === entry.id}
+                      href={entry === selectedEntry ? undefined : dayEntryHref(entry)}
+                    />
+                  ))
                 ) : (
                   <div class="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
-                    No journal entries yet for this month.
+                    No journal entries for this day.
                   </div>
                 )}
               </div>

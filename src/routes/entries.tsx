@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { isHtmxRequest } from '../lib/htmx'
 import { EntriesPage } from '../templates/pages/entries-page'
 import type { Bindings } from '../types/bindings'
 import type { JournalContextVariables } from '../types/journal'
@@ -12,10 +13,21 @@ entriesRoutes.get('/entries', async (c) => {
   )
     .bind(c.var.currentUser.id)
     .all<JournalEntryRow>()
-  return c.render(
+  const page = (
     <EntriesPage
       currentUser={c.var.currentUser}
       entries={rows.results}
+      query={{
+        month: c.req.query('month'),
+        date: c.req.query('date'),
+        entry: c.req.query('entry'),
+      }}
     />
   )
+
+  if (isHtmxRequest(c.req.raw)) {
+    return c.html(page)
+  }
+
+  return c.render(page)
 })
