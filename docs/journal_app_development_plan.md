@@ -348,6 +348,7 @@ Create a stable project skeleton and lock the non-negotiable design choices so l
 - define migration strategy
 - define lint, format, and test commands
 - write initial README bootstrap instructions
+- add Access user bootstrap and UUIDv7 id helper
 - define canonical timezone handling strategy
 - decide filename and R2 object key format
 - decide tag normalization rules
@@ -560,4 +561,3 @@ Add non-core features only after the core workflow is stable.
 No Phase 6 work should delay or destabilize Phases 1 through 4.
 
 ---
-

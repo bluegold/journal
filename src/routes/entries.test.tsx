@@ -32,6 +32,7 @@ describe('entries route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('Journal')
+    expect(body).toContain('Tester')
     expect(body).toContain('Calendar')
     expect(body).toContain('Selected day')
     expect(body).toContain('Article detail and editor')

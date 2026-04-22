@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { EntryCard } from '../templates/entry-card'
 import type { Bindings } from '../types/bindings'
+import type { JournalContextVariables } from '../types/journal'
 import type { JournalEntryRow } from '../types/journal'
 
 const matchesQuery = (entry: JournalEntryRow, query: string): boolean => {
@@ -14,11 +15,15 @@ const matchesQuery = (entry: JournalEntryRow, query: string): boolean => {
   )
 }
 
-export const searchRoutes = new Hono<{ Bindings: Bindings }>()
+export const searchRoutes = new Hono<{ Bindings: Bindings; Variables: JournalContextVariables }>()
 
 searchRoutes.get('/search', async (c) => {
   const q = c.req.query('q') ?? ''
-  const rows = await c.env.DB.prepare('SELECT * FROM entries ORDER BY journal_date DESC, created_at DESC').all<JournalEntryRow>()
+  const rows = await c.env.DB.prepare(
+    'SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC'
+  )
+    .bind(c.var.currentUser.id)
+    .all<JournalEntryRow>()
   const results = rows.results.filter((entry) => entry.deleted_at == null && matchesQuery(entry, q))
 
   return c.html(

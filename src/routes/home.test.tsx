@@ -10,10 +10,23 @@ describe('home route', () => {
     expect(body).toContain('href="/favicon.png"')
     expect(body).toContain('src="/favicon.png"')
     expect(body).toContain('Private server-rendered journal')
-    expect(body).not.toContain('Guest')
-    expect(body).not.toContain('Sign in')
+    expect(body).toContain('Tester')
+    expect(body).toContain('tester@example.com')
     expect(body).toContain('Calendar')
     expect(body).toContain('Content area')
     expect(body).toContain('Select a journal entry')
+  })
+
+  it('rejects requests without a Cloudflare Access email header', async () => {
+    const { response, body } = await requestApp('/', {
+      init: {
+        headers: {
+          'cf-access-authenticated-user-email': '',
+        },
+      },
+    })
+
+    expect(response.status).toBe(401)
+    expect(body).toContain('Cloudflare Access authentication is required.')
   })
 })

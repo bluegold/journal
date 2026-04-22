@@ -100,13 +100,32 @@ const sortByCreatedAtDesc = <T extends { created_at: string | null; id: number |
   })
 }
 
+const sortEntriesByJournalDateDesc = (items: EntryRow[]): EntryRow[] => {
+  return [...items].sort((a, b) => {
+    const journalDateA = parseStoredDate(a.journal_date)
+    const journalDateB = parseStoredDate(b.journal_date)
+    if (journalDateA !== journalDateB) {
+      return journalDateB - journalDateA
+    }
+
+    const createdAtA = parseStoredDate(a.created_at)
+    const createdAtB = parseStoredDate(b.created_at)
+    if (createdAtA !== createdAtB) {
+      return createdAtB - createdAtA
+    }
+
+    return String(b.id).localeCompare(String(a.id))
+  })
+}
+
 const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
   const normalizedSql = normalizeSql(sql)
   state.queries.push({ sql: normalizedSql, params: [...params] })
 
   if (normalizedSql.startsWith('INSERT INTO users')) {
+    const generatedId = `user-${state.nextUserId}`
     const user: UserRow = {
-      id: String(params[0] ?? `user-${state.nextUserId}`),
+      id: params[0] != null ? String(params[0]) : generatedId,
       access_subject: String(params[1] ?? ''),
       email: String(params[2] ?? ''),
       name: params[3] != null ? String(params[3]) : '',
@@ -122,6 +141,9 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
     }
 
     state.users = [...state.users, user]
+    if (params[0] == null) {
+      state.nextUserId += 1
+    }
     return { success: true, meta: { changes: 1 } }
   }
 
@@ -142,6 +164,27 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
     }
 
     state.entries = [...state.entries.filter((current) => current.id !== entry.id), entry]
+    return { success: true, meta: { changes: 1 } }
+  }
+
+  if (
+    normalizedSql.startsWith(
+      'UPDATE users SET access_subject = ?, email = ?, name = ?, avatar_url = ?, updated_at = ? WHERE id = ?'
+    )
+  ) {
+    const userId = String(params[5] ?? '')
+    const current = state.users.find((user) => user.id === userId)
+
+    if (!current) {
+      return { success: true, meta: { changes: 0 } }
+    }
+
+    current.access_subject = String(params[0] ?? current.access_subject)
+    current.email = String(params[1] ?? current.email)
+    current.name = String(params[2] ?? current.name)
+    current.avatar_url = params[3] != null ? String(params[3]) : null
+    current.updated_at = String(params[4] ?? current.updated_at)
+
     return { success: true, meta: { changes: 1 } }
   }
 
@@ -272,8 +315,17 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
   const normalizedSql = normalizeSql(sql)
   state.queries.push({ sql: normalizedSql, params: [...params] })
 
+  if (normalizedSql.startsWith('SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC')) {
+    const userId = String(params[0] ?? '')
+    return {
+      results: sortEntriesByJournalDateDesc(
+        state.entries.filter((entry) => entry.user_id === userId)
+      ) as T[],
+    }
+  }
+
   if (normalizedSql.startsWith('SELECT * FROM entries')) {
-    return { results: sortByCreatedAtDesc(state.entries) as T[] }
+    return { results: sortEntriesByJournalDateDesc(state.entries) as T[] }
   }
 
   if (normalizedSql.startsWith('SELECT * FROM users')) {

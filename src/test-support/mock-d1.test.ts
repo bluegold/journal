@@ -27,6 +27,7 @@ describe('mock D1 database', () => {
       id: string
       access_subject: string
       email: string
+      name: string
       avatar_url: string | null
     }>()
 
@@ -177,6 +178,40 @@ describe('mock D1 database', () => {
         entry_id: 'entry-2',
         tag_id: 1,
         created_at: '2026-04-22T01:15:00.000Z',
+      },
+    ])
+  })
+
+  it('filters entries by user id in list queries', async () => {
+    const db = createMockD1({
+      initialUsers: [createUserRow(), createUserRow({ id: 'user-2', access_subject: 'access-subject-2', email: 'other@example.com' })],
+      initialEntries: [
+        createEntryRow({ id: 'entry-1', user_id: 'user-1', title: 'Mine', created_at: '2026-04-22T03:00:00.000Z' }),
+        createEntryRow({ id: 'entry-2', user_id: 'user-2', title: 'Theirs', created_at: '2026-04-22T04:00:00.000Z' }),
+      ],
+    })
+
+    const rows = await db
+      .prepare('SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC')
+      .bind('user-1')
+      .all<{
+        id: string
+        user_id: string
+      }>()
+
+    expect(rows.results).toEqual([
+      {
+        id: 'entry-1',
+        user_id: 'user-1',
+        journal_date: '2026-04-22',
+        title: 'Mine',
+        summary: 'summary',
+        ai_summary: 'ai summary',
+        body_key: 'entries/entry-1.md',
+        status: 'private',
+        created_at: '2026-04-22T03:00:00.000Z',
+        updated_at: '2026-04-22T00:00:00.000Z',
+        deleted_at: null,
       },
     ])
   })

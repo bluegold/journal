@@ -2,9 +2,10 @@ import { CalendarMonth, buildCalendarMonthView } from './calendar-month'
 import { EntryCard } from './entry-card'
 import { EntryDetailPanel } from './entry-detail-panel'
 import { JournalHeader } from './journal-header'
-import type { JournalEntryRow } from '../types/journal'
+import type { JournalEntryRow, JournalUserRow } from '../types/journal'
 
 type JournalWorkspaceProps = {
+  currentUser: JournalUserRow
   monthDate: Date
   journalEntries: JournalEntryRow[]
   selectedEntry: JournalEntryRow | null
@@ -19,6 +20,7 @@ const normalizeDateKey = (date: string): string => {
 }
 
 export const JournalWorkspace = ({
+  currentUser,
   monthDate,
   journalEntries,
   selectedEntry,
@@ -30,7 +32,7 @@ export const JournalWorkspace = ({
 
   return (
     <div class="min-h-screen">
-      <JournalHeader menuItems={menuItems} />
+      <JournalHeader currentUser={currentUser} menuItems={menuItems} />
 
       <main class="mx-auto w-full max-w-[1600px] px-4 py-4 lg:px-6">
         <div class="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">

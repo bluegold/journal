@@ -40,6 +40,19 @@ A phase is done only when:
 - bootstrap or operator documentation is updated
 - no placeholder architecture is added without active use
 
+## Local Access bootstrap
+
+For local `wrangler dev`, the app accepts Access-style user values from `.dev.vars`:
+
+- `DEV_ACCESS_USER_EMAIL`
+- `DEV_ACCESS_USER_ID`
+- `DEV_ACCESS_USER_NAME`
+- `DEV_ACCESS_USER_AVATAR`
+
+If Access headers are present, they win. The local vars are only a fallback for development.
+
+If you want to seed a local D1 user manually, use the `users` table with the same email and subject as the dev vars. The app will also auto-create the user on first request when the dev vars are set.
+
 ---
 
 # Suggested Initial Schema Sketch

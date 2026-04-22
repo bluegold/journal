@@ -1,8 +1,14 @@
 import { JournalWorkspace } from '../journal-workspace'
+import type { JournalUserRow } from '../../types/journal'
 
-export const HomePage = () => {
+type HomePageProps = {
+  currentUser: JournalUserRow
+}
+
+export const HomePage = ({ currentUser }: HomePageProps) => {
   return (
     <JournalWorkspace
+      currentUser={currentUser}
       monthDate={new Date()}
       journalEntries={[]}
       selectedEntry={null}
