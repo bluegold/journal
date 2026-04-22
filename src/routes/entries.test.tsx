@@ -29,8 +29,11 @@ describe('entries route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('Entries')
-    expect(body).toContain('hx-get="/search"')
+    expect(body).toContain('Journal')
+    expect(body).toContain('Calendar')
+    expect(body).toContain('Selected day')
+    expect(body).toContain('Article detail and editor')
+    expect(body).toContain('Edit the selected entry')
     expect(body).toContain('First entry')
     expect(body).toContain('Summary one')
     expect(body).not.toContain('Deleted entry')

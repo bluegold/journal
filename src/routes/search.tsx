@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { EntryCard } from '../templates/entry-card'
 import type { Bindings } from '../types/bindings'
 import type { JournalEntryRow } from '../types/journal'
 
@@ -25,15 +26,7 @@ searchRoutes.get('/search', async (c) => {
       <div class="text-sm opacity-70">search: {q}</div>
       {results.length > 0 ? (
         results.map((entry) => (
-          <article class="card">
-            <div class="card-body space-y-1">
-              <div class="flex items-start justify-between gap-3">
-                <h2 class="text-base font-medium">{entry.title || 'Untitled'}</h2>
-                <span class="text-xs opacity-60">{entry.journal_date}</span>
-              </div>
-              {entry.summary ? <p class="text-sm opacity-80">{entry.summary}</p> : null}
-            </div>
-          </article>
+          <EntryCard entry={entry} />
         ))
       ) : (
         <p class="text-sm opacity-60">No matches.</p>
