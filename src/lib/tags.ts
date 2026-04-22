@@ -25,6 +25,26 @@ export const parseTagList = (value: string): string[] => {
   return tags
 }
 
+export const splitTagInput = (value: string): { selectedTags: string[]; query: string } => {
+  const normalized = value.replace(/\r\n/g, '\n')
+  const lastSeparatorIndex = Math.max(normalized.lastIndexOf(','), normalized.lastIndexOf('\n'))
+
+  if (lastSeparatorIndex < 0) {
+    return {
+      selectedTags: [],
+      query: normalizeTagName(normalized) ?? '',
+    }
+  }
+
+  const selectedTags = parseTagList(normalized.slice(0, lastSeparatorIndex + 1))
+  const query = normalizeTagName(normalized.slice(lastSeparatorIndex + 1)) ?? ''
+
+  return {
+    selectedTags,
+    query,
+  }
+}
+
 export const formatTagList = (tagNames: string[]): string => {
   return tagNames.join(', ')
 }

@@ -59,6 +59,27 @@ export const AppLayout = ({ title, children }: AppLayoutProps) => {
             document.addEventListener('htmx:load', (event) => {
               void renderMermaid(event.target)
             })
+
+            const focusTagInputEnd = (scope) => {
+              const root = scope instanceof Element ? scope : document
+              const textarea = root.querySelector('textarea[data-focus-end="true"]')
+              if (!(textarea instanceof HTMLTextAreaElement)) return
+
+              requestAnimationFrame(() => {
+                textarea.focus()
+                const end = textarea.value.length
+                textarea.setSelectionRange(end, end)
+                textarea.removeAttribute('data-focus-end')
+              })
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+              focusTagInputEnd(document)
+            })
+
+            document.addEventListener('htmx:load', (event) => {
+              focusTagInputEnd(event.target)
+            })
           })()
         `}</script>
       </body>

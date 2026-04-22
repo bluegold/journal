@@ -466,6 +466,30 @@ Provide fast search without touching full markdown bodies.
 - make sure candidate AI tags never contaminate approved-tag search
 - add tests around normalization and duplicate tags
 
+#### Tags API
+
+Expose approved tags through a lightweight API that can power autocomplete and side panels.
+
+Autocomplete guidance:
+
+- use htmx-only fragments for the current implementation
+- update suggestions on `input`
+- keep candidate selection server-driven so the editor stays SSR-friendly
+
+Suggested response shape:
+
+- `id`
+- `name`
+- `usage_count`
+- `weight`
+
+Sorting guidance:
+
+- higher `weight` first
+- tie-break by `name`
+
+Unused tags may remain in the result set with `usage_count = 0`; they should not be deleted from the canonical `tags` table just because no entry currently references them.
+
 ### Deliverables
 
 - practical metadata search

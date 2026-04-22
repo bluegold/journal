@@ -1,6 +1,7 @@
 import type { JournalEntryRow } from '../types/journal'
 import { createWorkspaceLinkAttrs } from '../lib/htmx'
 import { JournalContentPane } from './journal-content-pane'
+import { TagAutocompleteField } from './tag-autocomplete-field'
 
 type EntryEditPanelProps = {
   entry: JournalEntryRow
@@ -62,13 +63,13 @@ export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }
           </textarea>
         </label>
 
-        <label class="block space-y-2">
-          <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">Tags</span>
-          <textarea class="textarea min-h-20 w-full" name="tags" placeholder="work, ideas, project">
-            {tagsText}
-          </textarea>
-          <p class="text-xs text-slate-500">Comma or newline separated. Lower-cased and deduplicated on save.</p>
-        </label>
+        <TagAutocompleteField
+          fieldId="entry-edit-tags"
+          formId="entry-edit-form"
+          value={tagsText}
+          query=""
+          suggestions={[]}
+        />
 
         <label class="block space-y-2">
           <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">Markdown</span>

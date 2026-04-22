@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatTagList, normalizeTagName, parseTagList } from './tags'
+import { formatTagList, normalizeTagName, parseTagList, splitTagInput } from './tags'
 
 describe('tags helpers', () => {
   it('normalizes and parses tag input from commas and newlines', () => {
@@ -7,5 +7,13 @@ describe('tags helpers', () => {
     expect(normalizeTagName('   ')).toBeNull()
     expect(parseTagList('Work, ideas\nProject, work')).toEqual(['work', 'ideas', 'project'])
     expect(formatTagList(['work', 'ideas', 'project'])).toBe('work, ideas, project')
+    expect(splitTagInput('work, ide')).toEqual({
+      selectedTags: ['work'],
+      query: 'ide',
+    })
+    expect(splitTagInput('  idea  ')).toEqual({
+      selectedTags: [],
+      query: 'idea',
+    })
   })
 })
