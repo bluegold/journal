@@ -12,11 +12,20 @@ export const EntryPreviewOverlay = ({ body }: EntryPreviewOverlayProps) => {
   return (
     <section
       id="entry-preview-overlay"
-      class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/75 px-4 py-6 backdrop-blur-sm"
+      class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 px-4 py-6 backdrop-blur-sm"
       aria-modal="true"
       role="dialog"
     >
-      <div class="mt-6 w-full max-w-4xl rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-[0_30px_100px_-40px_rgba(15,23,42,0.95)]">
+      <button
+        type="button"
+        class="absolute inset-0 z-0 cursor-default"
+        aria-label="Close preview overlay"
+        hx-get="/entries/preview/close"
+        hx-target="#entry-preview-overlay"
+        hx-swap="outerHTML"
+      />
+
+      <div class="relative z-10 mx-auto mt-6 w-full max-w-4xl rounded-3xl border border-white/10 bg-slate-950/95 p-5 shadow-[0_30px_100px_-40px_rgba(15,23,42,0.95)]">
         <div class="flex items-center justify-between gap-3">
           <div>
             <p class="text-xs font-semibold tracking-[0.24em] text-cyan-200/80 uppercase">Preview</p>
@@ -41,6 +50,15 @@ export const EntryPreviewOverlay = ({ body }: EntryPreviewOverlayProps) => {
           dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
         />
       </div>
+
+      <div
+        class="sr-only"
+        hx-get="/entries/preview/close"
+        hx-trigger="keyup[key=='Escape'] from:body"
+        hx-target="#entry-preview-overlay"
+        hx-swap="outerHTML"
+        aria-hidden="true"
+      />
     </section>
   )
 }
