@@ -6,6 +6,7 @@ import {
   buildEntriesHref,
   buildTodayEntriesHref,
   buildNewEntryHref,
+  buildTodayNewEntryHref,
   formatMonthKey,
   shiftMonth,
 } from '../../lib/entries-navigation'
@@ -41,6 +42,7 @@ export const EntriesPage = ({ currentUser, entries, selectedEntryBody, query }: 
     <JournalWorkspace
       calendarView={calendarView}
       currentUser={currentUser}
+      composeHref={buildTodayNewEntryHref()}
       dayEntries={selection.dayEntries}
       selectedDateLabel={selection.selectedDateKey}
       selectedEntry={selection.selectedEntry}
@@ -54,7 +56,7 @@ export const EntriesPage = ({ currentUser, entries, selectedEntryBody, query }: 
       newEntryHref={buildNewEntryHref({ monthKey: selection.monthKey, dateKey: selection.selectedDateKey })}
       detailPane={<EntryDetailPanel entry={selection.selectedEntry} body={selectedEntryBody} />}
       menuItems={[
-        { label: 'Compose', href: '/entries/new' },
+        { label: 'Entries', href: '/entries' },
         { label: 'Search', href: '#search-results' },
       ]}
     />

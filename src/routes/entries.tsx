@@ -10,6 +10,7 @@ import {
 import { buildEntryBodyKey } from '../lib/entry-body-key'
 import { loadEntryBody } from '../lib/entry-body'
 import { resolveEntriesSelection } from '../lib/entries-selection'
+import { NewEntryContentPane } from '../templates/pages/new-entry-page'
 import { EntriesPage } from '../templates/pages/entries-page'
 import { NewEntryPage } from '../templates/pages/new-entry-page'
 import type { Bindings } from '../types/bindings'
@@ -66,9 +67,20 @@ entriesRoutes.get('/entries', async (c) => {
 })
 
 entriesRoutes.get('/entries/new', async (c) => {
+  if (isHtmxRequest(c.req.raw)) {
+    const journalDate = parseJournalDate(c.req.query('date'))
+    return c.html(<NewEntryContentPane journalDate={formatDateKey(journalDate)} />)
+  }
+
+  const rows = await c.env.DB.prepare(
+    'SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC'
+  )
+    .bind(c.var.currentUser.id)
+    .all<JournalEntryRow>()
   const page = (
     <NewEntryPage
       currentUser={c.var.currentUser}
+      entries={rows.results}
       query={{
         month: c.req.query('month'),
         date: c.req.query('date'),

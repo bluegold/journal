@@ -1,14 +1,17 @@
 import type { JournalUserRow } from '../types/journal'
 
+import { createWorkspaceLinkAttrs } from '../lib/htmx'
+
 type JournalHeaderProps = {
   currentUser: JournalUserRow
+  composeHref: string
   menuItems: Array<{
     label: string
     href: string
   }>
 }
 
-export const JournalHeader = ({ currentUser, menuItems }: JournalHeaderProps) => {
+export const JournalHeader = ({ currentUser, composeHref, menuItems }: JournalHeaderProps) => {
   const avatarSrc = currentUser.avatar_url ?? '/unknown_avatar.png'
 
   return (
@@ -28,6 +31,16 @@ export const JournalHeader = ({ currentUser, menuItems }: JournalHeaderProps) =>
         </div>
 
         <div class="flex flex-wrap items-center justify-end gap-3">
+          <a
+            {...createWorkspaceLinkAttrs(composeHref, {
+              target: '#journal-content',
+              swap: 'outerHTML',
+            })}
+            class="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition hover:border-cyan-300/40 hover:bg-cyan-400/15 hover:text-white"
+          >
+            Compose
+          </a>
+
           <div class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
             <img
               src={avatarSrc}

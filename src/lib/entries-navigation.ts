@@ -108,3 +108,9 @@ export const buildNewEntryHref = (options: {
   const query = params.toString()
   return query.length > 0 ? `/entries/new?${query}` : '/entries/new'
 }
+
+export const buildTodayNewEntryHref = (date: Date = new Date()): string => {
+  const monthKey = formatMonthKey(date)
+  const dateKey = formatDateKey(date)
+  return buildNewEntryHref({ monthKey, dateKey })
+}

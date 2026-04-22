@@ -2,12 +2,18 @@ export const isHtmxRequest = (request: Request): boolean => {
   return request.headers.get('HX-Request') === 'true'
 }
 
-export const createWorkspaceLinkAttrs = (href: string) => {
+type WorkspaceLinkOptions = {
+  target?: string
+  swap?: string
+  pushUrl?: boolean
+}
+
+export const createWorkspaceLinkAttrs = (href: string, options: WorkspaceLinkOptions = {}) => {
   return {
     href,
     'hx-get': href,
-    'hx-target': '#journal-workspace',
-    'hx-swap': 'outerHTML',
-    'hx-push-url': 'true',
+    'hx-target': options.target ?? '#journal-workspace',
+    'hx-swap': options.swap ?? 'outerHTML',
+    'hx-push-url': options.pushUrl === false ? 'false' : 'true',
   } as const
 }

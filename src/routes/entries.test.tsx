@@ -79,14 +79,31 @@ describe('entries route', () => {
     expect(body).toContain('href="/entries?month=2026-04&amp;date=2026-04-22&amp;entry=entry-1"')
   })
 
-  it('renders the create entry form', async () => {
-    const { response, body } = await requestApp('/entries/new?month=2026-04&date=2026-04-22')
+  it('renders the create entry form without losing the selected day state', async () => {
+    const { response, body } = await requestApp('/entries/new?month=2026-04&date=2026-04-22', {
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            title: 'Morning entry',
+            summary: 'Summary one',
+            ai_summary: null,
+            created_at: '2026-04-22T08:00:00.000Z',
+            updated_at: '2026-04-22T08:00:00.000Z',
+          }),
+        ],
+      },
+    })
 
     expect(response.status).toBe(200)
     expect(body).toContain('Create a new entry')
     expect(body).toContain('journal draft')
     expect(body).toContain('name="journal_date"')
     expect(body).toContain('value="2026-04-22"')
+    expect(body).toContain('Selected day')
+    expect(body).toContain('Morning entry')
+    expect(body).toContain('Summary one')
+    expect(body).toContain('ring-1 ring-cyan-400/40')
   })
 
   it('returns a partial workspace for htmx requests', async () => {
