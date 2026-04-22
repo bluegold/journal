@@ -73,7 +73,7 @@ const createResponseFromRecord = (record: MockR2ObjectRecord): MockR2ObjectRespo
   })
 }
 
-const createInitialState = (options: MockR2Options): MockR2State => {
+const createInitialState = (_options: MockR2Options): MockR2State => {
   return {
     objects: new Map<string, MockR2ObjectRecord>(),
     writes: [],

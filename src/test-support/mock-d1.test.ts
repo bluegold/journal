@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createEntryRow, createTagRow, createUserRow } from './fixtures'
+import { createEntryRow, createUserRow } from './fixtures'
 import { createMockD1 } from './mock-d1'
 
 describe('mock D1 database', () => {

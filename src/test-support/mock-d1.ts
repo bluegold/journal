@@ -70,10 +70,6 @@ const findUserByEmail = (state: MockD1State, email: string): UserRow | undefined
   return state.users.find((user) => user.email === email)
 }
 
-const findTagByName = (state: MockD1State, name: string): TagRow | undefined => {
-  return state.tags.find((tag) => tag.name === name)
-}
-
 const parseStoredDate = (value: string | null): number => {
   if (value == null || value.length === 0) {
     return 0

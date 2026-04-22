@@ -15,7 +15,10 @@ describe('mock R2 bucket', () => {
 
     const existing = await bucket.get('entries/entry-1.md')
     expect(existing).not.toBeNull()
-    await expect(existing!.text()).resolves.toBe('hello world')
+    if (!existing) {
+      throw new Error('Expected R2 object to exist')
+    }
+    await expect(existing.text()).resolves.toBe('hello world')
 
     await bucket.put('entries/entry-2.md', 'second entry')
 

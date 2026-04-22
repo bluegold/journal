@@ -43,7 +43,11 @@ describe('mock env', () => {
     const object = await env.JOURNAL_BUCKET.get('entries/entry-1.md')
 
     expect(entry?.title).toBe('Fixture entry')
-    await expect(object!.text()).resolves.toBe('fixture body')
+    expect(object).not.toBeNull()
+    if (!object) {
+      throw new Error('Expected R2 object to exist')
+    }
+    await expect(object.text()).resolves.toBe('fixture body')
 
     await env.AI_QUEUE.send({ type: 'enrich', entryId: 'entry-1' })
 

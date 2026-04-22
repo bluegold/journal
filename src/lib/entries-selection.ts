@@ -1,5 +1,5 @@
-import { formatMonthKey, parseDateKey, parseMonthKey } from './entries-navigation'
 import type { JournalEntryRow } from '../types/journal'
+import { formatMonthKey, parseDateKey, parseMonthKey } from './entries-navigation'
 
 export type EntriesSelectionQuery = {
   month?: string | null
@@ -37,8 +37,9 @@ export const resolveEntriesSelection = (
   const monthDate = getMonthDate(query?.month, query?.date, visibleEntries)
   const monthKey = formatMonthKey(monthDate)
   const monthEntries = visibleEntries.filter((entry) => entry.journal_date.startsWith(monthKey))
-  const selectedDateKey =
-    query?.date && query.date.startsWith(`${monthKey}-`) ? query.date : monthEntries[0]?.journal_date ?? null
+  const selectedDateKey = query?.date?.startsWith(`${monthKey}-`)
+    ? query.date
+    : monthEntries[0]?.journal_date ?? null
 
   const dayEntries = selectedDateKey
     ? monthEntries.filter((entry) => entry.journal_date === selectedDateKey)

@@ -396,7 +396,11 @@ describe('entries route', () => {
     expect(env.DB.state.entryTags.map((entryTag) => entryTag.tag_id).sort()).toEqual([2, 3])
     expect(await env.JOURNAL_BUCKET.get('entries/entry-2.md')).toBeNull()
     const movedBody = await env.JOURNAL_BUCKET.get('entries/2026/04/23/entry-2.md')
-    expect(await movedBody!.text()).toBe('# Updated entry\n\nUpdated body.')
+    expect(movedBody).not.toBeNull()
+    if (!movedBody) {
+      throw new Error('Expected moved body to exist')
+    }
+    expect(await movedBody.text()).toBe('# Updated entry\n\nUpdated body.')
 
     const followResponse = await app.request(
       '/entries?month=2026-04&date=2026-04-23&entry=entry-2',
@@ -469,7 +473,11 @@ describe('entries route', () => {
       body_key: 'entries/2026/04/22/entry-2.md',
     })
     const keptBody = await env.JOURNAL_BUCKET.get('entries/2026/04/22/entry-2.md')
-    expect(await keptBody!.text()).toBe('# Untitled\n')
+    expect(keptBody).not.toBeNull()
+    if (!keptBody) {
+      throw new Error('Expected kept body to exist')
+    }
+    expect(await keptBody.text()).toBe('# Untitled\n')
   })
 
   it('soft deletes an entry and removes it from the selected day list', async () => {
@@ -584,7 +592,11 @@ describe('entries route', () => {
     expect(env.DB.state.tags.map((tag) => tag.name)).toEqual(['ideas', 'work'])
     expect(env.DB.state.entryTags).toHaveLength(2)
     const bodyObject = await env.JOURNAL_BUCKET.get(env.DB.state.entries[0].body_key)
-    expect(await bodyObject!.text()).toBe('# Untitled\n')
+    expect(bodyObject).not.toBeNull()
+    if (!bodyObject) {
+      throw new Error('Expected entry body to exist')
+    }
+    expect(await bodyObject.text()).toBe('# Untitled\n')
     expect(env.DB.state.entries[0].journal_date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 
@@ -704,7 +716,10 @@ describe('entries route', () => {
     expect(env.JOURNAL_BUCKET.state.deletes).toHaveLength(1)
     const writtenKey = env.JOURNAL_BUCKET.state.writes[0]?.key
     expect(writtenKey).toBeDefined()
-    expect(await env.JOURNAL_BUCKET.get(writtenKey!)).toBeNull()
+    if (!writtenKey) {
+      throw new Error('Expected a written key')
+    }
+    expect(await env.JOURNAL_BUCKET.get(writtenKey)).toBeNull()
     expect(env.DB.state.entries).toHaveLength(0)
   })
 
@@ -783,7 +798,11 @@ describe('entries route', () => {
     expect(env.JOURNAL_BUCKET.state.writes).toHaveLength(2)
     expect(env.JOURNAL_BUCKET.state.deletes).toEqual(['entries/2026/04/22/entry-2.md'])
     const restored = await env.JOURNAL_BUCKET.get('entries/2026/04/22/entry-2.md')
-    expect(await restored!.text()).toBe('# Original title\n\nOriginal body.')
+    expect(restored).not.toBeNull()
+    if (!restored) {
+      throw new Error('Expected restored body to exist')
+    }
+    expect(await restored.text()).toBe('# Original title\n\nOriginal body.')
     expect(env.DB.state.entries[0]).toMatchObject({
       id: 'entry-2',
       title: 'Original title',
@@ -857,7 +876,11 @@ describe('entries route', () => {
     expect(env.JOURNAL_BUCKET.state.writes).toHaveLength(1)
     expect(env.JOURNAL_BUCKET.state.objects.size).toBe(1)
     const bodyObject = await env.JOURNAL_BUCKET.get(env.DB.state.entries[0].body_key)
-    expect(await bodyObject!.text()).toBe('# New entry\n\nHello journal.')
+    expect(bodyObject).not.toBeNull()
+    if (!bodyObject) {
+      throw new Error('Expected created entry body to exist')
+    }
+    expect(await bodyObject.text()).toBe('# New entry\n\nHello journal.')
 
     const followResponse = await app.request(
       `/entries?month=2026-04&date=2026-04-22&entry=${env.DB.state.entries[0].id}`,
