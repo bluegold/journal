@@ -103,6 +103,7 @@ describe('entries route', () => {
     expect(body).toContain('Selected day')
     expect(body).toContain('Morning entry')
     expect(body).toContain('Summary one')
+    expect(body).toContain('Cancel')
     expect(body).toContain('ring-1 ring-cyan-400/40')
   })
 
@@ -141,6 +142,7 @@ describe('entries route', () => {
     expect(body).toContain('Editable entry')
     expect(body).toContain('Original body.')
     expect(body).toContain('Save changes')
+    expect(body).toContain('Preview')
     expect(body).toContain('Cancel')
   })
 
@@ -181,6 +183,7 @@ describe('entries route', () => {
     expect(body).toContain('id="journal-content"')
     expect(body).toContain('Edit the selected entry')
     expect(body).toContain('Original body.')
+    expect(body).toContain('Preview')
     expect(body).toContain('Cancel')
   })
 
@@ -208,6 +211,7 @@ describe('entries route', () => {
     expect(body).toContain('Edit the selected entry')
     expect(body).toContain('name="body"')
     expect(body).not.toContain('Original body.')
+    expect(body).toContain('Preview')
   })
 
   it('returns 404 when editing, updating, or deleting a missing entry', async () => {
@@ -501,6 +505,71 @@ describe('entries route', () => {
     const bodyObject = await env.JOURNAL_BUCKET.get(env.DB.state.entries[0].body_key)
     expect(await bodyObject!.text()).toBe('# Untitled\n')
     expect(env.DB.state.entries[0].journal_date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('renders a markdown preview fragment from the current form body', async () => {
+    const { response, body } = await requestApp('/entries/preview', {
+      init: {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          title: 'Preview title',
+          body: '# Preview title\n\nHello preview.',
+        }),
+      },
+      db: {
+        initialUsers: [createUserRow()],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('id="entry-preview-overlay"')
+    expect(body).toContain('fixed inset-0')
+    expect(body).toContain('Rendered markdown')
+    expect(body).toContain('<h1>Preview title</h1>')
+    expect(body).toContain('Hello preview.')
+  })
+
+  it('renders a fallback preview when the body is empty', async () => {
+    const { response, body } = await requestApp('/entries/preview', {
+      init: {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          title: '   ',
+          body: '   ',
+        }),
+      },
+      db: {
+        initialUsers: [createUserRow()],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('id="entry-preview-overlay"')
+    expect(body).toContain('<h1>Untitled</h1>')
+    expect(body).toContain('Close')
+  })
+
+  it('closes the preview overlay back to a hidden slot', async () => {
+    const { response, body } = await requestApp('/entries/preview/close', {
+      init: {
+        headers: {
+          'HX-Request': 'true',
+        },
+      },
+      db: {
+        initialUsers: [createUserRow()],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('id="entry-preview-overlay"')
+    expect(body).toContain('hidden')
   })
 
   it('rolls back the body write when creating an entry fails after persisting to R2', async () => {

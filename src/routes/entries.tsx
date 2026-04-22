@@ -16,6 +16,7 @@ import { EntryEditPage } from '../templates/pages/entry-edit-page'
 import { NewEntryContentPane } from '../templates/pages/new-entry-page'
 import { EntriesPage } from '../templates/pages/entries-page'
 import { NewEntryPage } from '../templates/pages/new-entry-page'
+import { EntryPreviewOverlay, EntryPreviewSlot } from '../templates/entry-preview-panel'
 import type { Bindings } from '../types/bindings'
 import type { JournalContextVariables } from '../types/journal'
 import type { JournalEntryRow } from '../types/journal'
@@ -181,6 +182,18 @@ entriesRoutes.post('/entries', async (c) => {
   const response = c.redirect(href, 303)
   response.headers.set('HX-Redirect', href)
   return response
+})
+
+entriesRoutes.post('/entries/preview', async (c) => {
+  const form = await c.req.parseBody()
+  const title = typeof form.title === 'string' ? form.title.trim() : ''
+  const body = normalizeBody(title, typeof form.body === 'string' ? form.body : '')
+
+  return c.html(<EntryPreviewOverlay body={body} />)
+})
+
+entriesRoutes.get('/entries/preview/close', async (c) => {
+  return c.html(<EntryPreviewSlot />)
 })
 
 entriesRoutes.post('/entries/:id', async (c) => {

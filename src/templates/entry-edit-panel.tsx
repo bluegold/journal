@@ -17,12 +17,25 @@ export const EntryEditPanel = ({ entry, body, updateHref, cancelHref }: EntryEdi
           <p class="text-xs font-semibold tracking-[0.24em] text-cyan-200/80 uppercase">Editor</p>
           <h3 class="mt-2 text-xl font-semibold text-slate-50">Edit the selected entry</h3>
         </div>
-        <div class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-100">
-          editing mode
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
+            hx-post="/entries/preview"
+            hx-include="#entry-edit-form"
+            hx-target="#entry-preview-overlay"
+            hx-swap="outerHTML"
+          >
+            Preview
+          </button>
+          <div class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-100">
+            editing mode
+          </div>
         </div>
       </div>
 
       <form
+        id="entry-edit-form"
         class="mt-5 space-y-4"
         method="post"
         action={updateHref}
@@ -64,6 +77,7 @@ export const EntryEditPanel = ({ entry, body, updateHref, cancelHref }: EntryEdi
           </a>
         </div>
       </form>
+
     </section>
   )
 }

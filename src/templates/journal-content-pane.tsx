@@ -17,6 +17,7 @@ export const JournalContentPane = ({ detailPane }: JournalContentPaneProps) => {
       </div>
 
       {detailPane}
+      <div id="entry-preview-overlay" class="hidden" aria-hidden="true" />
     </section>
   )
 }

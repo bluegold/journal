@@ -1,7 +1,6 @@
 import { JournalWorkspace } from '../journal-workspace'
 import { buildCalendarMonthView } from '../calendar-month'
-import { EntryComposePanel } from '../entry-compose-panel'
-import { JournalContentPane } from '../journal-content-pane'
+import { EntryComposeContentPane, EntryComposePanel } from '../entry-compose-panel'
 import { resolveEntriesSelection } from '../../lib/entries-selection'
 import {
   buildEntriesHref,
@@ -56,6 +55,10 @@ export const NewEntryPage = ({ currentUser, entries, query }: NewEntryPageProps)
           title=""
           summary=""
           body={`# ${selection.selectedDateKey ?? formatDateKey(selection.monthDate)}\n\n`}
+          cancelHref={buildEntriesHref({
+            monthKey: selection.monthKey,
+            dateKey: selection.selectedDateKey,
+          })}
         />
       }
       menuItems={[
@@ -68,15 +71,15 @@ export const NewEntryPage = ({ currentUser, entries, query }: NewEntryPageProps)
 
 export const NewEntryContentPane = ({ journalDate }: { journalDate: string }) => {
   return (
-    <JournalContentPane
-      detailPane={
-        <EntryComposePanel
-          journalDate={journalDate}
-          title=""
-          summary=""
-          body={`# ${journalDate}\n\n`}
-        />
-      }
+    <EntryComposeContentPane
+      journalDate={journalDate}
+      title=""
+      summary=""
+      body={`# ${journalDate}\n\n`}
+      cancelHref={buildEntriesHref({
+        monthKey: journalDate.slice(0, 7),
+        dateKey: journalDate,
+      })}
     />
   )
 }
