@@ -204,6 +204,18 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
 
     if (
       normalizedSql ===
+      'UPDATE entries SET journal_date = ?, title = ?, summary = ?, body_key = ?, updated_at = ? WHERE id = ?'
+    ) {
+      current.journal_date = params[0] != null ? String(params[0]) : current.journal_date
+      current.title = params[1] != null ? String(params[1]) : current.title
+      current.summary = params[2] != null ? String(params[2]) : null
+      current.body_key = params[3] != null ? String(params[3]) : current.body_key
+      current.updated_at = params[4] != null ? String(params[4]) : current.updated_at
+      return { success: true, meta: { changes: 1 } }
+    }
+
+    if (
+      normalizedSql ===
       'UPDATE entries SET summary = ?, ai_summary = ?, body_key = ?, status = ?, updated_at = ? WHERE id = ?'
     ) {
       current.summary = params[0] != null ? String(params[0]) : null

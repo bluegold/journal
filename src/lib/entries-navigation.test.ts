@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildEntryEditHref,
   buildEntriesHref,
+  buildNewEntryHref,
+  buildTodayNewEntryHref,
   formatDateKey,
   formatMonthKey,
   parseDateKey,
@@ -31,5 +34,12 @@ describe('entries navigation helpers', () => {
       '/entries?month=2026-04&date=2026-04-22&entry=entry-1'
     )
     expect(buildEntriesHref({})).toBe('/entries')
+    expect(buildNewEntryHref({ monthKey: '2026-04', dateKey: '2026-04-22' })).toBe('/entries/new?month=2026-04&date=2026-04-22')
+    expect(buildNewEntryHref({})).toBe('/entries/new')
+    expect(buildTodayNewEntryHref(new Date(2026, 3, 22))).toBe('/entries/new?month=2026-04&date=2026-04-22')
+    expect(buildEntryEditHref('entry-1', { monthKey: '2026-04', dateKey: '2026-04-22' })).toBe(
+      '/entries/entry-1/edit?month=2026-04&date=2026-04-22'
+    )
+    expect(buildEntryEditHref('entry-1')).toBe('/entries/entry-1/edit')
   })
 })

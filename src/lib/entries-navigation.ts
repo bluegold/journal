@@ -114,3 +114,24 @@ export const buildTodayNewEntryHref = (date: Date = new Date()): string => {
   const dateKey = formatDateKey(date)
   return buildNewEntryHref({ monthKey, dateKey })
 }
+
+export const buildEntryEditHref = (
+  entryId: string,
+  options: {
+    monthKey?: string | null
+    dateKey?: string | null
+  } = {}
+): string => {
+  const params = new URLSearchParams()
+
+  if (options.monthKey) {
+    params.set('month', options.monthKey)
+  }
+
+  if (options.dateKey) {
+    params.set('date', options.dateKey)
+  }
+
+  const query = params.toString()
+  return query.length > 0 ? `/entries/${entryId}/edit?${query}` : `/entries/${entryId}/edit`
+}

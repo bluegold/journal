@@ -68,7 +68,7 @@ describe('entries route', () => {
     expect(body).toContain('Selected day')
     expect(body).toContain('2026-04-22')
     expect(body).toContain('Article detail and editor')
-    expect(body).toContain('Edit the selected entry')
+    expect(body).toContain('Selected article')
     expect(body).toContain('Morning entry')
     expect(body).toContain('Evening entry')
     expect(body).toContain('Selected entry body from R2')
@@ -104,6 +104,541 @@ describe('entries route', () => {
     expect(body).toContain('Morning entry')
     expect(body).toContain('Summary one')
     expect(body).toContain('ring-1 ring-cyan-400/40')
+  })
+
+  it('renders the edit entry form for the selected entry', async () => {
+    const { response, body } = await requestApp('/entries/entry-2/edit?month=2026-04&date=2026-04-22', {
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-2',
+            user_id: 'user-1',
+            journal_date: '2026-04-22',
+            title: 'Editable entry',
+            summary: 'Editable summary',
+            ai_summary: null,
+            body_key: 'entries/entry-2.md',
+            created_at: '2026-04-22T18:00:00.000Z',
+            updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+      },
+      r2: {
+        initialObjects: [
+          {
+            key: 'entries/entry-2.md',
+            body: '# Editable entry\n\nOriginal body.',
+          },
+        ],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Edit the selected entry')
+    expect(body).toContain('name="journal_date"')
+    expect(body).toContain('value="2026-04-22"')
+    expect(body).toContain('Editable entry')
+    expect(body).toContain('Original body.')
+    expect(body).toContain('Save changes')
+    expect(body).toContain('Cancel')
+  })
+
+  it('renders the edit entry fragment for htmx requests', async () => {
+    const { response, body } = await requestApp('/entries/entry-2/edit?month=2026-04&date=2026-04-22', {
+      init: {
+        headers: {
+          'HX-Request': 'true',
+        },
+      },
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-2',
+            user_id: 'user-1',
+            journal_date: '2026-04-22',
+            title: 'Editable entry',
+            summary: 'Editable summary',
+            ai_summary: null,
+            body_key: 'entries/entry-2.md',
+            created_at: '2026-04-22T18:00:00.000Z',
+            updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+      },
+      r2: {
+        initialObjects: [
+          {
+            key: 'entries/entry-2.md',
+            body: '# Editable entry\n\nOriginal body.',
+          },
+        ],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('id="journal-content"')
+    expect(body).toContain('Edit the selected entry')
+    expect(body).toContain('Original body.')
+    expect(body).toContain('Cancel')
+  })
+
+  it('renders the edit entry form with an empty body when R2 has no content', async () => {
+    const { response, body } = await requestApp('/entries/entry-2/edit?month=2026-04&date=2026-04-22', {
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-2',
+            user_id: 'user-1',
+            journal_date: '2026-04-22',
+            title: 'Editable entry',
+            summary: 'Editable summary',
+            ai_summary: null,
+            body_key: 'entries/entry-2.md',
+            created_at: '2026-04-22T18:00:00.000Z',
+            updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('Edit the selected entry')
+    expect(body).toContain('name="body"')
+    expect(body).not.toContain('Original body.')
+  })
+
+  it('returns 404 when editing, updating, or deleting a missing entry', async () => {
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+      },
+    })
+
+    const editResponse = await app.request(
+      '/entries/missing/edit',
+      {
+        headers: accessHeaders,
+      },
+      env
+    )
+    const updateResponse = await app.request(
+      '/entries/missing',
+      {
+        method: 'POST',
+        headers: {
+          ...accessHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          title: 'Updated title',
+        }),
+      },
+      env
+    )
+    const deleteResponse = await app.request(
+      '/entries/missing/delete',
+      {
+        method: 'POST',
+        headers: accessHeaders,
+      },
+      env
+    )
+
+    expect(editResponse.status).toBe(404)
+    expect(await editResponse.text()).toBe('Entry not found.')
+    expect(updateResponse.status).toBe(404)
+    expect(await updateResponse.text()).toBe('Entry not found.')
+    expect(deleteResponse.status).toBe(404)
+    expect(await deleteResponse.text()).toBe('Entry not found.')
+  })
+
+  it('updates an entry, moves the R2 body key when the date changes, and redirects to the new day', async () => {
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-2',
+            user_id: 'user-1',
+            journal_date: '2026-04-22',
+            title: 'Editable entry',
+            summary: 'Editable summary',
+            ai_summary: null,
+            body_key: 'entries/entry-2.md',
+            created_at: '2026-04-22T18:00:00.000Z',
+            updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+      },
+      r2: {
+        initialObjects: [
+          {
+            key: 'entries/entry-2.md',
+            body: '# Editable entry\n\nOriginal body.',
+          },
+        ],
+      },
+    })
+
+    const form = new URLSearchParams({
+      journal_date: '2026-04-23',
+      title: 'Updated entry',
+      summary: 'Updated summary',
+      body: '# Updated entry\n\nUpdated body.',
+    })
+
+    const response = await app.request(
+      '/entries/entry-2',
+      {
+        method: 'POST',
+        headers: {
+          ...accessHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: form,
+      },
+      env
+    )
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('/entries?month=2026-04&date=2026-04-23&entry=entry-2')
+    expect(env.DB.state.entries[0]).toMatchObject({
+      id: 'entry-2',
+      journal_date: '2026-04-23',
+      title: 'Updated entry',
+      summary: 'Updated summary',
+      body_key: 'entries/2026/04/23/entry-2.md',
+    })
+    expect(await env.JOURNAL_BUCKET.get('entries/entry-2.md')).toBeNull()
+    const movedBody = await env.JOURNAL_BUCKET.get('entries/2026/04/23/entry-2.md')
+    expect(await movedBody!.text()).toBe('# Updated entry\n\nUpdated body.')
+
+    const followResponse = await app.request(
+      '/entries?month=2026-04&date=2026-04-23&entry=entry-2',
+      {
+        headers: accessHeaders,
+      },
+      env
+    )
+    const followBody = await followResponse.text()
+
+    expect(followResponse.status).toBe(200)
+    expect(followBody).toContain('Updated entry')
+    expect(followBody).toContain('Updated body.')
+  })
+
+  it('updates an entry without changing the day and keeps the current body key when body is omitted', async () => {
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-2',
+            user_id: 'user-1',
+            journal_date: '2026-04-22',
+            title: 'Original title',
+            summary: null,
+            ai_summary: null,
+            body_key: 'entries/2026/04/22/entry-2.md',
+            created_at: '2026-04-22T18:00:00.000Z',
+            updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+      },
+      r2: {
+        initialObjects: [
+          {
+            key: 'entries/2026/04/22/entry-2.md',
+            body: '# Original title\n\nOriginal body.',
+          },
+        ],
+      },
+    })
+
+    const form = new URLSearchParams({
+      journal_date: '2026-04-22',
+      title: '  ',
+      summary: '  ',
+    })
+
+    const response = await app.request(
+      '/entries/entry-2',
+      {
+        method: 'POST',
+        headers: {
+          ...accessHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: form,
+      },
+      env
+    )
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('/entries?month=2026-04&date=2026-04-22&entry=entry-2')
+    expect(env.DB.state.entries[0]).toMatchObject({
+      id: 'entry-2',
+      journal_date: '2026-04-22',
+      title: '',
+      summary: null,
+      body_key: 'entries/2026/04/22/entry-2.md',
+    })
+    const keptBody = await env.JOURNAL_BUCKET.get('entries/2026/04/22/entry-2.md')
+    expect(await keptBody!.text()).toBe('# Untitled\n')
+  })
+
+  it('soft deletes an entry and removes it from the selected day list', async () => {
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-2',
+            user_id: 'user-1',
+            journal_date: '2026-04-22',
+            title: 'Entry to delete',
+            summary: 'Delete me',
+            ai_summary: null,
+            body_key: 'entries/entry-2.md',
+            created_at: '2026-04-22T18:00:00.000Z',
+            updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+      },
+      r2: {
+        initialObjects: [
+          {
+            key: 'entries/entry-2.md',
+            body: '# Entry to delete\n\nPlease delete.',
+          },
+        ],
+      },
+    })
+
+    const response = await app.request(
+      '/entries/entry-2/delete',
+      {
+        method: 'POST',
+        headers: accessHeaders,
+      },
+      env
+    )
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('/entries?month=2026-04&date=2026-04-22')
+    expect(env.DB.state.entries[0]).toMatchObject({
+      id: 'entry-2',
+      deleted_at: expect.any(String),
+    })
+
+    const followResponse = await app.request(
+      '/entries?month=2026-04&date=2026-04-22',
+      {
+        headers: accessHeaders,
+      },
+      env
+    )
+    const followBody = await followResponse.text()
+
+    expect(followResponse.status).toBe(200)
+    expect(followBody).toContain('No journal entries for this day.')
+    expect(followBody).not.toContain('Entry to delete')
+  })
+
+  it('returns a fragment for new entry htmx requests with an invalid date fallback', async () => {
+    const { response, body } = await requestApp('/entries/new?date=not-a-date', {
+      init: {
+        headers: {
+          'HX-Request': 'true',
+        },
+      },
+      db: {
+        initialUsers: [createUserRow()],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('id="journal-content"')
+    expect(body).toContain('Create a new entry')
+    expect(body).toContain('name="journal_date"')
+    expect(body).toContain('value="')
+  })
+
+  it('creates an entry with fallback body and summary fields', async () => {
+    const env = await createMockEnv()
+    const response = await app.request(
+      '/entries?date=2026-04-22',
+      {
+        method: 'POST',
+        headers: {
+          ...accessHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          journal_date: 'not-a-real-date',
+          title: '   ',
+          summary: '   ',
+        }),
+      },
+      env
+    )
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toMatch(
+      /^\/entries\?month=\d{4}-\d{2}&date=\d{4}-\d{2}-\d{2}&entry=[0-9a-f-]{36}$/
+    )
+    expect(env.DB.state.users).toHaveLength(1)
+    expect(env.DB.state.entries).toHaveLength(1)
+    expect(env.DB.state.entries[0]).toMatchObject({
+      user_id: env.DB.state.users[0].id,
+      title: '',
+      summary: null,
+      status: 'private',
+    })
+    const bodyObject = await env.JOURNAL_BUCKET.get(env.DB.state.entries[0].body_key)
+    expect(await bodyObject!.text()).toBe('# Untitled\n')
+    expect(env.DB.state.entries[0].journal_date).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('rolls back the body write when creating an entry fails after persisting to R2', async () => {
+    const env = await createMockEnv()
+    const originalPrepare = env.DB.prepare.bind(env.DB)
+
+    env.DB.prepare = ((sql: string) => {
+      const statement = originalPrepare(sql)
+
+      if (!sql.includes('INSERT INTO entries')) {
+        return statement
+      }
+
+      const failingStatement = {
+        bind() {
+          return failingStatement
+        },
+        async run() {
+          throw new Error('forced insert failure')
+        },
+        async all<T>() {
+          return statement.all<T>()
+        },
+        async first<T>() {
+          return statement.first<T>()
+        },
+      }
+
+      return failingStatement as never
+    }) as typeof env.DB.prepare
+
+    const response = await app.request(
+      '/entries',
+      {
+        method: 'POST',
+        headers: {
+          ...accessHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          journal_date: '2026-04-22',
+          title: 'Broken entry',
+          body: '# Broken entry\n\nThis should roll back.',
+        }),
+      },
+      env
+    )
+
+    expect(response.status).toBe(500)
+    expect(env.JOURNAL_BUCKET.state.writes).toHaveLength(1)
+    expect(env.JOURNAL_BUCKET.state.deletes).toHaveLength(1)
+    const writtenKey = env.JOURNAL_BUCKET.state.writes[0]?.key
+    expect(writtenKey).toBeDefined()
+    expect(await env.JOURNAL_BUCKET.get(writtenKey!)).toBeNull()
+    expect(env.DB.state.entries).toHaveLength(0)
+  })
+
+  it('restores the previous body when an update fails without changing the day', async () => {
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-2',
+            user_id: 'user-1',
+            journal_date: '2026-04-22',
+            title: 'Original title',
+            summary: null,
+            ai_summary: null,
+            body_key: 'entries/2026/04/22/entry-2.md',
+            created_at: '2026-04-22T18:00:00.000Z',
+            updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+      },
+      r2: {
+        initialObjects: [
+          {
+            key: 'entries/2026/04/22/entry-2.md',
+            body: '# Original title\n\nOriginal body.',
+          },
+        ],
+      },
+    })
+    const originalPrepare = env.DB.prepare.bind(env.DB)
+
+    env.DB.prepare = ((sql: string) => {
+      const statement = originalPrepare(sql)
+
+      if (!sql.includes('UPDATE entries SET journal_date = ?, title = ?, summary = ?, body_key = ?, updated_at = ? WHERE id = ?')) {
+        return statement
+      }
+
+      const failingStatement = {
+        bind() {
+          return failingStatement
+        },
+        async run() {
+          throw new Error('forced update failure')
+        },
+        async all<T>() {
+          return statement.all<T>()
+        },
+        async first<T>() {
+          return statement.first<T>()
+        },
+      }
+
+      return failingStatement as never
+    }) as typeof env.DB.prepare
+
+    const response = await app.request(
+      '/entries/entry-2',
+      {
+        method: 'POST',
+        headers: {
+          ...accessHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          journal_date: '2026-04-22',
+          title: 'Updated title',
+          body: '# Updated title\n\nUpdated body.',
+        }),
+      },
+      env
+    )
+
+    expect(response.status).toBe(500)
+    expect(env.JOURNAL_BUCKET.state.writes).toHaveLength(2)
+    expect(env.JOURNAL_BUCKET.state.deletes).toEqual(['entries/2026/04/22/entry-2.md'])
+    const restored = await env.JOURNAL_BUCKET.get('entries/2026/04/22/entry-2.md')
+    expect(await restored!.text()).toBe('# Original title\n\nOriginal body.')
+    expect(env.DB.state.entries[0]).toMatchObject({
+      id: 'entry-2',
+      title: 'Original title',
+      body_key: 'entries/2026/04/22/entry-2.md',
+    })
   })
 
   it('returns a partial workspace for htmx requests', async () => {

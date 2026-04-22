@@ -103,6 +103,120 @@ describe('mock D1 database', () => {
     expect(await db.prepare('SELECT * FROM entries WHERE id = ? LIMIT 1').bind('entry-1').first()).toBeNull()
     expect(db.state.entries).toHaveLength(0)
     expect(db.state.queries.at(-1)?.sql).toBe('SELECT * FROM entries WHERE id = ? LIMIT 1')
+
+    const allUsers = await db.prepare('SELECT * FROM users').all<{
+      id: string
+      email: string
+    }>()
+
+    expect(allUsers.results.map((user) => user.id)).toEqual(['user-2', 'user-1'])
+
+    await db.prepare('UPDATE imaginary SET value = ? WHERE id = ?').bind('value', 'id').run()
+  })
+
+  it('updates users, deduplicates by access subject and email, and auto-generates ids', async () => {
+    const db = createMockD1({
+      initialUsers: [createUserRow()],
+    })
+
+    await db
+      .prepare(
+        'INSERT INTO users (id, access_subject, email, name, avatar_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      )
+      .bind(
+        null,
+        'access-subject-2',
+        'writer@example.com',
+        'Writer',
+        'https://example.com/writer.png',
+        '2026-04-22T00:00:00.000Z',
+        '2026-04-22T00:00:00.000Z'
+      )
+      .run()
+
+    await db
+      .prepare(
+        'INSERT INTO users (id, access_subject, email, name, avatar_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      )
+      .bind(
+        null,
+        'access-subject-2',
+        'writer@example.com',
+        'Writer duplicate',
+        'https://example.com/writer-2.png',
+        '2026-04-22T00:10:00.000Z',
+        '2026-04-22T00:10:00.000Z'
+      )
+      .run()
+
+    await db
+      .prepare('UPDATE users SET access_subject = ?, email = ?, name = ?, avatar_url = ?, updated_at = ? WHERE id = ?')
+      .bind(
+        'access-subject-2-updated',
+        'writer-updated@example.com',
+        'Writer Updated',
+        null,
+        '2026-04-22T01:00:00.000Z',
+        'user-2'
+      )
+      .run()
+
+    await db
+      .prepare('INSERT INTO users (id, access_subject, email, name, avatar_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(
+        null,
+        'access-subject-3',
+        'second@example.com',
+        'Second',
+        null,
+        '2026-04-22T02:00:00.000Z',
+        '2026-04-22T02:00:00.000Z'
+      )
+      .run()
+
+    const inserted = await db.prepare('SELECT * FROM users WHERE id = ? LIMIT 1').bind('user-2').first<{
+      id: string
+      access_subject: string
+      email: string
+      name: string
+      avatar_url: string | null
+    }>()
+
+    const updated = await db.prepare('SELECT * FROM users WHERE id = ? LIMIT 1').bind('user-2').first<{
+      id: string
+      access_subject: string
+      email: string
+      name: string
+      avatar_url: string | null
+      updated_at: string
+    }>()
+
+    const missing = await db.prepare('SELECT * FROM unknown_table WHERE id = ? LIMIT 1').bind('whatever').first()
+    const missingRows = await db.prepare('SELECT * FROM unknown_table').all()
+
+    expect(inserted).toMatchObject({
+      id: 'user-2',
+      access_subject: 'access-subject-2-updated',
+      email: 'writer-updated@example.com',
+      name: 'Writer Updated',
+      avatar_url: null,
+    })
+    expect(updated).toMatchObject({
+      id: 'user-2',
+      access_subject: 'access-subject-2-updated',
+      email: 'writer-updated@example.com',
+      name: 'Writer Updated',
+      avatar_url: null,
+      updated_at: '2026-04-22T01:00:00.000Z',
+    })
+    expect(db.state.users).toHaveLength(3)
+    expect(db.state.users[2]).toMatchObject({
+      id: 'user-3',
+      access_subject: 'access-subject-3',
+      email: 'second@example.com',
+    })
+    expect(missing).toBeNull()
+    expect(missingRows.results).toEqual([])
   })
 
   it('deduplicates tags, links entries, and exposes lookup queries', async () => {
@@ -161,6 +275,15 @@ describe('mock D1 database', () => {
       name: 'journal',
       created_at: '2026-04-22T01:00:00.000Z',
     })
+
+    const allTags = await db.prepare('SELECT * FROM tags').all<{
+      id: number
+      user_id: string
+      name: string
+      created_at: string | null
+    }>()
+
+    expect(allTags.results.map((tag) => tag.name)).toEqual(['cloudflare', 'journal'])
 
     await db
       .prepare('INSERT INTO entry_tags (entry_id, tag_id, created_at) VALUES (?, ?, ?)')
@@ -298,6 +421,17 @@ describe('mock D1 database', () => {
       },
     ])
     expect(entries.results.map((entry) => entry.id)).toEqual(['entry-3', 'entry-4'])
+
+    await db.prepare('DELETE FROM entry_ai_tag_candidates WHERE entry_id = ?').bind('entry-3').run()
+
+    const clearedCandidates = await db.prepare('SELECT * FROM entry_ai_tag_candidates').all<{
+      id: number
+      entry_id: string
+      tag_name: string
+      created_at: string
+    }>()
+
+    expect(clearedCandidates.results).toEqual([])
   })
 
   it('clones initial state so tests can mutate their fixtures safely', async () => {

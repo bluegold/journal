@@ -6,6 +6,7 @@ import {
   buildEntriesHref,
   buildTodayEntriesHref,
   buildNewEntryHref,
+  buildEntryEditHref,
   buildTodayNewEntryHref,
   formatMonthKey,
   shiftMonth,
@@ -54,7 +55,25 @@ export const EntriesPage = ({ currentUser, entries, selectedEntryBody, query }: 
         })
       }
       newEntryHref={buildNewEntryHref({ monthKey: selection.monthKey, dateKey: selection.selectedDateKey })}
-      detailPane={<EntryDetailPanel entry={selection.selectedEntry} body={selectedEntryBody} />}
+      detailPane={
+        <EntryDetailPanel
+          entry={selection.selectedEntry}
+          body={selectedEntryBody}
+          editHref={
+            selection.selectedEntry
+              ? buildEntryEditHref(selection.selectedEntry.id, {
+                  monthKey: selection.monthKey,
+                  dateKey: selection.selectedEntry.journal_date,
+                })
+              : null
+          }
+          deleteHref={
+            selection.selectedEntry
+              ? `/entries/${selection.selectedEntry.id}/delete`
+              : null
+          }
+        />
+      }
       menuItems={[
         { label: 'Entries', href: '/entries' },
         { label: 'Search', href: '#search-results' },
