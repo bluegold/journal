@@ -24,12 +24,15 @@
   "type": "commonjs",
   "dependencies": {
     "basecoat-css": "^0.3.11",
-    "hono": "^4.12.14"
+    "hono": "^4.12.14",
+    "markdown-it": "^14.1.1",
+    "markdown-it-task-lists": "^2.1.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260422.1",
     "@tailwindcss/cli": "^4.2.4",
     "@tailwindcss/postcss": "^4.2.4",
+    "@types/markdown-it": "^14.1.2",
     "@vitest/coverage-v8": "^4.1.5",
     "jsdom": "^29.0.2",
     "npm-run-all": "^4.1.5",

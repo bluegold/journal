@@ -1,4 +1,5 @@
 import type { JournalEntryRow } from '../types/journal'
+import { renderMarkdown } from '../lib/render-markdown'
 
 type EntryDetailPanelProps = {
   entry: JournalEntryRow | null
@@ -50,9 +51,10 @@ export const EntryDetailPanel = ({ entry, body }: EntryDetailPanelProps) => {
         <div class="mt-5 rounded-2xl border border-white/10 bg-slate-900/70 p-4">
           <p class="text-xs font-semibold tracking-[0.18em] text-cyan-200/75 uppercase">Markdown body</p>
           {body ? (
-            <pre class="mt-3 overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/80 p-4 text-sm leading-6 text-slate-200 whitespace-pre-wrap">
-              {body}
-            </pre>
+            <div
+              class="markdown-body mt-3 overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/80 p-4"
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
+            />
           ) : (
             <div class="mt-3 space-y-3 text-sm leading-6 text-slate-300">
               <div class="h-3 w-4/5 rounded-full bg-white/10" />
