@@ -36,32 +36,32 @@ export const JournalHeader = ({ currentUser, composeHref, menuItems }: JournalHe
               target: '#journal-content',
               swap: 'outerHTML',
             })}
-            class="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition hover:border-cyan-300/40 hover:bg-cyan-400/15 hover:text-white"
+            class="rounded-sm border border-cyan-400/20 bg-cyan-400/10 px-4 py-4 text-xs font-medium text-cyan-100 transition hover:border-cyan-300/40 hover:bg-cyan-400/15 hover:text-white"
           >
             Compose
           </a>
 
-          <div class="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+          {menuItems.map((item) => (
+            <a
+              href={item.href}
+              class="rounded-sm border border-white/10 bg-white/5 px-4 py-4 text-xs font-medium text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
+            >
+              {item.label}
+            </a>
+          ))}
+
+          <div class="flex items-center gap-2 rounded-sm border border-white/10 bg-white/5 px-5 py-1.5">
             <img
               src={avatarSrc}
               alt=""
               aria-hidden="true"
-              class="h-6 w-6 rounded-full object-cover"
+              class="h-6 w-6 rounded-sm object-cover"
             />
             <div class="min-w-0 text-right">
               <p class="truncate text-xs font-medium text-slate-100">{currentUser.name}</p>
               <p class="truncate text-[11px] text-slate-400">{currentUser.email}</p>
             </div>
           </div>
-
-          {menuItems.map((item) => (
-            <a
-              href={item.href}
-              class="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
-            >
-              {item.label}
-            </a>
-          ))}
         </div>
       </div>
     </header>
