@@ -12,6 +12,7 @@ describe('home route', () => {
     expect(body).toContain('Private server-rendered journal')
     expect(body).toContain('Compose')
     expect(body).toContain('hx-target="#journal-content"')
+    expect(body).toContain('htmx:afterSwap')
     expect(body).toContain('Tester')
     expect(body).toContain('tester@example.com')
     expect(body).toContain('Calendar')
