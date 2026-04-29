@@ -187,6 +187,12 @@ Phase 1 behavior:
 - store these fences unchanged
 - render them as normal fenced code blocks unless a renderer is later introduced
 
+Implementation note:
+
+- keep diagram metadata shared, but split backend rendering from browser-side re-rendering
+- do not use one abstraction to hide both server and browser responsibilities
+- browser-side JavaScript may own MutationObserver and swap-aware redraw logic
+
 ### Front matter policy
 
 Front matter is **export format**, not primary storage.

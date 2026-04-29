@@ -40,6 +40,18 @@ A phase is done only when:
 - bootstrap or operator documentation is updated
 - no placeholder architecture is added without active use
 
+## Diagram Rendering Memo
+
+Diagram-related support should be split by execution environment.
+
+- Keep the shared diagram definition in a common module
+- Keep backend rendering concerns separate from browser re-rendering concerns
+- Let markdown-to-HTML conversion emit stable placeholders or fenced-content containers
+- Let browser-side JavaScript handle DOM re-rendering, MutationObserver handling, and htmx-assisted swaps if needed
+- Avoid a single `register` that hides both server and browser responsibilities behind one abstraction
+
+This keeps Mermaid usable now and leaves room for later PlantUML or other diagram formats without coupling the request path to browser-only behavior.
+
 ## Local Access bootstrap
 
 For local `wrangler dev`, the app accepts Access-style user values from `.dev.vars`:

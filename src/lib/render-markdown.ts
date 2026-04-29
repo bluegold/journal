@@ -1,6 +1,11 @@
 import MarkdownIt from 'markdown-it'
 import taskLists from 'markdown-it-task-lists'
 import { bundledLanguages, createHighlighter } from 'shiki'
+import {
+  createEmbeddedDiagramPlaceholderHtml,
+  escapeHtml,
+  findEmbeddedDiagramDefinition,
+} from './embedded-diagrams'
 
 const theme = 'github-dark'
 
@@ -44,8 +49,9 @@ const markdownPromise = (async () => {
         return ''
       }
 
-      if (normalizedLanguage === 'mermaid') {
-        return `<div class="mermaid language-mermaid" data-language="mermaid">${escapeHtml(code)}</div>`
+      const embeddedDiagramDefinition = findEmbeddedDiagramDefinition(normalizedLanguage)
+      if (embeddedDiagramDefinition) {
+        return createEmbeddedDiagramPlaceholderHtml(embeddedDiagramDefinition, code)
       }
 
       try {
@@ -84,14 +90,6 @@ const languageAliasMap: Record<string, string> = {
   yml: 'yaml',
   md: 'markdown',
   text: 'text',
-}
-
-const escapeHtml = (value: string): string => {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
 }
 
 const normalizeLanguage = (language: string | null | undefined): string | null => {
