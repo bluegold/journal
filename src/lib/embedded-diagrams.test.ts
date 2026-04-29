@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { createEmbeddedDiagramPlaceholderHtml, findEmbeddedDiagramDefinition } from './embedded-diagrams'
+import { createEmbeddedDiagramPlaceholderHtml } from './embedded-diagram'
+import { embeddedDiagramDefinitions } from './mermaid-diagram'
 
 describe('embedded diagram definitions', () => {
-  it('finds the mermaid definition by language', () => {
-    const definition = findEmbeddedDiagramDefinition('mermaid')
+  it('exposes the mermaid definition', () => {
+    const definition = embeddedDiagramDefinitions[0]
 
     expect(definition).toMatchObject({
       language: 'mermaid',
@@ -14,10 +15,7 @@ describe('embedded diagram definitions', () => {
   })
 
   it('renders a safe placeholder for a diagram source block', () => {
-    const definition = findEmbeddedDiagramDefinition('mermaid')
-    if (!definition) {
-      throw new Error('Expected mermaid definition')
-    }
+    const definition = embeddedDiagramDefinitions[0]
 
     const html = createEmbeddedDiagramPlaceholderHtml(definition, 'flowchart LR\n  A --> B')
 

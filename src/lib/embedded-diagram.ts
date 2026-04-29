@@ -5,15 +5,6 @@ export type EmbeddedDiagramDefinition = {
   dataLanguage: string
 }
 
-export const mermaidDiagram: EmbeddedDiagramDefinition = {
-  language: 'mermaid',
-  selector: '.mermaid',
-  placeholderClassName: 'mermaid language-mermaid',
-  dataLanguage: 'mermaid',
-}
-
-export const embeddedDiagramDefinitions: EmbeddedDiagramDefinition[] = [mermaidDiagram]
-
 export const normalizeEmbeddedDiagramLanguage = (language: string | null | undefined): string | null => {
   const value = language?.trim().toLowerCase()
   if (!value) {
@@ -21,17 +12,6 @@ export const normalizeEmbeddedDiagramLanguage = (language: string | null | undef
   }
 
   return value
-}
-
-export const findEmbeddedDiagramDefinition = (
-  language: string | null | undefined
-): EmbeddedDiagramDefinition | null => {
-  const normalizedLanguage = normalizeEmbeddedDiagramLanguage(language)
-  if (!normalizedLanguage) {
-    return null
-  }
-
-  return embeddedDiagramDefinitions.find((definition) => definition.language === normalizedLanguage) ?? null
 }
 
 export const escapeHtml = (value: string): string => {

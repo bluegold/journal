@@ -4,8 +4,8 @@ import { bundledLanguages, createHighlighter } from 'shiki'
 import {
   createEmbeddedDiagramPlaceholderHtml,
   escapeHtml,
-  findEmbeddedDiagramDefinition,
-} from './embedded-diagrams'
+} from './embedded-diagram'
+import { embeddedDiagramDefinitions } from './mermaid-diagram'
 
 const theme = 'github-dark'
 
@@ -49,7 +49,8 @@ const markdownPromise = (async () => {
         return ''
       }
 
-      const embeddedDiagramDefinition = findEmbeddedDiagramDefinition(normalizedLanguage)
+      const embeddedDiagramDefinition =
+        embeddedDiagramDefinitions.find((definition) => definition.language === normalizedLanguage) ?? null
       if (embeddedDiagramDefinition) {
         return createEmbeddedDiagramPlaceholderHtml(embeddedDiagramDefinition, code)
       }

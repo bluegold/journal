@@ -1,4 +1,4 @@
-import { embeddedDiagramDefinitions } from '../lib/embedded-diagrams'
+import { embeddedDiagramDefinitions } from '../lib/mermaid-diagram'
 
 const serializedDefinitions = JSON.stringify(embeddedDiagramDefinitions)
 
