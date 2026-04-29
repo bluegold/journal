@@ -1,5 +1,5 @@
 import app from '../app'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   createEntryRow,
   createEntryTagRow,
@@ -668,6 +668,7 @@ describe('entries route', () => {
   it('rolls back the body write when creating an entry fails after persisting to R2', async () => {
     const env = await createMockEnv()
     const originalPrepare = env.DB.prepare.bind(env.DB)
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     env.DB.prepare = ((sql: string) => {
       const statement = originalPrepare(sql)
@@ -694,33 +695,37 @@ describe('entries route', () => {
       return failingStatement as never
     }) as typeof env.DB.prepare
 
-    const response = await app.request(
-      '/entries',
-      {
-        method: 'POST',
-        headers: {
-          ...accessHeaders,
-          'content-type': 'application/x-www-form-urlencoded',
+    try {
+      const response = await app.request(
+        '/entries',
+        {
+          method: 'POST',
+          headers: {
+            ...accessHeaders,
+            'content-type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            journal_date: '2026-04-22',
+            title: 'Broken entry',
+            body: '# Broken entry\n\nThis should roll back.',
+          }),
         },
-        body: new URLSearchParams({
-          journal_date: '2026-04-22',
-          title: 'Broken entry',
-          body: '# Broken entry\n\nThis should roll back.',
-        }),
-      },
-      env
-    )
+        env
+      )
 
-    expect(response.status).toBe(500)
-    expect(env.JOURNAL_BUCKET.state.writes).toHaveLength(1)
-    expect(env.JOURNAL_BUCKET.state.deletes).toHaveLength(1)
-    const writtenKey = env.JOURNAL_BUCKET.state.writes[0]?.key
-    expect(writtenKey).toBeDefined()
-    if (!writtenKey) {
-      throw new Error('Expected a written key')
+      expect(response.status).toBe(500)
+      expect(env.JOURNAL_BUCKET.state.writes).toHaveLength(1)
+      expect(env.JOURNAL_BUCKET.state.deletes).toHaveLength(1)
+      const writtenKey = env.JOURNAL_BUCKET.state.writes[0]?.key
+      expect(writtenKey).toBeDefined()
+      if (!writtenKey) {
+        throw new Error('Expected a written key')
+      }
+      expect(await env.JOURNAL_BUCKET.get(writtenKey)).toBeNull()
+      expect(env.DB.state.entries).toHaveLength(0)
+    } finally {
+      consoleErrorSpy.mockRestore()
     }
-    expect(await env.JOURNAL_BUCKET.get(writtenKey)).toBeNull()
-    expect(env.DB.state.entries).toHaveLength(0)
   })
 
   it('restores the previous body when an update fails without changing the day', async () => {
@@ -751,6 +756,7 @@ describe('entries route', () => {
       },
     })
     const originalPrepare = env.DB.prepare.bind(env.DB)
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     env.DB.prepare = ((sql: string) => {
       const statement = originalPrepare(sql)
@@ -777,37 +783,41 @@ describe('entries route', () => {
       return failingStatement as never
     }) as typeof env.DB.prepare
 
-    const response = await app.request(
-      '/entries/entry-2',
-      {
-        method: 'POST',
-        headers: {
-          ...accessHeaders,
-          'content-type': 'application/x-www-form-urlencoded',
+    try {
+      const response = await app.request(
+        '/entries/entry-2',
+        {
+          method: 'POST',
+          headers: {
+            ...accessHeaders,
+            'content-type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            journal_date: '2026-04-22',
+            title: 'Updated title',
+            body: '# Updated title\n\nUpdated body.',
+          }),
         },
-        body: new URLSearchParams({
-          journal_date: '2026-04-22',
-          title: 'Updated title',
-          body: '# Updated title\n\nUpdated body.',
-        }),
-      },
-      env
-    )
+        env
+      )
 
-    expect(response.status).toBe(500)
-    expect(env.JOURNAL_BUCKET.state.writes).toHaveLength(2)
-    expect(env.JOURNAL_BUCKET.state.deletes).toEqual(['entries/2026/04/22/entry-2.md'])
-    const restored = await env.JOURNAL_BUCKET.get('entries/2026/04/22/entry-2.md')
-    expect(restored).not.toBeNull()
-    if (!restored) {
-      throw new Error('Expected restored body to exist')
+      expect(response.status).toBe(500)
+      expect(env.JOURNAL_BUCKET.state.writes).toHaveLength(2)
+      expect(env.JOURNAL_BUCKET.state.deletes).toEqual(['entries/2026/04/22/entry-2.md'])
+      const restored = await env.JOURNAL_BUCKET.get('entries/2026/04/22/entry-2.md')
+      expect(restored).not.toBeNull()
+      if (!restored) {
+        throw new Error('Expected restored body to exist')
+      }
+      expect(await restored.text()).toBe('# Original title\n\nOriginal body.')
+      expect(env.DB.state.entries[0]).toMatchObject({
+        id: 'entry-2',
+        title: 'Original title',
+        body_key: 'entries/2026/04/22/entry-2.md',
+      })
+    } finally {
+      consoleErrorSpy.mockRestore()
     }
-    expect(await restored.text()).toBe('# Original title\n\nOriginal body.')
-    expect(env.DB.state.entries[0]).toMatchObject({
-      id: 'entry-2',
-      title: 'Original title',
-      body_key: 'entries/2026/04/22/entry-2.md',
-    })
   })
 
   it('returns a partial workspace for htmx requests', async () => {
