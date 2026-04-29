@@ -1,4 +1,5 @@
 import type { Child } from 'hono/jsx'
+import { embeddedDiagramsBootScript } from '../client/embedded-diagrams-script'
 
 type AppLayoutProps = {
   title: string
@@ -27,74 +28,6 @@ export const AppLayout = ({ title, children }: AppLayoutProps) => {
         <script
           dangerouslySetInnerHTML={{
             __html: `
-          (() => {
-            const getMermaid = () => window.mermaid
-            let mermaidRenderScheduled = false
-
-            const getRenderScope = (event) => {
-              const scope = event?.detail?.elt ?? event?.target
-              if (scope instanceof Element || scope instanceof DocumentFragment || scope instanceof Document) {
-                return scope
-              }
-
-              return document
-            }
-
-            const renderMermaidNode = async (node) => {
-              if (!(node instanceof Element)) return
-              if (!node.matches('.mermaid')) return
-              if (node.dataset.journalMermaidRendered === 'true') return
-
-              const mermaid = getMermaid()
-              if (!mermaid) return
-
-              if (!window.__journalMermaidInitialized) {
-                mermaid.initialize({
-                  startOnLoad: false,
-                  theme: 'dark',
-                  securityLevel: 'strict',
-                })
-                window.__journalMermaidInitialized = true
-              }
-
-              try {
-                await mermaid.run({ nodes: [node] })
-                node.dataset.journalMermaidRendered = 'true'
-              } catch (error) {
-                console.error('Mermaid render failed', error)
-              }
-            }
-
-            const renderMermaid = async (scope) => {
-              const root = scope instanceof Element || scope instanceof DocumentFragment ? scope : document
-              const nodes = Array.from(root.querySelectorAll('.mermaid'))
-              if (nodes.length === 0) return
-
-              await Promise.all(nodes.map((node) => renderMermaidNode(node)))
-            }
-
-            const scheduleMermaidRender = (scope) => {
-              if (mermaidRenderScheduled) return
-
-              mermaidRenderScheduled = true
-              requestAnimationFrame(() => {
-                mermaidRenderScheduled = false
-                void renderMermaid(scope)
-              })
-            }
-
-            document.addEventListener('DOMContentLoaded', () => {
-              scheduleMermaidRender(document)
-            })
-
-            document.addEventListener('htmx:afterSwap', (event) => {
-              scheduleMermaidRender(getRenderScope(event))
-            })
-
-            document.addEventListener('htmx:afterSettle', (event) => {
-              scheduleMermaidRender(getRenderScope(event))
-            })
-
             const focusTagInputEnd = (scope) => {
               const root = scope instanceof Element ? scope : document
               const textarea = root.querySelector('textarea[data-focus-end="true"]')
@@ -115,33 +48,13 @@ export const AppLayout = ({ title, children }: AppLayoutProps) => {
             document.addEventListener('htmx:load', (event) => {
               focusTagInputEnd(event.target)
             })
-
-            const observeMermaid = () => {
-              const body = document.body
-              if (!body) return
-
-              const observer = new MutationObserver((mutations) => {
-                for (const mutation of mutations) {
-                  for (const addedNode of mutation.addedNodes) {
-                    if (!(addedNode instanceof Element)) continue
-                    if (addedNode.matches('.mermaid') || addedNode.querySelector('.mermaid')) {
-                      scheduleMermaidRender(addedNode)
-                      return
-                    }
-                  }
-                }
-              })
-
-              observer.observe(body, { childList: true, subtree: true })
-            }
-
-            if (document.body) {
-              observeMermaid()
-            } else {
-              document.addEventListener('DOMContentLoaded', observeMermaid, { once: true })
-            }
           })()
         `,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: embeddedDiagramsBootScript,
           }}
         />
       </body>
