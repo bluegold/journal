@@ -62,7 +62,7 @@ export const NewEntryPage = ({ currentUser, entries, query }: NewEntryPageProps)
       }
       menuItems={[
         { label: 'Entries', href: '/entries' },
-        { label: 'Search', href: '/entries' },
+        { label: 'Search', href: '/search' },
       ]}
     />
   )

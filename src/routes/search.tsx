@@ -1,41 +1,33 @@
 import { Hono } from 'hono'
-import { EntryCard } from '../templates/entry-card'
 import type { Bindings } from '../types/bindings'
-import type { JournalContextVariables } from '../types/journal'
-import type { JournalEntryRow } from '../types/journal'
-
-const matchesQuery = (entry: JournalEntryRow, query: string): boolean => {
-  const normalizedQuery = query.trim().toLowerCase()
-  if (normalizedQuery.length === 0) {
-    return true
-  }
-
-  return [entry.title, entry.summary ?? '', entry.ai_summary ?? ''].some((value) =>
-    value.toLowerCase().includes(normalizedQuery)
-  )
-}
+import type { JournalContextVariables, JournalEntryRow, JournalEntryTagRow, JournalTagRow } from '../types/journal'
+import { searchEntries } from '../lib/search'
+import { SearchPage } from '../templates/pages/search-page'
+import { buildTagStats } from '../lib/tag-stats'
 
 export const searchRoutes = new Hono<{ Bindings: Bindings; Variables: JournalContextVariables }>()
 
 searchRoutes.get('/search', async (c) => {
   const q = c.req.query('q') ?? ''
-  const rows = await c.env.DB.prepare(
-    'SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC'
-  )
-    .bind(c.var.currentUser.id)
-    .all<JournalEntryRow>()
-  const results = rows.results.filter((entry) => entry.deleted_at == null && matchesQuery(entry, q))
+  const tag = c.req.query('tag') ?? ''
+  const [entryRows, tagRows, entryTagRows] = await Promise.all([
+    c.env.DB.prepare('SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC')
+      .bind(c.var.currentUser.id)
+      .all<JournalEntryRow>(),
+    c.env.DB.prepare('SELECT * FROM tags').all<JournalTagRow>(),
+    c.env.DB.prepare('SELECT * FROM entry_tags').all<JournalEntryTagRow>(),
+  ])
+  const results = searchEntries({
+    entries: entryRows.results,
+    tags: tagRows.results,
+    entryTags: entryTagRows.results,
+    userId: c.var.currentUser.id,
+    query: q,
+    tag,
+  })
+  const tagStats = buildTagStats(tagRows.results, entryTagRows.results, entryRows.results, c.var.currentUser.id)
 
-  return c.html(
-    <div class="space-y-3">
-      <div class="text-sm opacity-70">search: {q}</div>
-      {results.length > 0 ? (
-        results.map((entry) => (
-          <EntryCard entry={entry} />
-        ))
-      ) : (
-        <p class="text-sm opacity-60">No matches.</p>
-      )}
-    </div>
+  return c.render(
+    <SearchPage currentUser={c.var.currentUser} query={q} tag={tag} results={results} tagStats={tagStats} />
   )
 })

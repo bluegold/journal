@@ -76,7 +76,7 @@ export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, selec
       }
       menuItems={[
         { label: 'Entries', href: '/entries' },
-        { label: 'Search', href: '#search-results' },
+        { label: 'Search', href: '/search' },
       ]}
     />
   )

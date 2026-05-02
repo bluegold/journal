@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createEntryRow, createUserRow, requestApp } from '../test-support'
+import { createEntryRow, createEntryTagRow, createTagRow, createUserRow, requestApp } from '../test-support'
 
 describe('search route', () => {
   it('filters entries by title and summary', async () => {
@@ -31,13 +31,14 @@ describe('search route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('search: apple')
+    expect(body).toContain('Find entries')
+    expect(body).toContain('q:')
     expect(body).toContain('Apple notes')
     expect(body).toContain('Daily work log')
     expect(body).not.toContain('Banana notes')
   })
 
-  it('matches ai summary, ignores deleted entries, and returns no matches for empty results', async () => {
+  it('ignores ai summary, deleted entries, and returns no matches for empty results', async () => {
     const { response, body } = await requestApp('/search?q=insight', {
       db: {
         initialUsers: [createUserRow()],
@@ -66,11 +67,35 @@ describe('search route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('search: insight')
-    expect(body).toContain('Plain note')
+    expect(body).toContain('No matches.')
+    expect(body).not.toContain('Plain note')
     expect(body).not.toContain('Deleted note')
     expect(body).not.toContain('Should stay hidden')
-    expect(body).not.toContain('No matches.')
+  })
+
+  it('filters by approved tag name', async () => {
+    const { response, body } = await requestApp('/search?tag=work', {
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({ id: 'entry-1', title: 'Work log' }),
+          createEntryRow({ id: 'entry-2', title: 'Private note', journal_date: '2026-04-21', body_key: 'entries/entry-2.md' }),
+        ],
+        initialTags: [
+          createTagRow({ id: 1, name: 'work' }),
+          createTagRow({ id: 2, name: 'personal' }),
+        ],
+        initialEntryTags: [
+          createEntryTagRow({ entry_id: 'entry-1', tag_id: 1 }),
+          createEntryTagRow({ entry_id: 'entry-2', tag_id: 2 }),
+        ],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('tag:')
+    expect(body).toContain('Work log')
+    expect(body).not.toContain('Private note')
   })
 
   it('shows the empty state for blank queries with no entries', async () => {
@@ -81,7 +106,7 @@ describe('search route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('search:   ')
+    expect(body).toContain('Results')
     expect(body).toContain('No matches.')
   })
 })

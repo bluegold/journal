@@ -87,6 +87,7 @@ describe('entries route', () => {
     expect(body).toContain('2026-04-22')
     expect(body).toContain('Tags')
     expect(body).toContain('travel')
+    expect(body).toContain('href="/search?tag=travel"')
     expect(body).toContain('Selected article')
     expect(body).toContain('Morning entry')
     expect(body).toContain('Evening entry')

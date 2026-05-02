@@ -39,7 +39,7 @@ export const HomePage = ({ currentUser }: HomePageProps) => {
       detailPane={<EntryDetailPanel entry={null} renderedBodyHtml={null} entryTags={[]} />}
       menuItems={[
         { label: 'Entries', href: '/entries' },
-        { label: 'Search', href: '/entries' },
+        { label: 'Search', href: '/search' },
       ]}
     />
   )

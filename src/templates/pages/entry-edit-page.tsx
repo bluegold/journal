@@ -72,7 +72,7 @@ export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText }: E
       }
       menuItems={[
         { label: 'Entries', href: '/entries' },
-        { label: 'Search', href: '#search-results' },
+        { label: 'Search', href: '/search' },
       ]}
     />
   )

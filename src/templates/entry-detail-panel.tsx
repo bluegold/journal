@@ -87,9 +87,12 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
             <div class="flex flex-wrap items-center justify-end gap-1.5">
               <span class="text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">Tags</span>
               {entryTags.map((tagName) => (
-                <span class="rounded-full border border-cyan-300/40 bg-cyan-300/15 px-2.5 py-0.5 text-[11px] text-cyan-50">
+                <a
+                  href={`/search?tag=${encodeURIComponent(tagName)}`}
+                  class="rounded-full border border-cyan-300/40 bg-cyan-300/15 px-2.5 py-0.5 text-[11px] text-cyan-50 transition hover:border-cyan-200/70 hover:bg-cyan-300/25 hover:text-white"
+                >
                   {tagName}
-                </span>
+                </a>
               ))}
             </div>
           ) : null}
