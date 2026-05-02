@@ -18,10 +18,20 @@ app.route('/', entriesRoutes)
 app.route('/', searchRoutes)
 app.route('/', tagsRoutes)
 
-const worker = app as typeof app & ExportedHandler<Bindings, AiSummaryQueueMessage>
+type JournalWorker = ExportedHandler<Bindings, AiSummaryQueueMessage> & {
+  request: typeof app.request
+}
 
-worker.queue = async (batch, env, ctx) => {
-  await handleAiSummaryQueueBatch(batch, env, ctx)
+const worker: JournalWorker = {
+  request: app.request.bind(app),
+  fetch: (request, env, ctx) => app.fetch(request, env, ctx),
+  queue: async (batch, env, ctx) => {
+    console.log('AI summary queue batch received', {
+      messageCount: batch.messages.length,
+    })
+
+    await handleAiSummaryQueueBatch(batch, env, ctx)
+  },
 }
 
 export default worker
