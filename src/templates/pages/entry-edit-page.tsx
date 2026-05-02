@@ -65,6 +65,7 @@ export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText }: E
           body={body}
           tagsText={tagsText}
           updateHref={`/entries/${entry.id}`}
+          acceptAiSummaryHref={`/entries/${entry.id}/accept-ai-summary`}
           cancelHref={buildEntriesHref({
             monthKey: selection.monthKey,
             dateKey: entry.journal_date,

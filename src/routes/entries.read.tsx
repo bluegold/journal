@@ -90,6 +90,7 @@ export const registerEntriesReadRoutes = (app: Hono<{ Bindings: Bindings; Variab
           body={body}
           tagsText={formatTagList(tagNames)}
           updateHref={`/entries/${entry.id}`}
+          acceptAiSummaryHref={`/entries/${entry.id}/accept-ai-summary`}
           cancelHref={buildEntriesHref({
             monthKey: formatMonthKey(parseDateKey(entry.journal_date) ?? new Date()),
             dateKey: entry.journal_date,

@@ -9,11 +9,20 @@ type EntryEditPanelProps = {
   body: string
   tagsText: string
   updateHref: string
+  acceptAiSummaryHref: string
   cancelHref: string
 }
 
-export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }: EntryEditPanelProps) => {
+export const EntryEditPanel = ({
+  entry,
+  body,
+  tagsText,
+  updateHref,
+  acceptAiSummaryHref,
+  cancelHref,
+}: EntryEditPanelProps) => {
   const text = uiText.ja
+  const aiSummaryFormId = 'entry-accept-ai-summary-form'
   return (
     <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 shadow-[0_18px_54px_-36px_rgba(2,6,23,0.95)]">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
@@ -77,9 +86,35 @@ export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }
         </label>
 
         <div class="grid gap-3 xl:grid-cols-2">
+          <div class="space-y-1.5">
+            <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.editor.aiSummary}</span>
+            {entry.ai_summary ? (
+              <div class="space-y-2 rounded-2xl border border-cyan-300/30 bg-cyan-300/10 p-3">
+                <p class="whitespace-pre-wrap text-sm leading-6 text-cyan-50">{entry.ai_summary}</p>
+                <form id={aiSummaryFormId} method="post" action={acceptAiSummaryHref} hx-post={acceptAiSummaryHref} hx-target="#journal-workspace" hx-swap="outerHTML" hx-push-url="true" />
+                <button
+                  type="submit"
+                  form={aiSummaryFormId}
+                  class="rounded-full border border-cyan-200/40 bg-cyan-300/15 px-3 py-1 text-xs text-cyan-50 transition hover:border-cyan-200/70 hover:bg-cyan-300/25 hover:text-white"
+                >
+                  {text.editor.copyAiSummary}
+                </button>
+              </div>
+            ) : (
+              <div class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/70 p-3 text-sm leading-6 text-slate-400">
+                {text.editor.noAiSummary}
+              </div>
+            )}
+          </div>
+
           <label class="block space-y-1.5">
             <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.editor.summary}</span>
-            <textarea class="textarea min-h-24 w-full" name="summary" placeholder={text.editor.placeholderSummary}>
+            <textarea
+              id="entry-edit-summary"
+              class="textarea min-h-24 w-full"
+              name="summary"
+              placeholder={text.editor.placeholderSummary}
+            >
               {entry.summary ?? ''}
             </textarea>
           </label>

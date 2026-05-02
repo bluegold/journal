@@ -229,6 +229,36 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
     return response
   })
 
+  app.post('/entries/:id/accept-ai-summary', async (c) => {
+    const entryId = c.req.param('id')
+    const entries = await loadUserEntries(c)
+    const currentEntry = findEntryById(entries, entryId)
+
+    if (!currentEntry) {
+      return c.text('Entry not found.', 404)
+    }
+
+    const aiSummary = currentEntry.ai_summary?.trim() ?? ''
+    if (aiSummary.length === 0) {
+      return c.text('AI summary is not available yet.', 400)
+    }
+
+    const timestamp = new Date().toISOString()
+
+    await c.env.DB.prepare('UPDATE entries SET summary = ?, updated_at = ? WHERE id = ?')
+      .bind(aiSummary, timestamp, currentEntry.id)
+      .run()
+
+    const href = buildEntriesHref({
+      monthKey: formatMonthKey(parseJournalDate(currentEntry.journal_date)),
+      dateKey: currentEntry.journal_date,
+      entryId: currentEntry.id,
+    })
+    const response = c.redirect(href, 303)
+    response.headers.set('HX-Redirect', href)
+    return response
+  })
+
   app.post('/entries/:id/delete', async (c) => {
     const entryId = c.req.param('id')
     const entries = await loadUserEntries(c)

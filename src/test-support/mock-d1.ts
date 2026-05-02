@@ -211,6 +211,12 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
       return { success: true, meta: { changes: 0 } }
     }
 
+    if (normalizedSql === 'UPDATE entries SET summary = ?, updated_at = ? WHERE id = ?') {
+      current.summary = params[0] != null ? String(params[0]) : null
+      current.updated_at = params[1] != null ? String(params[1]) : current.updated_at
+      return { success: true, meta: { changes: 1 } }
+    }
+
     if (normalizedSql.includes('deleted_at = ?')) {
       current.deleted_at = params[0] != null ? String(params[0]) : null
       current.updated_at = params[1] != null ? String(params[1]) : current.updated_at

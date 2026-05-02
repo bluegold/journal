@@ -188,6 +188,42 @@ describe('entries route', () => {
     expect(body).toContain('キャンセル')
   })
 
+  it('shows ai summary in the edit form and can copy it into summary', async () => {
+    const { response, body } = await requestApp('/entries/entry-2/edit?month=2026-04&date=2026-04-22', {
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-2',
+            user_id: 'user-1',
+            journal_date: '2026-04-22',
+            title: 'Editable entry',
+            summary: 'Editable summary',
+            ai_summary: 'AI generated summary',
+            ai_summary_model: '@cf/facebook/bart-large-cnn',
+            ai_summary_generated_at: '2026-05-02T16:46:33.090Z',
+            body_key: 'entries/entry-2.md',
+            created_at: '2026-04-22T18:00:00.000Z',
+            updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+      },
+      r2: {
+        initialObjects: [
+          {
+            key: 'entries/entry-2.md',
+            body: '# Editable entry\n\nOriginal body.',
+          },
+        ],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('AI 要約')
+    expect(body).toContain('AI generated summary')
+    expect(body).toContain('要約にコピー')
+  })
+
   it('renders the edit entry fragment for htmx requests', async () => {
     const { response, body } = await requestApp('/entries/entry-2/edit?month=2026-04&date=2026-04-22', {
       init: {
@@ -928,6 +964,45 @@ describe('entries route', () => {
     expect(followBody).toContain('Selected article')
     expect(followBody).toContain('New entry')
     expect(followBody).toContain('Hello journal.')
+  })
+
+  it('copies ai summary into summary when accepting it from the edit form', async () => {
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-2',
+            user_id: 'user-1',
+            journal_date: '2026-04-22',
+            title: 'Editable entry',
+            summary: 'Editable summary',
+            ai_summary: 'AI generated summary',
+            ai_summary_model: '@cf/facebook/bart-large-cnn',
+            ai_summary_generated_at: '2026-05-02T16:46:33.090Z',
+            body_key: 'entries/entry-2.md',
+            created_at: '2026-04-22T18:00:00.000Z',
+            updated_at: '2026-04-22T18:00:00.000Z',
+          }),
+        ],
+      },
+    })
+
+    const response = await app.request(
+      '/entries/entry-2/accept-ai-summary',
+      {
+        method: 'POST',
+        headers: accessHeaders,
+      },
+      env
+    )
+
+    expect(response.status).toBe(303)
+    expect(response.headers.get('location')).toBe('/entries?month=2026-04&date=2026-04-22&entry=entry-2')
+    expect(env.DB.state.entries[0]).toMatchObject({
+      summary: 'AI generated summary',
+      ai_summary: 'AI generated summary',
+    })
   })
 
   it('runs ai summary directly during local requests without queueing', async () => {
