@@ -152,6 +152,8 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
       title: String(params[params.length >= 11 ? 3 : 2] ?? ''),
       summary: params[params.length >= 11 ? 4 : 3] != null ? String(params[params.length >= 11 ? 4 : 3]) : null,
       ai_summary: params[params.length >= 11 ? 5 : 4] != null ? String(params[params.length >= 11 ? 5 : 4]) : null,
+      ai_summary_model: null,
+      ai_summary_generated_at: null,
       body_key: String(params[params.length >= 11 ? 6 : 5] ?? ''),
       status: String(params[params.length >= 11 ? 7 : 6] ?? 'private'),
       created_at: String(params[params.length >= 11 ? 8 : 7] ?? ''),
@@ -185,6 +187,23 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
   }
 
   if (normalizedSql.startsWith('UPDATE entries SET')) {
+    if (
+      normalizedSql ===
+      'UPDATE entries SET ai_summary = ?, ai_summary_model = ?, ai_summary_generated_at = ? WHERE id = ? AND updated_at = ?'
+    ) {
+      const entryId = String(params[3] ?? '')
+      const current = state.entries.find((entry) => entry.id === entryId)
+
+      if (!current) {
+        return { success: true, meta: { changes: 0 } }
+      }
+
+      current.ai_summary = params[0] != null ? String(params[0]) : null
+      current.ai_summary_model = params[1] != null ? String(params[1]) : null
+      current.ai_summary_generated_at = params[2] != null ? String(params[2]) : null
+      return { success: true, meta: { changes: 1 } }
+    }
+
     const entryId = String(params[params.length - 1] ?? '')
     const current = state.entries.find((entry) => entry.id === entryId)
 

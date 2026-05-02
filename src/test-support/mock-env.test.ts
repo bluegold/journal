@@ -49,9 +49,18 @@ describe('mock env', () => {
     }
     await expect(object.text()).resolves.toBe('fixture body')
 
-    await env.AI_QUEUE.send({ type: 'enrich', entryId: 'entry-1' })
+    await env.AI_QUEUE.send({ type: 'summarize_entry', entryId: 'entry-1', entryUpdatedAt: '2026-04-22T00:00:00.000Z', requestedAt: '2026-04-22T00:00:00.000Z' })
+    await env.AI.run('@cf/facebook/bart-large-cnn', { input_text: 'fixture body', max_length: 120 })
 
-    expect(env.AI_QUEUE.state.messages).toEqual([{ type: 'enrich', entryId: 'entry-1' }])
+    expect(env.AI_QUEUE.state.messages).toEqual([
+      { type: 'summarize_entry', entryId: 'entry-1', entryUpdatedAt: '2026-04-22T00:00:00.000Z', requestedAt: '2026-04-22T00:00:00.000Z' },
+    ])
+    expect(env.AI.state.calls).toEqual([
+      {
+        model: '@cf/facebook/bart-large-cnn',
+        inputs: { input_text: 'fixture body', max_length: 120 },
+      },
+    ])
     expect(env.DB.state.entries).toHaveLength(1)
     expect(env.JOURNAL_BUCKET.state.objects.has('entries/entry-1.md')).toBe(true)
   })

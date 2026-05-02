@@ -392,6 +392,14 @@ describe('entries route', () => {
     })
     expect(env.DB.state.tags.map((tag) => tag.name).sort()).toEqual(['ideas', 'personal', 'work'])
     expect(env.DB.state.entryTags.map((entryTag) => entryTag.tag_id).sort()).toEqual([2, 3])
+    expect(env.AI_QUEUE.state.messages).toEqual([
+      {
+        type: 'summarize_entry',
+        entryId: 'entry-2',
+        entryUpdatedAt: env.DB.state.entries[0].updated_at,
+        requestedAt: env.DB.state.entries[0].updated_at,
+      },
+    ])
     expect(await env.JOURNAL_BUCKET.get('entries/entry-2.md')).toBeNull()
     const movedBody = await env.JOURNAL_BUCKET.get('entries/2026/04/23/entry-2.md')
     expect(movedBody).not.toBeNull()
@@ -470,6 +478,14 @@ describe('entries route', () => {
       summary: null,
       body_key: 'entries/2026/04/22/entry-2.md',
     })
+    expect(env.AI_QUEUE.state.messages).toEqual([
+      {
+        type: 'summarize_entry',
+        entryId: 'entry-2',
+        entryUpdatedAt: env.DB.state.entries[0].updated_at,
+        requestedAt: env.DB.state.entries[0].updated_at,
+      },
+    ])
     const keptBody = await env.JOURNAL_BUCKET.get('entries/2026/04/22/entry-2.md')
     expect(keptBody).not.toBeNull()
     if (!keptBody) {
@@ -589,6 +605,14 @@ describe('entries route', () => {
     })
     expect(env.DB.state.tags.map((tag) => tag.name)).toEqual(['ideas', 'work'])
     expect(env.DB.state.entryTags).toHaveLength(2)
+    expect(env.AI_QUEUE.state.messages).toEqual([
+      {
+        type: 'summarize_entry',
+        entryId: env.DB.state.entries[0].id,
+        entryUpdatedAt: env.DB.state.entries[0].updated_at,
+        requestedAt: env.DB.state.entries[0].updated_at,
+      },
+    ])
     const bodyObject = await env.JOURNAL_BUCKET.get(env.DB.state.entries[0].body_key)
     expect(bodyObject).not.toBeNull()
     if (!bodyObject) {

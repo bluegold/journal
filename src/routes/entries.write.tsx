@@ -3,6 +3,7 @@ import { buildEntriesHref, formatDateKey, formatMonthKey } from '../lib/entries-
 import { buildEntryBodyKey } from '../lib/entry-body-key'
 import { loadEntryBody } from '../lib/entry-body'
 import { replaceEntryTags } from '../lib/entry-tags'
+import { enqueueAiSummary } from '../lib/ai-summary'
 import { renderMarkdown } from '../lib/render-markdown'
 import { EntryPreviewOverlay, EntryPreviewSlot } from '../templates/entry-preview-panel'
 import { findEntryById, loadUserEntries, normalizeBody, parseJournalDate } from './entries.shared'
@@ -65,6 +66,8 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
       await c.env.JOURNAL_BUCKET.delete(bodyKey)
       throw error
     }
+
+    enqueueAiSummary(c.env.AI_QUEUE, entryId, timestamp, timestamp)
 
     const href = buildEntriesHref({
       monthKey: formatMonthKey(journalDate),
@@ -180,6 +183,8 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
       }
       throw error
     }
+
+    enqueueAiSummary(c.env.AI_QUEUE, currentEntry.id, timestamp, timestamp)
 
     if (nextBodyKey !== previousBodyKey) {
       await c.env.JOURNAL_BUCKET.delete(previousBodyKey)

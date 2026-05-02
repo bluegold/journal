@@ -45,13 +45,13 @@ npm run dev
 - test / test:watch / test:coverage: vitest を用いたテスト
 
 環境変数とバインディング
-- wrangler.jsonc に Workers, D1, R2, Queue のバインディングが定義されています。
+- wrangler.jsonc に Workers, D1, R2, AI, Queue のバインディングが定義されています。
 - ローカル開発では適切な環境（wrangler secrets / .devvars 等）を用意してください。
 
 ## データモデル（概要）
 
 主なテーブル（D1）
-- entries: id, journal_date, title, status, body_key, summary, ai_summary, created_at, updated_at, deleted_at
+- entries: id, journal_date, title, status, body_key, summary, ai_summary, ai_summary_model, ai_summary_generated_at, created_at, updated_at, deleted_at
 - tags: 正規化された承認タグ
 - entry_tags: entries ⇄ tags の junction
 - entry_ai_tags: AI 候補タグ（state: candidate/accepted/discarded）
@@ -61,7 +61,7 @@ npm run dev
 ## AI ワークフロー
 
 - 保存時に本文の処理は必須ではなく、保存後にキューへメッセージを発行して非同期で AI 処理を行います。
-- AI 呼び出しは構造化された JSON を返す前提で、生成日時・モデル名を記録します。
+- AI 要約は Workers AI の要約モデルを使い、生成日時・モデル名を記録します。
 - UI では AI 候補は承認操作を通じて明示的に採用/破棄できるようにします。
 
 ## エクスポート
@@ -91,4 +91,3 @@ npm run dev
 - AGENTS.md（アーキテクチャ規約）
 - docs/（開発計画・実装方針）
 - migrations/0001_init.sql（初期スキーマ）
-

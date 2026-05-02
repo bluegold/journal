@@ -431,8 +431,9 @@ Generate AI summary and AI tag candidates asynchronously after save, without aff
 - enqueue a job after create and update
 - implement queue consumer Worker logic
 - fetch markdown body from R2 inside the consumer
-- call Workers AI with structured JSON output
-- persist `ai_summary` and `entry_ai_tags`
+- call Workers AI summarization for `ai_summary`
+- later extend the same pipeline to structured JSON for `entry_ai_tags`
+- persist `ai_summary`, model name, and generation timestamp
 - store model name and generation timestamp
 - add retry and idempotency protections
 - decide how updates supersede stale AI output

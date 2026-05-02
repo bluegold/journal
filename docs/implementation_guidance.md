@@ -78,6 +78,8 @@ CREATE TABLE entries (
   body_key TEXT NOT NULL,
   summary TEXT,
   ai_summary TEXT,
+  ai_summary_model TEXT,
+  ai_summary_generated_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   deleted_at TEXT
@@ -184,6 +186,8 @@ CREATE TABLE entries (
   body_key TEXT NOT NULL,
   summary TEXT,
   ai_summary TEXT,
+  ai_summary_model TEXT,
+  ai_summary_generated_at TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   deleted_at TEXT

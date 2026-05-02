@@ -5,6 +5,8 @@ export type EntryRow = {
   title: string
   summary: string | null
   ai_summary: string | null
+  ai_summary_model: string | null
+  ai_summary_generated_at: string | null
   body_key: string
   status: string
   created_at: string

@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { currentUserMiddleware } from './middleware/current-user'
 import { renderer } from './renderer'
+import { handleAiSummaryQueueBatch, type AiSummaryQueueMessage } from './lib/ai-summary'
 import { entriesRoutes } from './routes/entries'
 import { homeRoutes } from './routes/home'
 import { searchRoutes } from './routes/search'
@@ -17,4 +18,10 @@ app.route('/', entriesRoutes)
 app.route('/', searchRoutes)
 app.route('/', tagsRoutes)
 
-export default app
+const worker = app as typeof app & ExportedHandler<Bindings, AiSummaryQueueMessage>
+
+worker.queue = async (batch, env, ctx) => {
+  await handleAiSummaryQueueBatch(batch, env, ctx)
+}
+
+export default worker

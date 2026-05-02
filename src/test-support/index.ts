@@ -1,5 +1,5 @@
 export { createMockD1 } from './mock-d1'
-export { createMockEnv, createMockQueue } from './mock-env'
+export { createMockAi, createMockEnv, createMockQueue } from './mock-env'
 export {
   createEntryAiTagCandidateRow,
   createEntryRow,

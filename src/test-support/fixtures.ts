@@ -27,6 +27,8 @@ export const createEntryRow = (overrides: Partial<EntryRow> = {}): EntryRow => {
     title: 'First entry',
     summary: 'summary',
     ai_summary: 'ai summary',
+    ai_summary_model: null,
+    ai_summary_generated_at: null,
     body_key: 'entries/entry-1.md',
     status: 'private',
     created_at: '2026-04-22T00:00:00.000Z',

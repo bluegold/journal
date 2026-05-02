@@ -351,6 +351,8 @@ describe('mock D1 database', () => {
         title: 'Mine',
         summary: 'summary',
         ai_summary: 'ai summary',
+        ai_summary_model: null,
+        ai_summary_generated_at: null,
         body_key: 'entries/entry-1.md',
         status: 'private',
         created_at: '2026-04-22T03:00:00.000Z',
