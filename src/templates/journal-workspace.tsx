@@ -8,7 +8,6 @@ import type { JournalEntryRow, JournalUserRow } from '../types/journal'
 
 type JournalWorkspaceProps = {
   currentUser: JournalUserRow
-  composeHref: string
   calendarView: CalendarMonthView
   dayEntries: JournalEntryRow[]
   selectedDateLabel: string | null
@@ -24,7 +23,6 @@ type JournalWorkspaceProps = {
 
 export const JournalWorkspace = ({
   currentUser,
-  composeHref,
   calendarView,
   dayEntries,
   selectedDateLabel,
@@ -38,7 +36,7 @@ export const JournalWorkspace = ({
 
   return (
     <div id="journal-workspace" class="min-h-screen">
-      <JournalHeader currentUser={currentUser} composeHref={composeHref} menuItems={menuItems} />
+      <JournalHeader currentUser={currentUser} menuItems={menuItems} />
 
       <main class="mx-auto w-full max-w-[1600px] px-4 py-4 lg:px-6">
         <div class="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
@@ -47,21 +45,18 @@ export const JournalWorkspace = ({
 
             <section class="rounded-3xl border border-white/10 bg-slate-950/75 p-4">
               <div class="flex items-center justify-between gap-3">
-                <div>
-                  <p class="text-xs font-semibold tracking-[0.24em] text-cyan-200/80 uppercase">Selected day</p>
-                  <h2 class="mt-1 text-lg font-semibold text-slate-100">
-                    {selectedDateKey || 'No entry selected'}
-                  </h2>
-                </div>
+                <h2 class="text-sm font-semibold text-slate-100">
+                  {selectedDateKey || 'No date selected'}
+                </h2>
                 <a
                   href={newEntryHref}
                   hx-get={newEntryHref}
                   hx-target="#journal-content"
                   hx-swap="outerHTML"
                   hx-push-url="true"
-                  class="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-medium text-cyan-100 transition hover:border-cyan-300/40 hover:bg-cyan-400/15"
+                  class="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-100 transition hover:border-cyan-300/40 hover:bg-cyan-400/15"
                 >
-                  New entry
+                  + New
                 </a>
               </div>
 

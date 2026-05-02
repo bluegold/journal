@@ -46,7 +46,6 @@ export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText }: E
     <JournalWorkspace
       calendarView={calendarView}
       currentUser={currentUser}
-      composeHref={buildTodayNewEntryHref()}
       dayEntries={selection.dayEntries}
       selectedDateLabel={selection.selectedDateKey}
       selectedEntry={entry}

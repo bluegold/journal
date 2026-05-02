@@ -7,7 +7,6 @@ import {
   buildTodayEntriesHref,
   buildNewEntryHref,
   buildEntryEditHref,
-  buildTodayNewEntryHref,
   formatMonthKey,
   shiftMonth,
 } from '../../lib/entries-navigation'
@@ -44,7 +43,6 @@ export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, selec
     <JournalWorkspace
       calendarView={calendarView}
       currentUser={currentUser}
-      composeHref={buildTodayNewEntryHref()}
       dayEntries={selection.dayEntries}
       selectedDateLabel={selection.selectedDateKey}
       selectedEntry={selection.selectedEntry}

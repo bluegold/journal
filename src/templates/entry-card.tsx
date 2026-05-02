@@ -21,7 +21,6 @@ export const EntryCard = ({ entry, active = false, href }: EntryCardProps) => {
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <h3 class="truncate text-sm font-semibold text-slate-100">{entry.title || 'Untitled'}</h3>
-            <p class="mt-1 text-[11px] tracking-[0.18em] text-slate-500 uppercase">{entry.journal_date}</p>
           </div>
           <span class="mt-0.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
             {entry.status}
@@ -38,7 +37,6 @@ export const EntryCard = ({ entry, active = false, href }: EntryCardProps) => {
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <h3 class="truncate text-sm font-semibold text-slate-100">{entry.title || 'Untitled'}</h3>
-            <p class="mt-1 text-[11px] tracking-[0.18em] text-slate-500 uppercase">{entry.journal_date}</p>
           </div>
           <span class="mt-0.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
             {entry.status}

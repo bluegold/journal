@@ -6,7 +6,6 @@ import {
   buildEntriesHref,
   buildNewEntryHref,
   buildTodayEntriesHref,
-  buildTodayNewEntryHref,
   formatDateKey,
   formatMonthKey,
   shiftMonth,
@@ -43,7 +42,6 @@ export const NewEntryPage = ({ currentUser, entries, query }: NewEntryPageProps)
     <JournalWorkspace
       calendarView={calendarView}
       currentUser={currentUser}
-      composeHref={buildTodayNewEntryHref()}
       dayEntries={selection.dayEntries}
       selectedDateLabel={selection.selectedDateKey}
       selectedEntry={null}
