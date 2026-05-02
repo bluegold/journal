@@ -13,16 +13,19 @@ type EntryEditPanelProps = {
 
 export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }: EntryEditPanelProps) => {
   return (
-    <section class="rounded-3xl border border-white/10 bg-slate-950/75 p-5 shadow-[0_18px_60px_-34px_rgba(2,6,23,0.9)]">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <p class="text-xs font-semibold tracking-[0.24em] text-cyan-200/80 uppercase">Editor</p>
-          <h3 class="mt-2 text-xl font-semibold text-slate-50">Edit the selected entry</h3>
+    <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 shadow-[0_18px_54px_-36px_rgba(2,6,23,0.95)]">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div class="min-w-0">
+          <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Editor</p>
+          <h3 class="mt-1 truncate text-xl font-semibold text-slate-50">Edit the selected entry</h3>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="submit" form="entry-edit-form" class="btn btn-primary h-7 px-3 text-xs">
+            Save changes
+          </button>
           <button
             type="button"
-            class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
+            class="rounded-full border border-slate-600 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
             hx-post="/entries/preview"
             hx-include="#entry-edit-form"
             hx-target="#entry-preview-overlay"
@@ -30,7 +33,7 @@ export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }
           >
             Preview
           </button>
-          <div class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-100">
+          <div class="rounded-full border border-emerald-300/40 bg-emerald-300/15 px-3 py-1 text-xs text-emerald-50">
             editing mode
           </div>
         </div>
@@ -38,7 +41,7 @@ export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }
 
       <form
         id="entry-edit-form"
-        class="mt-5 space-y-4"
+        class="mt-3 space-y-3"
         method="post"
         action={updateHref}
         hx-post={updateHref}
@@ -46,37 +49,41 @@ export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }
         hx-swap="outerHTML"
         hx-push-url="true"
       >
-        <label class="block space-y-2">
-          <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">Journal date</span>
-          <input class="input w-full" type="date" name="journal_date" value={entry.journal_date} required />
-        </label>
+        <div class="grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]">
+          <label class="block space-y-1.5">
+            <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Journal date</span>
+            <input class="input w-full" type="date" name="journal_date" value={entry.journal_date} required />
+          </label>
 
-        <label class="block space-y-2">
-          <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">Title</span>
-          <input class="input w-full" type="text" name="title" value={entry.title} placeholder="Untitled" />
-        </label>
+          <label class="block space-y-1.5">
+            <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Title</span>
+            <input class="input w-full" type="text" name="title" value={entry.title} placeholder="Untitled" />
+          </label>
+        </div>
 
-        <label class="block space-y-2">
-          <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">Summary</span>
-          <textarea class="textarea min-h-28 w-full" name="summary" placeholder="Short summary">
-            {entry.summary ?? ''}
-          </textarea>
-        </label>
-
-        <TagAutocompleteField
-          fieldId="entry-edit-tags"
-          formId="entry-edit-form"
-          value={tagsText}
-          query=""
-          suggestions={[]}
-        />
-
-        <label class="block space-y-2">
-          <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">Markdown</span>
-          <textarea class="textarea min-h-60 w-full font-mono text-sm leading-6" name="body" placeholder="# Title">
+        <label class="block space-y-1.5">
+          <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Markdown</span>
+          <textarea class="textarea min-h-[52vh] w-full font-mono text-sm leading-6" name="body" placeholder="# Title">
             {body}
           </textarea>
         </label>
+
+        <div class="grid gap-3 xl:grid-cols-2">
+          <label class="block space-y-1.5">
+            <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Summary</span>
+            <textarea class="textarea min-h-24 w-full" name="summary" placeholder="Short summary">
+              {entry.summary ?? ''}
+            </textarea>
+          </label>
+
+          <TagAutocompleteField
+            fieldId="entry-edit-tags"
+            formId="entry-edit-form"
+            value={tagsText}
+            query=""
+            suggestions={[]}
+          />
+        </div>
 
         <div class="flex flex-wrap gap-2">
           <button type="submit" class="btn btn-primary">
