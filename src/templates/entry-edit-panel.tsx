@@ -82,7 +82,7 @@ export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }
           <button type="submit" class="btn btn-primary">
             Save changes
           </button>
-          <a {...createWorkspaceLinkAttrs(cancelHref, { target: '#journal-workspace' })} class="btn">
+          <a {...createWorkspaceLinkAttrs(cancelHref, { target: '#journal-content' })} class="btn">
             Cancel
           </a>
         </div>

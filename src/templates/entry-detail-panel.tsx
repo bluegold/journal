@@ -9,6 +9,18 @@ type EntryDetailPanelProps = {
   deleteHref?: string | null
 }
 
+const formatTimestamp = (iso: string): string => {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return new Intl.DateTimeFormat('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(d)
+}
+
 export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref, deleteHref }: EntryDetailPanelProps) => {
   if (!entry) {
     return (
@@ -16,8 +28,7 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
         <p class="text-sm font-semibold tracking-[0.18em] text-cyan-200/80 uppercase">Content area</p>
         <h2 class="mt-2 text-2xl font-semibold text-slate-100">Select a journal entry</h2>
         <p class="mt-3 max-w-xl text-sm leading-6 text-slate-400">
-          The workspace is reserved for the selected article detail. Once an entry is chosen, this area will show
-          the article body, approved metadata, and edit controls.
+          Pick a day on the calendar and select an entry from the list, or start a new one with the <strong class="font-medium text-slate-200">+ New</strong> button.
         </p>
       </section>
     )
@@ -60,18 +71,14 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
         </div>
       </div>
 
-      <div class="mt-4 grid gap-3 sm:grid-cols-3">
+      <div class="mt-4 grid gap-3 sm:grid-cols-2">
         <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
           <p class="text-[10px] tracking-[0.2em] text-slate-500 uppercase">Status</p>
           <p class="mt-1 text-sm text-slate-100">{entry.status}</p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-          <p class="text-[10px] tracking-[0.2em] text-slate-500 uppercase">Body key</p>
-          <p class="mt-1 break-all text-sm text-slate-100">{entry.body_key}</p>
-        </div>
-        <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
           <p class="text-[10px] tracking-[0.2em] text-slate-500 uppercase">Updated</p>
-          <p class="mt-1 text-sm text-slate-100">{entry.updated_at}</p>
+          <p class="mt-1 text-sm text-slate-100">{formatTimestamp(entry.updated_at)}</p>
         </div>
       </div>
 

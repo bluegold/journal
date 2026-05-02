@@ -122,7 +122,7 @@ describe('entries route', () => {
     expect(body).toContain('Morning entry')
     expect(body).toContain('Summary one')
     expect(body).toContain('Cancel')
-    expect(body).toContain('ring-1 ring-cyan-400/40')
+    expect(body).toContain('ring-1 ring-cyan-300/50')
   })
 
   it('renders the edit entry form for the selected entry', async () => {

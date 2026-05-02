@@ -9,7 +9,7 @@ describe('home route', () => {
     expect(body).toContain('<html lang="ja"')
     expect(body).toContain('href="/favicon.png"')
     expect(body).toContain('src="/favicon.png"')
-    expect(body).toContain('hx-target="#journal-content"')
+    expect(body).toContain('hx-target="#journal-workspace"')
     expect(body).toContain('htmx:afterSwap')
     expect(body).toContain('Tester')
     expect(body).toContain('Calendar')

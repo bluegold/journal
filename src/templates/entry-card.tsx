@@ -9,10 +9,10 @@ type EntryCardProps = {
 
 export const EntryCard = ({ entry, active = false, href }: EntryCardProps) => {
   const classes = [
-    'block rounded-2xl border p-3 transition',
+    'block rounded-xl border p-3 transition',
     active
-      ? 'border-cyan-300/40 bg-cyan-400/10 shadow-[0_14px_36px_-24px_rgba(34,211,238,0.6)]'
-      : 'border-white/10 bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.06]',
+      ? 'border-cyan-200/70 bg-cyan-300/15 shadow-[0_14px_36px_-24px_rgba(34,211,238,0.7)]'
+      : 'border-slate-700 bg-slate-900/80 hover:border-slate-500 hover:bg-slate-800/90',
   ].join(' ')
 
   if (!href) {
@@ -22,11 +22,11 @@ export const EntryCard = ({ entry, active = false, href }: EntryCardProps) => {
           <div class="min-w-0">
             <h3 class="truncate text-sm font-semibold text-slate-100">{entry.title || 'Untitled'}</h3>
           </div>
-          <span class="mt-0.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+          <span class="mt-0.5 rounded-full border border-slate-600 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-200">
             {entry.status}
           </span>
         </div>
-        <p class="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{entry.summary ?? 'No summary yet'}</p>
+        <p class="mt-2 line-clamp-2 text-xs leading-5 text-slate-300">{entry.summary ?? 'No summary yet'}</p>
       </article>
     )
   }
@@ -38,11 +38,11 @@ export const EntryCard = ({ entry, active = false, href }: EntryCardProps) => {
           <div class="min-w-0">
             <h3 class="truncate text-sm font-semibold text-slate-100">{entry.title || 'Untitled'}</h3>
           </div>
-          <span class="mt-0.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+          <span class="mt-0.5 rounded-full border border-slate-600 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-200">
             {entry.status}
           </span>
         </div>
-        <p class="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">{entry.summary ?? 'No summary yet'}</p>
+        <p class="mt-2 line-clamp-2 text-xs leading-5 text-slate-300">{entry.summary ?? 'No summary yet'}</p>
       </article>
     </a>
   )

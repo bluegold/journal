@@ -73,7 +73,7 @@ export const EntryComposePanel = ({ journalDate, title, summary, tagsText, body,
           <button type="submit" class="btn btn-primary">
             Save
           </button>
-          <a {...createWorkspaceLinkAttrs(cancelHref, { target: '#journal-workspace' })} class="btn">
+          <a {...createWorkspaceLinkAttrs(cancelHref, { target: '#journal-content' })} class="btn">
             Cancel
           </a>
         </div>

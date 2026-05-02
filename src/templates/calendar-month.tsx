@@ -79,35 +79,35 @@ export const buildCalendarMonthView = (
 
 export const CalendarMonth = ({ view }: CalendarMonthProps) => {
   return (
-    <section class="rounded-3xl border border-white/10 bg-slate-950/75 p-4 shadow-[0_18px_60px_-35px_rgba(2,6,23,0.9)] backdrop-blur">
+    <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-3 shadow-[0_18px_48px_-36px_rgba(2,6,23,0.95)] backdrop-blur">
       <div class="flex items-center justify-between gap-3">
         <div>
-          <p class="text-xs font-semibold tracking-[0.24em] text-cyan-200/80 uppercase">Calendar</p>
+          <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Calendar</p>
           <h2 class="mt-1 text-lg font-semibold text-slate-100">{view.monthLabel}</h2>
         </div>
         <div class="flex items-center gap-2">
           <a
             {...createWorkspaceLinkAttrs(view.todayHref)}
-            class="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100 transition hover:border-cyan-300/40 hover:bg-cyan-400/15 hover:text-white"
+            class="rounded-full border border-cyan-300/50 bg-cyan-300/15 px-3 py-1 text-xs text-cyan-50 transition hover:border-cyan-200/70 hover:bg-cyan-300/25"
           >
             Today
           </a>
           <a
             {...createWorkspaceLinkAttrs(view.previousMonthHref)}
-            class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
+            class="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
           >
             Prev
           </a>
           <a
             {...createWorkspaceLinkAttrs(view.nextMonthHref)}
-            class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
+            class="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
           >
             Next
           </a>
         </div>
       </div>
 
-      <div class="mt-4 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+      <div class="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
         {view.weekdayLabels.map((weekday) => (
           <div>{weekday}</div>
         ))}
@@ -118,13 +118,13 @@ export const CalendarMonth = ({ view }: CalendarMonthProps) => {
           <a
             {...createWorkspaceLinkAttrs(cell.href)}
             class={[
-              'flex aspect-square items-center justify-center rounded-2xl border text-sm transition',
+              'flex aspect-square items-center justify-center rounded-xl border text-sm transition',
               'focus:outline-none focus:ring-2 focus:ring-cyan-300/60 focus:ring-offset-0',
               cell.inMonth
-                ? 'border-white/10 bg-white/5 text-slate-100 hover:border-cyan-400/35 hover:bg-cyan-400/10'
-                : 'border-white/5 bg-slate-950/40 text-slate-600',
-              cell.hasEntry ? 'ring-1 ring-cyan-400/40' : '',
-              cell.isSelected ? 'border-cyan-300/60 bg-cyan-400/15 text-cyan-50' : '',
+                ? 'border-slate-700 bg-slate-900/80 text-slate-100 hover:border-cyan-300/50 hover:bg-cyan-400/10'
+                : 'border-slate-800 bg-slate-950/60 text-slate-500',
+              cell.hasEntry ? 'ring-1 ring-cyan-300/50' : '',
+              cell.isSelected ? 'border-cyan-200/80 bg-cyan-300/20 text-cyan-50' : '',
               cell.isToday ? 'shadow-[0_0_0_1px_rgba(56,189,248,0.45)]' : '',
             ].join(' ')}
             data-date={cell.dateKey}
