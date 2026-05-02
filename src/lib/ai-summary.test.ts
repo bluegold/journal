@@ -47,7 +47,8 @@ describe('ai summary queue processing', () => {
         max_length: 120,
       },
     })
-    expect(String(env.AI.state.calls[0].inputs.input_text)).toContain('Title: Daily notes')
+    expect(String(env.AI.state.calls[0].inputs.input_text)).toContain('Entry title: Daily notes')
+    expect(String(env.AI.state.calls[0].inputs.input_text)).not.toContain('Title: Daily notes')
     expect(String(env.AI.state.calls[0].inputs.input_text)).toContain('calendar search update')
     expect(env.DB.state.entries[0]).toMatchObject({
       ai_summary: 'Short release summary',

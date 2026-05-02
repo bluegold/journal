@@ -13,17 +13,25 @@ const AI_SUMMARY_MODEL = '@cf/facebook/bart-large-cnn'
 const MAX_INPUT_CHARS = 12_000
 
 const buildSummaryInput = (entry: Pick<JournalEntryRow, 'title' | 'journal_date'>, body: string): string => {
-  const parts: string[] = []
+  const parts: string[] = [
+    'Summarize the journal entry in 1-2 short sentences.',
+    'Return plain text only.',
+    'Do not repeat labels like Title or Date.',
+    'Focus on the main content.',
+    '',
+  ]
   const title = entry.title.trim()
 
   if (title.length > 0) {
-    parts.push(`Title: ${title}`)
+    parts.push(`Entry title: ${title}`)
   }
 
   if (entry.journal_date.trim().length > 0) {
-    parts.push(`Date: ${entry.journal_date}`)
+    parts.push(`Entry date: ${entry.journal_date}`)
   }
 
+  parts.push('')
+  parts.push('Entry body:')
   parts.push(body.trim())
 
   return parts.join('\n\n').slice(0, MAX_INPUT_CHARS)
