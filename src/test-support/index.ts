@@ -7,5 +7,5 @@ export {
   createTagRow,
   createUserRow,
 } from './fixtures'
-export { requestApp } from './http'
+export { createMockExecutionCtx, requestApp } from './http'
 export { createMockR2Bucket } from './mock-r2'

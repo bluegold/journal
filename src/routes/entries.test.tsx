@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   createEntryRow,
   createEntryTagRow,
+  createMockExecutionCtx,
   createMockEnv,
   createTagRow,
   createUserRow,
@@ -927,5 +928,42 @@ describe('entries route', () => {
     expect(followBody).toContain('Selected article')
     expect(followBody).toContain('New entry')
     expect(followBody).toContain('Hello journal.')
+  })
+
+  it('runs ai summary directly during local requests without queueing', async () => {
+    const executionCtx = createMockExecutionCtx()
+    const { response, env } = await requestApp('/entries', {
+      executionCtx,
+      db: {
+        initialUsers: [createUserRow()],
+      },
+      ai: {
+        summary: 'Local summary',
+      },
+      init: {
+        method: 'POST',
+        headers: {
+          ...accessHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          journal_date: '2026-04-22',
+          title: 'Local entry',
+          summary: 'Created locally',
+          body: '# Local entry\n\nHello from local dev.',
+        }),
+      },
+    })
+
+    await Promise.all(executionCtx.promises)
+
+    expect(response.status).toBe(303)
+    expect(env.AI_QUEUE.state.messages).toEqual([])
+    expect(env.AI.state.calls).toHaveLength(1)
+    expect(env.DB.state.entries[0]).toMatchObject({
+      title: 'Local entry',
+      ai_summary: 'Local summary',
+      ai_summary_model: '@cf/facebook/bart-large-cnn',
+    })
   })
 })

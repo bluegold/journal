@@ -3,6 +3,11 @@ import { createMockEnv, type MockEnvOptions } from './mock-env'
 
 type RequestAppOptions = MockEnvOptions & {
   init?: RequestInit
+  executionCtx?: ExecutionContext
+}
+
+export type MockExecutionCtx = ExecutionContext & {
+  promises: Promise<unknown>[]
 }
 
 const defaultAccessHeaders: Record<string, string> = {
@@ -13,7 +18,7 @@ const defaultAccessHeaders: Record<string, string> = {
 }
 
 export const requestApp = async (path: string, options: RequestAppOptions = {}) => {
-  const { init, ...envOptions } = options
+  const { init, executionCtx, ...envOptions } = options
   const env = await createMockEnv(envOptions)
   const headers = new Headers(init?.headers ?? {})
 
@@ -23,7 +28,7 @@ export const requestApp = async (path: string, options: RequestAppOptions = {}) 
     }
   }
 
-  const response = await app.request(path, { ...init, headers }, env)
+  const response = await app.request(path, { ...init, headers }, env, executionCtx)
   const body = await response.text()
 
   return {
@@ -31,4 +36,15 @@ export const requestApp = async (path: string, options: RequestAppOptions = {}) 
     response,
     body,
   }
+}
+
+export const createMockExecutionCtx = (): MockExecutionCtx => {
+  const promises: Promise<unknown>[] = []
+
+  return {
+    promises,
+    waitUntil(promise: Promise<unknown>) {
+      promises.push(promise)
+    },
+  } as MockExecutionCtx
 }

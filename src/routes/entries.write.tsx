@@ -3,13 +3,26 @@ import { buildEntriesHref, formatDateKey, formatMonthKey } from '../lib/entries-
 import { buildEntryBodyKey } from '../lib/entry-body-key'
 import { loadEntryBody } from '../lib/entry-body'
 import { replaceEntryTags } from '../lib/entry-tags'
-import { enqueueAiSummary } from '../lib/ai-summary'
+import { createAiSummaryQueueMessage, enqueueAiSummary, processAiSummaryQueueMessage } from '../lib/ai-summary'
 import { renderMarkdown } from '../lib/render-markdown'
 import { EntryPreviewOverlay, EntryPreviewSlot } from '../templates/entry-preview-panel'
 import { findEntryById, loadUserEntries, normalizeBody, parseJournalDate } from './entries.shared'
 import { generateUuidv7 } from '../lib/uuidv7'
 import type { Bindings } from '../types/bindings'
 import type { JournalContextVariables } from '../types/journal'
+
+const isLocalRequest = (url: string): boolean => {
+  const host = new URL(url).hostname
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1'
+}
+
+const getExecutionCtx = (c: { executionCtx?: ExecutionContext }): ExecutionContext | undefined => {
+  try {
+    return c.executionCtx
+  } catch {
+    return undefined
+  }
+}
 
 export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Variables: JournalContextVariables }>) => {
   app.post('/entries', async (c) => {
@@ -67,7 +80,15 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
       throw error
     }
 
-    enqueueAiSummary(c.env.AI_QUEUE, entryId, timestamp, timestamp)
+    const executionCtx = getExecutionCtx(c)
+
+    if (executionCtx && isLocalRequest(c.req.url)) {
+      executionCtx.waitUntil(
+        processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(entryId, timestamp, timestamp))
+      )
+    } else {
+      enqueueAiSummary(c.env.AI_QUEUE, entryId, timestamp, timestamp)
+    }
 
     const href = buildEntriesHref({
       monthKey: formatMonthKey(journalDate),
@@ -184,7 +205,15 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
       throw error
     }
 
-    enqueueAiSummary(c.env.AI_QUEUE, currentEntry.id, timestamp, timestamp)
+    const executionCtx = getExecutionCtx(c)
+
+    if (executionCtx && isLocalRequest(c.req.url)) {
+      executionCtx.waitUntil(
+        processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(currentEntry.id, timestamp, timestamp))
+      )
+    } else {
+      enqueueAiSummary(c.env.AI_QUEUE, currentEntry.id, timestamp, timestamp)
+    }
 
     if (nextBodyKey !== previousBodyKey) {
       await c.env.JOURNAL_BUCKET.delete(previousBodyKey)
