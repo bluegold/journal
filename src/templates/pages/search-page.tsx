@@ -48,17 +48,17 @@ export const SearchPage = ({ currentUser, query, tag, results, tagStats }: Searc
           <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Search</p>
           <h1 class="mt-1 text-2xl font-semibold text-slate-50">Find entries</h1>
           <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-            Search approved metadata only: title, summary, and approved tags.
+            Free text searches title and summary. Tags are filtered separately against approved tags.
           </p>
 
           <form class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_auto]" method="get" action="/search">
             <label class="block space-y-1.5">
-              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Free text</span>
+              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Title / summary</span>
               <input class="input w-full" type="search" name="q" value={query} placeholder="meeting, idea, project..." />
             </label>
 
             <label class="block space-y-1.5">
-              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Tag</span>
+              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Approved tag</span>
               <input class="input w-full" type="search" name="tag" value={normalizedTag} placeholder="work" />
             </label>
 
