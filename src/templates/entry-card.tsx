@@ -5,9 +5,10 @@ type EntryCardProps = {
   entry: JournalEntryRow
   active?: boolean
   href?: string
+  showDate?: boolean
 }
 
-export const EntryCard = ({ entry, active = false, href }: EntryCardProps) => {
+export const EntryCard = ({ entry, active = false, href, showDate = false }: EntryCardProps) => {
   const classes = [
     'block rounded-xl border p-3 transition',
     active
@@ -21,6 +22,7 @@ export const EntryCard = ({ entry, active = false, href }: EntryCardProps) => {
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <h3 class="truncate text-sm font-semibold text-slate-100">{entry.title || 'Untitled'}</h3>
+            {showDate ? <p class="mt-1 text-[11px] text-slate-400">{entry.journal_date}</p> : null}
           </div>
           <span class="mt-0.5 rounded-full border border-slate-600 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-200">
             {entry.status}
@@ -37,6 +39,7 @@ export const EntryCard = ({ entry, active = false, href }: EntryCardProps) => {
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <h3 class="truncate text-sm font-semibold text-slate-100">{entry.title || 'Untitled'}</h3>
+            {showDate ? <p class="mt-1 text-[11px] text-slate-400">{entry.journal_date}</p> : null}
           </div>
           <span class="mt-0.5 rounded-full border border-slate-600 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-200">
             {entry.status}

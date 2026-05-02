@@ -28,6 +28,7 @@ export const AppLayout = ({ title, children }: AppLayoutProps) => {
         <script
           dangerouslySetInnerHTML={{
             __html: `
+            (() => {
             const focusTagInputEnd = (scope) => {
               const root = scope instanceof Element ? scope : document
               const textarea = root.querySelector('textarea[data-focus-end="true"]')

@@ -26,7 +26,7 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
   const text = uiText.ja
   if (!entry) {
     return (
-      <section class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/90 p-4 text-slate-300">
+    <section class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/90 p-4 text-slate-300 lg:min-h-[calc(100vh-112px)]">
         <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Content area</p>
         <h2 class="mt-1 text-lg font-semibold text-slate-50">Select a journal entry</h2>
         <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{text.detail.noEntryDescription}</p>
@@ -35,7 +35,7 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
   }
 
   return (
-    <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 shadow-[0_18px_54px_-36px_rgba(2,6,23,0.95)]">
+    <section class="flex min-h-[calc(100vh-112px)] flex-col rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 shadow-[0_18px_54px_-36px_rgba(2,6,23,0.95)]">
       <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800 pb-3">
         <div class="min-w-0">
           <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Selected article</p>
@@ -82,7 +82,7 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
         </div>
       </div>
 
-      <div class="mt-3 rounded-xl border border-slate-700 bg-slate-900/80 p-3">
+      <div class="mt-3 flex min-h-0 flex-1 flex-col rounded-xl border border-slate-700 bg-slate-900/80 p-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <p class="text-[10px] font-semibold tracking-[0.2em] text-cyan-100 uppercase">Markdown body</p>
           {entryTags.length > 0 ? (
@@ -101,16 +101,16 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
         </div>
         {renderedBodyHtml ? (
           <div
-            class="markdown-body mt-2 overflow-x-auto rounded-xl border border-slate-700 bg-slate-950/80 p-4"
+            class="markdown-body mt-2 min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-xl border border-slate-700 bg-slate-950/80 p-4"
             dangerouslySetInnerHTML={{ __html: renderedBodyHtml }}
           />
         ) : (
-          <div class="mt-3 space-y-3 text-sm leading-6 text-slate-300">
+          <div class="mt-3 flex min-h-0 flex-1 flex-col space-y-3 text-sm leading-6 text-slate-300">
             <div class="h-3 w-4/5 rounded-full bg-white/10" />
             <div class="h-3 w-full rounded-full bg-white/10" />
             <div class="h-3 w-3/4 rounded-full bg-white/10" />
             <div class="h-3 w-5/6 rounded-full bg-white/10" />
-            <div class="h-28 rounded-xl border border-dashed border-slate-700 bg-slate-950/70 p-4 font-mono text-xs text-slate-400">
+            <div class="min-h-28 flex-1 rounded-xl border border-dashed border-slate-700 bg-slate-950/70 p-4 font-mono text-xs text-slate-400">
               {text.detail.noBody}
             </div>
           </div>

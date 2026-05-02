@@ -22,6 +22,7 @@ export type CalendarMonthView = {
 
 type CalendarMonthProps = {
   view: CalendarMonthView
+  linkTarget?: string
 }
 
 const createDateKey = (date: Date): string => {
@@ -78,7 +79,7 @@ export const buildCalendarMonthView = (
   }
 }
 
-export const CalendarMonth = ({ view }: CalendarMonthProps) => {
+export const CalendarMonth = ({ view, linkTarget = '#journal-workspace' }: CalendarMonthProps) => {
   const text = uiText.ja
   return (
     <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-3 shadow-[0_18px_48px_-36px_rgba(2,6,23,0.95)] backdrop-blur">
@@ -89,19 +90,19 @@ export const CalendarMonth = ({ view }: CalendarMonthProps) => {
         </div>
         <div class="flex items-center gap-2">
           <a
-            {...createWorkspaceLinkAttrs(view.todayHref)}
+            {...createWorkspaceLinkAttrs(view.todayHref, { target: linkTarget })}
             class="rounded-full border border-cyan-300/50 bg-cyan-300/15 px-3 py-1 text-xs text-cyan-50 transition hover:border-cyan-200/70 hover:bg-cyan-300/25"
           >
             {text.calendar.today}
           </a>
           <a
-            {...createWorkspaceLinkAttrs(view.previousMonthHref)}
+            {...createWorkspaceLinkAttrs(view.previousMonthHref, { target: linkTarget })}
             class="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
           >
             {text.calendar.previousMonth}
           </a>
           <a
-            {...createWorkspaceLinkAttrs(view.nextMonthHref)}
+            {...createWorkspaceLinkAttrs(view.nextMonthHref, { target: linkTarget })}
             class="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
           >
             {text.calendar.nextMonth}
@@ -118,7 +119,7 @@ export const CalendarMonth = ({ view }: CalendarMonthProps) => {
       <div class="mt-2 grid grid-cols-7 gap-1">
         {view.cells.map((cell) => (
           <a
-            {...createWorkspaceLinkAttrs(cell.href)}
+            {...createWorkspaceLinkAttrs(cell.href, { target: linkTarget })}
             class={[
               'flex aspect-square items-center justify-center rounded-xl border text-sm transition',
               'focus:outline-none focus:ring-2 focus:ring-cyan-300/60 focus:ring-offset-0',

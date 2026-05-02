@@ -1,38 +1,94 @@
 import { JournalHeader } from '../journal-header'
+import { CalendarMonth } from '../calendar-month'
 import { EntryCard } from '../entry-card'
 import type { JournalTagStat } from '../../lib/tag-stats'
 import type { SearchEntryMatch } from '../../lib/search'
 import { buildEntriesHref } from '../../lib/entries-navigation'
 import { normalizeTagName } from '../../lib/tags'
+import type { CalendarMonthView } from '../calendar-month'
 import type { JournalUserRow } from '../../types/journal'
 import { uiText } from '../../lib/i18n'
 
 type SearchPageProps = {
   currentUser: JournalUserRow
+  calendarView: CalendarMonthView
   query: string
   tag: string
+  month: string
+  date: string
   results: SearchEntryMatch[]
   tagStats: JournalTagStat[]
 }
 
-const buildTagHref = (query: string, tag: string): string => {
+const buildSearchHref = (options: {
+  query?: string
+  tag?: string
+  month?: string
+  date?: string
+}): string => {
   const params = new URLSearchParams()
+  const queryValue = options.query?.trim() ?? ''
+  const tagValue = options.tag?.trim() ?? ''
+  const monthValue = options.month?.trim() ?? ''
+  const dateValue = options.date?.trim() ?? ''
 
-  if (query.trim().length > 0) {
-    params.set('q', query)
+  if (queryValue.length > 0) {
+    params.set('q', queryValue)
   }
 
-  if (tag.trim().length > 0) {
-    params.set('tag', tag)
+  if (tagValue.length > 0) {
+    params.set('tag', tagValue)
+  }
+
+  if (monthValue.length > 0) {
+    params.set('month', monthValue)
+  }
+
+  if (dateValue.length > 0) {
+    params.set('date', dateValue)
   }
 
   const serialized = params.toString()
   return serialized.length > 0 ? `/search?${serialized}` : '/search'
 }
 
-export const SearchPage = ({ currentUser, query, tag, results, tagStats }: SearchPageProps) => {
-  const normalizedTag = normalizeTagName(tag) ?? ''
-  const hasActiveFilters = query.trim().length > 0 || normalizedTag.length > 0
+const buildTagHref = (query: string, tag: string, month: string, date: string): string => {
+  return buildSearchHref({ query, tag, month, date })
+}
+
+export const SearchPage = ({ currentUser, calendarView, query, tag, month, date, results, tagStats }: SearchPageProps) => {
+  return (
+    <SearchPageShell
+      currentUser={currentUser}
+      calendarView={calendarView}
+      query={query}
+      tag={tag}
+      month={month}
+      date={date}
+      results={results}
+      tagStats={tagStats}
+    />
+  )
+}
+
+export const SearchContentPane = (props: SearchPageProps) => {
+  const { currentUser: _currentUser, calendarView, query, tag, month, date, results, tagStats } = props
+  return (
+    <div id="search-workspace" class="min-h-screen">
+      <SearchWorkspace
+        calendarView={calendarView}
+        query={query}
+        tag={tag}
+        month={month}
+        date={date}
+        results={results}
+        tagStats={tagStats}
+      />
+    </div>
+  )
+}
+
+const SearchPageShell = ({ currentUser, calendarView, query, tag, month, date, results, tagStats }: SearchPageProps) => {
   const text = uiText.ja
 
   return (
@@ -45,90 +101,123 @@ export const SearchPage = ({ currentUser, query, tag, results, tagStats }: Searc
         ]}
       />
 
-      <main class="mx-auto w-full max-w-[1200px] px-3 py-4 sm:px-4 lg:px-5">
-        <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 shadow-[0_18px_54px_-36px_rgba(2,6,23,0.95)]">
-          <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Search</p>
-          <h1 class="mt-1 text-2xl font-semibold text-slate-50">Find entries</h1>
-          <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{text.search.description}</p>
+      <div id="search-workspace" class="min-h-screen">
+        <SearchWorkspace
+          calendarView={calendarView}
+          query={query}
+          tag={tag}
+          month={month}
+          date={date}
+          results={results}
+          tagStats={tagStats}
+        />
+      </div>
+    </div>
+  )
+}
 
-          <form class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_auto]" method="get" action="/search">
-            <label class="block space-y-1.5">
-              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.search.freeTextLabel}</span>
-              <input class="input w-full" type="search" name="q" value={query} placeholder={text.search.placeholderFreeText} />
-            </label>
+const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagStats }: Omit<SearchPageProps, 'currentUser'>) => {
+  const normalizedTag = normalizeTagName(tag) ?? ''
+  const hasActiveFilters = query.trim().length > 0 || normalizedTag.length > 0 || month.trim().length > 0 || date.trim().length > 0
+  const text = uiText.ja
 
-            <label class="block space-y-1.5">
-              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.search.tagLabel}</span>
-              <input class="input w-full" type="search" name="tag" value={normalizedTag} placeholder={text.search.placeholderTag} />
-            </label>
+  return (
+    <main class="mx-auto w-full max-w-[1680px] px-3 py-3 sm:px-4 lg:px-5">
+      <div class="grid gap-3 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+        <aside class="space-y-3 lg:sticky lg:top-[64px] lg:h-[calc(100vh-76px)] lg:overflow-y-auto lg:pr-1">
+          <CalendarMonth view={calendarView} linkTarget="#search-workspace" />
+        </aside>
 
-            <div class="flex items-end gap-2">
-              <button type="submit" class="btn btn-primary w-full lg:w-auto">
-                {text.search.search}
-              </button>
-              {hasActiveFilters ? (
-                <a href="/search" class="btn w-full lg:w-auto">
-                  {text.search.clear}
-                </a>
-              ) : null}
-            </div>
-          </form>
+        <div class="space-y-4">
+          <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 shadow-[0_18px_54px_-36px_rgba(2,6,23,0.95)]">
+            <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Search</p>
+            <h1 class="mt-1 text-2xl font-semibold text-slate-50">Find entries</h1>
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{text.search.description}</p>
 
-          {tagStats.length > 0 ? (
-            <div class="mt-4">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">{text.search.popularTags}</span>
-                {tagStats.slice(0, 12).map((tagStat) => (
-                  <a
-                    href={buildTagHref(query, tagStat.name)}
-                    class={[
-                      'rounded-full border px-3 py-1 text-xs transition',
-                      normalizedTag === tagStat.name
-                        ? 'border-cyan-300/50 bg-cyan-300/15 text-cyan-50'
-                        : 'border-slate-700 bg-slate-900 text-slate-200 hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white',
-                    ].join(' ')}
-                  >
-                    {tagStat.name} <span class="text-slate-400">{tagStat.usage_count}</span>
+            <form class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_auto]" method="get" action="/search">
+              {month.trim().length > 0 ? <input type="hidden" name="month" value={month} /> : null}
+              {date.trim().length > 0 ? <input type="hidden" name="date" value={date} /> : null}
+              <label class="block space-y-1.5">
+                <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.search.freeTextLabel}</span>
+                <input class="input w-full" type="search" name="q" value={query} placeholder={text.search.placeholderFreeText} />
+              </label>
+
+              <label class="block space-y-1.5">
+                <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.search.tagLabel}</span>
+                <input class="input w-full" type="search" name="tag" value={normalizedTag} placeholder={text.search.placeholderTag} />
+              </label>
+
+              <div class="flex items-end gap-2">
+                <button type="submit" class="btn btn-primary w-full lg:w-auto">
+                  {text.search.search}
+                </button>
+                {hasActiveFilters ? (
+                  <a href="/search" class="btn w-full lg:w-auto">
+                    {text.search.clear}
                   </a>
+                ) : null}
+              </div>
+            </form>
+
+            {tagStats.length > 0 ? (
+              <div class="mt-4">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">{text.search.popularTags}</span>
+                  {tagStats.slice(0, 12).map((tagStat) => (
+                    <a
+                      href={buildTagHref(query, tagStat.name, month, date)}
+                      class={[
+                        'rounded-full border px-3 py-1 text-xs transition',
+                        normalizedTag === tagStat.name
+                          ? 'border-cyan-300/50 bg-cyan-300/15 text-cyan-50'
+                          : 'border-slate-700 bg-slate-900 text-slate-200 hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white',
+                      ].join(' ')}
+                    >
+                      {tagStat.name} <span class="text-slate-400">{tagStat.usage_count}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </section>
+
+          <section id="search-results" class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div>
+                <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Results</p>
+                <h2 class="mt-1 text-lg font-semibold text-slate-50">{text.search.resultCount.replace('{{count}}', `${results.length}`)}</h2>
+              </div>
+              <p class="text-sm text-slate-400">
+                {text.search.queryLabel}: <span class="text-slate-200">{query || 'all'}</span>
+                {' · '}
+                {text.search.tagFilterLabel}: <span class="text-slate-200">{normalizedTag || 'all'}</span>
+                {' · '}
+                <span class="text-slate-200">{date.trim().length > 0 ? date : month || 'all'}</span>
+              </p>
+            </div>
+
+            {results.length > 0 ? (
+              <div class="mt-4 grid gap-3">
+                {results.map((result) => (
+                  <EntryCard
+                    entry={result.entry}
+                    showDate
+                    href={buildEntriesHref({
+                      monthKey: result.entry.journal_date.slice(0, 7),
+                      dateKey: result.entry.journal_date,
+                      entryId: result.entry.id,
+                    })}
+                  />
                 ))}
               </div>
-            </div>
-          ) : null}
-        </section>
-
-        <section id="search-results" class="mt-4 rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4">
-          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-            <div>
-              <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Results</p>
-              <h2 class="mt-1 text-lg font-semibold text-slate-50">{text.search.resultCount.replace('{{count}}', `${results.length}`)}</h2>
-            </div>
-            <p class="text-sm text-slate-400">
-              {text.search.queryLabel}: <span class="text-slate-200">{query || 'all'}</span>
-              {' · '}
-              {text.search.tagFilterLabel}: <span class="text-slate-200">{normalizedTag || 'all'}</span>
-            </p>
-          </div>
-
-          {results.length > 0 ? (
-            <div class="mt-4 grid gap-3">
-              {results.map((result) => (
-                <EntryCard
-                  entry={result.entry}
-                  href={buildEntriesHref({
-                    monthKey: result.entry.journal_date.slice(0, 7),
-                    dateKey: result.entry.journal_date,
-                    entryId: result.entry.id,
-                  })}
-                />
-              ))}
-            </div>
-          ) : (
-            <div class="mt-4 rounded-xl border border-dashed border-slate-700 bg-slate-900/70 p-4 text-sm text-slate-300">
-              {text.search.noMatches}
-            </div>
-          )}
-        </section>
-      </main>
-    </div>
+            ) : (
+              <div class="mt-4 rounded-xl border border-dashed border-slate-700 bg-slate-900/70 p-4 text-sm text-slate-300">
+                {text.search.noMatches}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+    </main>
   )
 }

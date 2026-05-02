@@ -32,8 +32,10 @@ describe('search route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('Find entries')
+    expect(body).toContain('Calendar')
     expect(body).toContain('検索語:')
     expect(body).toContain('Apple notes')
+    expect(body).toContain('2026-04-22')
     expect(body).toContain('Daily work log')
     expect(body).not.toContain('Banana notes')
   })
@@ -96,6 +98,36 @@ describe('search route', () => {
     expect(body).toContain('タグ:')
     expect(body).toContain('Work log')
     expect(body).not.toContain('Private note')
+  })
+
+  it('filters by calendar date', async () => {
+    const { response, body } = await requestApp('/search?month=2026-04&date=2026-04-21', {
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-1',
+            title: 'April twenty-first',
+            journal_date: '2026-04-21',
+            summary: 'Match this day',
+            body_key: 'entries/entry-1.md',
+          }),
+          createEntryRow({
+            id: 'entry-2',
+            title: 'Another day',
+            journal_date: '2026-04-22',
+            summary: 'Should be filtered out',
+            body_key: 'entries/entry-2.md',
+          }),
+        ],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('April twenty-first')
+    expect(body).toContain('2026-04-21')
+    expect(body).not.toContain('Another day')
+    expect(body).toContain('href="/search?month=2026-04&amp;date=2026-04-21"')
   })
 
   it('shows the empty state for blank queries with no entries', async () => {

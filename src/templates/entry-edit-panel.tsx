@@ -38,7 +38,10 @@ export const EntryEditPanel = ({ entry, body, tagsText, updateHref, cancelHref }
           <div class="rounded-full border border-emerald-300/40 bg-emerald-300/15 px-3 py-1 text-xs text-emerald-50">
             {text.editor.editing}
           </div>
-          <a {...createWorkspaceLinkAttrs(cancelHref, { target: '#journal-workspace' })} class="btn">
+          <a
+            {...createWorkspaceLinkAttrs(cancelHref, { target: '#journal-workspace' })}
+            class="inline-flex h-7 items-center rounded-full border border-slate-600 bg-slate-900 px-3 text-xs leading-none text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
+          >
             {text.editor.cancel}
           </a>
         </div>

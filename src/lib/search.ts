@@ -8,6 +8,8 @@ type SearchEntriesOptions = {
   userId: string
   query: string
   tag: string
+  month?: string | null
+  date?: string | null
 }
 
 export type SearchEntryMatch = {
@@ -53,12 +55,27 @@ export const searchEntries = ({
   userId,
   query,
   tag,
+  month,
+  date,
 }: SearchEntriesOptions): SearchEntryMatch[] => {
   const normalizedTag = normalizeTagName(tag)
+  const normalizedMonth = month?.trim() ?? ''
+  const normalizedDate = date?.trim() ?? ''
   const tagNamesByEntryId = buildTagNamesByEntryId(tags, entryTags, userId)
 
   return entries
     .filter((entry) => entry.user_id === userId && entry.deleted_at == null)
+    .filter((entry) => {
+      if (normalizedDate.length > 0) {
+        return entry.journal_date === normalizedDate
+      }
+
+      if (normalizedMonth.length > 0) {
+        return entry.journal_date.startsWith(normalizedMonth)
+      }
+
+      return true
+    })
     .map((entry) => ({
       entry,
       tagNames: [...new Set(tagNamesByEntryId.get(entry.id) ?? [])].sort((a, b) => a.localeCompare(b)),
