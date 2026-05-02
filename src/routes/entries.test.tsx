@@ -200,7 +200,7 @@ describe('entries route', () => {
             title: 'Editable entry',
             summary: 'Editable summary',
             ai_summary: 'AI generated summary',
-            ai_summary_model: '@cf/facebook/bart-large-cnn',
+            ai_summary_model: '@cf/meta/llama-3.2-3b-instruct',
             ai_summary_generated_at: '2026-05-02T16:46:33.090Z',
             body_key: 'entries/entry-2.md',
             created_at: '2026-04-22T18:00:00.000Z',
@@ -978,7 +978,7 @@ describe('entries route', () => {
             title: 'Editable entry',
             summary: 'Editable summary',
             ai_summary: 'AI generated summary',
-            ai_summary_model: '@cf/facebook/bart-large-cnn',
+            ai_summary_model: '@cf/meta/llama-3.2-3b-instruct',
             ai_summary_generated_at: '2026-05-02T16:46:33.090Z',
             body_key: 'entries/entry-2.md',
             created_at: '2026-04-22T18:00:00.000Z',
@@ -1038,7 +1038,7 @@ describe('entries route', () => {
     expect(env.DB.state.entries[0]).toMatchObject({
       title: 'Local entry',
       ai_summary: 'Local summary',
-      ai_summary_model: '@cf/facebook/bart-large-cnn',
+      ai_summary_model: '@cf/meta/llama-3.2-3b-instruct',
     })
   })
 })

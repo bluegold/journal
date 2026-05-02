@@ -29,7 +29,7 @@ describe('ai summary queue processing', () => {
         ],
       },
       ai: {
-        summary: 'Short release summary',
+        summary: '以下は、日記本文の要約です。\n\nShort release summary',
       },
     })
 
@@ -42,21 +42,73 @@ describe('ai summary queue processing', () => {
 
     expect(env.AI.state.calls).toHaveLength(1)
     expect(env.AI.state.calls[0]).toMatchObject({
-      model: '@cf/facebook/bart-large-cnn',
+      model: '@cf/meta/llama-3.2-3b-instruct',
       inputs: {
-        max_length: 120,
+        max_tokens: 240,
+        temperature: 0.2,
       },
     })
-    expect(String(env.AI.state.calls[0].inputs.input_text)).toContain('Entry title: Daily notes')
-    expect(String(env.AI.state.calls[0].inputs.input_text)).not.toContain('Title: Daily notes')
-    expect(String(env.AI.state.calls[0].inputs.input_text)).toContain('calendar search update')
+    expect(env.AI.state.calls[0].inputs).toMatchObject({
+      messages: [
+        {
+          role: 'system',
+          content: expect.stringContaining('本文と同じ言語'),
+        },
+        {
+          role: 'user',
+          content: expect.stringContaining('タイトル: Daily notes'),
+        },
+      ],
+    })
+    const messages = env.AI.state.calls[0].inputs.messages as Array<{ role: string; content: string }>
+    expect(String(messages[1].content)).toContain('calendar search update')
+    expect(String(messages[1].content)).not.toContain('```')
     expect(env.DB.state.entries[0]).toMatchObject({
       ai_summary: 'Short release summary',
-      ai_summary_model: '@cf/facebook/bart-large-cnn',
+      ai_summary_model: '@cf/meta/llama-3.2-3b-instruct',
     })
     expect(env.DB.state.entries[0].ai_summary_generated_at).toMatch(
       /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
     )
+  })
+
+  it('skips entries whose body only contains fenced code blocks', async () => {
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            id: 'entry-1',
+            title: 'Diagram notes',
+            ai_summary: null,
+            ai_summary_model: null,
+            ai_summary_generated_at: null,
+            body_key: 'entries/entry-1.md',
+            updated_at: '2026-04-22T08:00:00.000Z',
+          }),
+        ],
+      },
+      r2: {
+        initialObjects: [
+          {
+            key: 'entries/entry-1.md',
+            body: '```mermaid\ngraph TD;\n    A --> B;\n```',
+          },
+        ],
+      },
+    })
+
+    await processAiSummaryQueueMessage(env, {
+      type: 'summarize_entry',
+      entryId: 'entry-1',
+      entryUpdatedAt: '2026-04-22T08:00:00.000Z',
+      requestedAt: '2026-04-22T08:01:00.000Z',
+    })
+
+    expect(env.AI.state.calls).toHaveLength(0)
+    expect(env.DB.state.entries[0].ai_summary).toBeNull()
+    expect(env.DB.state.entries[0].ai_summary_model).toBeNull()
+    expect(env.DB.state.entries[0].ai_summary_generated_at).toBeNull()
   })
 
   it('skips stale queue messages when the entry has changed since enqueue', async () => {

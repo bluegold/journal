@@ -9,32 +9,52 @@ export type AiSummaryQueueMessage = {
   requestedAt: string
 }
 
-const AI_SUMMARY_MODEL = '@cf/facebook/bart-large-cnn'
+const AI_SUMMARY_MODEL = '@cf/meta/llama-3.2-3b-instruct'
 const MAX_INPUT_CHARS = 12_000
+const MAX_OUTPUT_TOKENS = 240
+const AI_SUMMARY_SYSTEM_PROMPT =
+  'あなたはジャーナルアプリの一覧画面に表示する短い要約を作成します。\n本文と同じ言語で、自然な1〜2文のプレーンテキストだけを返してください。前置き、見出し、箇条書き、ラベル、引用符は不要です。"筆者"、"The writer"、"この文章では" のような主語や導入で始めないでください。\n 本文全体から、中心的な出来事、進捗、判断、気づきだけを残してください。作業手順を時系列に並べたり、本文の文を切り貼りしたりしないでください。細かい実装内容、画面名、カラム名、状態名、時刻、個別の操作は、重要でない限り省いてください。\nマークダウンの見出し行、タイトル行、日付だけの行は、本文の内容を理解するための補助情報として扱い、要約文には含めないでください。特に、`#` で始まる行や「本日の記録」「作業ログ」「日記」「メモ」のようなタイトル語を、要約の先頭や本文中に再利用しないでください。\n「何をしたか」だけでなく、「何が決まったか」「次に何が残ったか」が自然に分かる要約にしてください。\n出力してよいのは要約文だけです。\n\n 本文:\n'
 
-const buildSummaryInput = (entry: Pick<JournalEntryRow, 'title' | 'journal_date'>, body: string): string => {
-  const parts: string[] = [
-    'Summarize the journal entry in 1-2 short sentences.',
-    'Return plain text only.',
-    'Do not repeat labels like Title or Date.',
-    'Focus on the main content.',
-    '',
-  ]
+const stripFencedCodeBlocks = (text: string): string => {
+  return text.replace(/```[\s\S]*?```/g, '').trim()
+}
+
+const buildSummaryPromptPreview = (entry: Pick<JournalEntryRow, 'title' | 'journal_date'>): string => {
+  const parts: string[] = []
   const title = entry.title.trim()
 
   if (title.length > 0) {
-    parts.push(`Entry title: ${title}`)
+    parts.push(`タイトル: ${title}`)
   }
 
   if (entry.journal_date.trim().length > 0) {
-    parts.push(`Entry date: ${entry.journal_date}`)
+    parts.push(`日付: ${entry.journal_date}`)
   }
 
-  parts.push('')
-  parts.push('Entry body:')
-  parts.push(body.trim())
+  return parts.join('\n\n')
+}
 
-  return parts.join('\n\n').slice(0, MAX_INPUT_CHARS)
+const buildSummaryMessages = (
+  entry: Pick<JournalEntryRow, 'title' | 'journal_date'>,
+  body: string
+): Array<{ role: 'system' | 'user'; content: string }> => {
+  const preview = buildSummaryPromptPreview(entry)
+  const bodyWithoutCodeBlocks = stripFencedCodeBlocks(body)
+  const userContent = [preview, '本文:', bodyWithoutCodeBlocks]
+    .filter((part) => part.length > 0)
+    .join('\n\n')
+    .slice(0, MAX_INPUT_CHARS)
+
+  return [
+    {
+      role: 'system',
+      content: AI_SUMMARY_SYSTEM_PROMPT,
+    },
+    {
+      role: 'user',
+      content: userContent,
+    },
+  ]
 }
 
 const extractSummary = (result: unknown): string => {
@@ -57,6 +77,14 @@ const extractSummary = (result: unknown): string => {
   }
 
   return ''
+}
+
+const normalizeSummary = (summary: string): string => {
+  return summary
+    .replace(/^(以下は.{0,40}?要約(?:です|になります)?[。:：\s]*)+/u, '')
+    .replace(/^(Here is(?: a)? summary(?: of the journal entry)?[。:：\s]*)+/iu, '')
+    .replace(/^(The following is(?: a)? summary(?: of the journal entry)?[。:：\s]*)+/iu, '')
+    .trim()
 }
 
 export const createAiSummaryQueueMessage = (
@@ -116,16 +144,35 @@ export const processAiSummaryQueueMessage = async (
     return
   }
 
+  const bodyWithoutCodeBlocks = stripFencedCodeBlocks(body)
+  if (bodyWithoutCodeBlocks.length === 0) {
+    console.log('AI summary job skipped: entry body only contains code blocks', {
+      entryId: message.entryId,
+    })
+    return
+  }
+
   console.log('AI summary job running model', {
     entryId: message.entryId,
     model: AI_SUMMARY_MODEL,
+    systemPrompt: AI_SUMMARY_SYSTEM_PROMPT,
+    prompt: buildSummaryPromptPreview(currentEntry),
+    bodyLength: body.length,
+    bodyTrimmedLength: body.trim().length,
+    bodyWithoutCodeBlocksLength: bodyWithoutCodeBlocks.length,
+    inputLength: buildSummaryMessages(currentEntry, body).at(1)?.content.length ?? 0,
   })
 
   const generated = await env.AI.run(AI_SUMMARY_MODEL, {
-    input_text: buildSummaryInput(currentEntry, body),
-    max_length: 120,
+    messages: buildSummaryMessages(currentEntry, body),
+    max_tokens: MAX_OUTPUT_TOKENS,
+    temperature: 0.2,
   })
-  const aiSummary = extractSummary(generated)
+  console.log('AI summary job raw response', {
+    entryId: message.entryId,
+    response: generated,
+  })
+  const aiSummary = normalizeSummary(extractSummary(generated))
 
   if (aiSummary.length === 0) {
     console.log('AI summary job skipped: model returned empty summary', {
