@@ -85,7 +85,7 @@ describe('entries route', () => {
     expect(body).toContain('Tester')
     expect(body).toContain('Calendar')
     expect(body).toContain('2026-04-22')
-    expect(body).toContain('Tags')
+    expect(body).toContain('タグ')
     expect(body).toContain('travel')
     expect(body).toContain('href="/search?tag=travel"')
     expect(body).toContain('Selected article')
@@ -117,12 +117,12 @@ describe('entries route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('Create a new entry')
-    expect(body).toContain('journal draft')
+    expect(body).toContain('下書き')
     expect(body).toContain('name="journal_date"')
     expect(body).toContain('value="2026-04-22"')
     expect(body).toContain('Morning entry')
     expect(body).toContain('Summary one')
-    expect(body).toContain('Cancel')
+    expect(body).toContain('キャンセル')
     expect(body).toContain('ring-1 ring-cyan-300/50')
   })
 
@@ -181,10 +181,10 @@ describe('entries route', () => {
     expect(body).toContain('Editable entry')
     expect(body).toContain('Original body.')
     expect(body).toContain('name="tags"')
-    expect(body).toContain('work, ideas')
-    expect(body).toContain('Save changes')
-    expect(body).toContain('Preview')
-    expect(body).toContain('Cancel')
+    expect(body).toContain('ideas, work')
+    expect(body).toContain('変更を保存')
+    expect(body).toContain('プレビュー')
+    expect(body).toContain('キャンセル')
   })
 
   it('renders the edit entry fragment for htmx requests', async () => {
@@ -240,8 +240,8 @@ describe('entries route', () => {
     expect(body).toContain('id="journal-content"')
     expect(body).toContain('Edit the selected entry')
     expect(body).toContain('Original body.')
-    expect(body).toContain('Preview')
-    expect(body).toContain('Cancel')
+    expect(body).toContain('プレビュー')
+    expect(body).toContain('キャンセル')
   })
 
   it('renders the edit entry form with an empty body when R2 has no content', async () => {
@@ -268,7 +268,7 @@ describe('entries route', () => {
     expect(body).toContain('Edit the selected entry')
     expect(body).toContain('name="body"')
     expect(body).not.toContain('Original body.')
-    expect(body).toContain('Preview')
+    expect(body).toContain('プレビュー')
   })
 
   it('returns 404 when editing, updating, or deleting a missing entry', async () => {
@@ -532,7 +532,7 @@ describe('entries route', () => {
     const followBody = await followResponse.text()
 
     expect(followResponse.status).toBe(200)
-    expect(followBody).toContain('No journal entries for this day.')
+    expect(followBody).toContain('この日の記録はありません。')
     expect(followBody).not.toContain('Entry to delete')
   })
 
@@ -643,7 +643,7 @@ describe('entries route', () => {
     expect(response.status).toBe(200)
     expect(body).toContain('id="entry-preview-overlay"')
     expect(body).toContain('<h1>Untitled</h1>')
-    expect(body).toContain('Close')
+    expect(body).toContain('閉じる')
   })
 
   it('closes the preview overlay back to a hidden slot', async () => {

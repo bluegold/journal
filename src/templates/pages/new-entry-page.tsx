@@ -10,6 +10,7 @@ import {
   formatMonthKey,
   shiftMonth,
 } from '../../lib/entries-navigation'
+import { uiText } from '../../lib/i18n'
 import type { JournalEntryRow, JournalUserRow } from '../../types/journal'
 
 type NewEntryPageProps = {
@@ -22,6 +23,7 @@ type NewEntryPageProps = {
 }
 
 export const NewEntryPage = ({ currentUser, entries, query }: NewEntryPageProps) => {
+  const text = uiText.ja
   const selection = resolveEntriesSelection(entries, query)
   const previousMonthDate = shiftMonth(selection.monthDate, -1)
   const nextMonthDate = shiftMonth(selection.monthDate, 1)
@@ -61,8 +63,8 @@ export const NewEntryPage = ({ currentUser, entries, query }: NewEntryPageProps)
         />
       }
       menuItems={[
-        { label: 'Entries', href: '/entries' },
-        { label: 'Search', href: '/search' },
+        { label: text.nav.entries, href: '/entries' },
+        { label: text.nav.search, href: '/search' },
       ]}
     />
   )

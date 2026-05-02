@@ -32,7 +32,7 @@ describe('search route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('Find entries')
-    expect(body).toContain('q:')
+    expect(body).toContain('検索語:')
     expect(body).toContain('Apple notes')
     expect(body).toContain('Daily work log')
     expect(body).not.toContain('Banana notes')
@@ -67,7 +67,7 @@ describe('search route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('No matches.')
+    expect(body).toContain('一致する記事はありません。')
     expect(body).not.toContain('Plain note')
     expect(body).not.toContain('Deleted note')
     expect(body).not.toContain('Should stay hidden')
@@ -93,7 +93,7 @@ describe('search route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('tag:')
+    expect(body).toContain('タグ:')
     expect(body).toContain('Work log')
     expect(body).not.toContain('Private note')
   })
@@ -107,6 +107,6 @@ describe('search route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('Results')
-    expect(body).toContain('No matches.')
+    expect(body).toContain('一致する記事はありません。')
   })
 })

@@ -5,6 +5,7 @@ import type { SearchEntryMatch } from '../../lib/search'
 import { buildEntriesHref } from '../../lib/entries-navigation'
 import { normalizeTagName } from '../../lib/tags'
 import type { JournalUserRow } from '../../types/journal'
+import { uiText } from '../../lib/i18n'
 
 type SearchPageProps = {
   currentUser: JournalUserRow
@@ -32,14 +33,15 @@ const buildTagHref = (query: string, tag: string): string => {
 export const SearchPage = ({ currentUser, query, tag, results, tagStats }: SearchPageProps) => {
   const normalizedTag = normalizeTagName(tag) ?? ''
   const hasActiveFilters = query.trim().length > 0 || normalizedTag.length > 0
+  const text = uiText.ja
 
   return (
     <div class="min-h-screen">
       <JournalHeader
         currentUser={currentUser}
         menuItems={[
-          { label: 'Entries', href: '/entries' },
-          { label: 'Search', href: '/search' },
+          { label: text.nav.entries, href: '/entries' },
+          { label: text.nav.search, href: '/search' },
         ]}
       />
 
@@ -47,28 +49,26 @@ export const SearchPage = ({ currentUser, query, tag, results, tagStats }: Searc
         <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 shadow-[0_18px_54px_-36px_rgba(2,6,23,0.95)]">
           <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Search</p>
           <h1 class="mt-1 text-2xl font-semibold text-slate-50">Find entries</h1>
-          <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-            Free text searches title and summary. Tags are filtered separately against approved tags.
-          </p>
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{text.search.description}</p>
 
           <form class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_auto]" method="get" action="/search">
             <label class="block space-y-1.5">
-              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Title / summary</span>
-              <input class="input w-full" type="search" name="q" value={query} placeholder="meeting, idea, project..." />
+              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.search.freeTextLabel}</span>
+              <input class="input w-full" type="search" name="q" value={query} placeholder={text.search.placeholderFreeText} />
             </label>
 
             <label class="block space-y-1.5">
-              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">Approved tag</span>
-              <input class="input w-full" type="search" name="tag" value={normalizedTag} placeholder="work" />
+              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.search.tagLabel}</span>
+              <input class="input w-full" type="search" name="tag" value={normalizedTag} placeholder={text.search.placeholderTag} />
             </label>
 
             <div class="flex items-end gap-2">
               <button type="submit" class="btn btn-primary w-full lg:w-auto">
-                Search
+                {text.search.search}
               </button>
               {hasActiveFilters ? (
                 <a href="/search" class="btn w-full lg:w-auto">
-                  Clear
+                  {text.search.clear}
                 </a>
               ) : null}
             </div>
@@ -77,7 +77,7 @@ export const SearchPage = ({ currentUser, query, tag, results, tagStats }: Searc
           {tagStats.length > 0 ? (
             <div class="mt-4">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">Popular tags</span>
+                <span class="text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">{text.search.popularTags}</span>
                 {tagStats.slice(0, 12).map((tagStat) => (
                   <a
                     href={buildTagHref(query, tagStat.name)}
@@ -100,12 +100,12 @@ export const SearchPage = ({ currentUser, query, tag, results, tagStats }: Searc
           <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
             <div>
               <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Results</p>
-              <h2 class="mt-1 text-lg font-semibold text-slate-50">{results.length} entries</h2>
+              <h2 class="mt-1 text-lg font-semibold text-slate-50">{text.search.resultCount.replace('{{count}}', `${results.length}`)}</h2>
             </div>
             <p class="text-sm text-slate-400">
-              q: <span class="text-slate-200">{query || 'all'}</span>
+              {text.search.queryLabel}: <span class="text-slate-200">{query || 'all'}</span>
               {' · '}
-              tag: <span class="text-slate-200">{normalizedTag || 'all'}</span>
+              {text.search.tagFilterLabel}: <span class="text-slate-200">{normalizedTag || 'all'}</span>
             </p>
           </div>
 
@@ -124,7 +124,7 @@ export const SearchPage = ({ currentUser, query, tag, results, tagStats }: Searc
             </div>
           ) : (
             <div class="mt-4 rounded-xl border border-dashed border-slate-700 bg-slate-900/70 p-4 text-sm text-slate-300">
-              No matches.
+              {text.search.noMatches}
             </div>
           )}
         </section>

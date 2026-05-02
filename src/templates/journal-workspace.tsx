@@ -5,6 +5,7 @@ import { JournalHeader } from './journal-header'
 import { JournalContentPane } from './journal-content-pane'
 import type { CalendarMonthView } from './calendar-month'
 import type { JournalEntryRow, JournalUserRow } from '../types/journal'
+import { uiText } from '../lib/i18n'
 
 type JournalWorkspaceProps = {
   currentUser: JournalUserRow
@@ -33,6 +34,7 @@ export const JournalWorkspace = ({
   menuItems,
 }: JournalWorkspaceProps) => {
   const selectedDateKey = selectedDateLabel?.trim() ?? null
+  const text = uiText.ja
 
   return (
     <div id="journal-workspace" class="min-h-screen">
@@ -48,7 +50,7 @@ export const JournalWorkspace = ({
                 <div>
                   <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Selected day</p>
                   <h2 class="mt-1 text-sm font-semibold text-slate-100">
-                    {selectedDateKey || 'No date selected'}
+                    {selectedDateKey || text.workspace.noDateSelected}
                   </h2>
                 </div>
                 {selectedDateKey ? (
@@ -60,7 +62,7 @@ export const JournalWorkspace = ({
                     hx-push-url="true"
                     class="rounded-full border border-cyan-300/50 bg-cyan-300/15 px-3 py-1 text-xs font-medium text-cyan-50 transition hover:border-cyan-200/70 hover:bg-cyan-300/25"
                   >
-                    + New
+                    {text.workspace.newEntry}
                   </a>
                 ) : null}
               </div>
@@ -76,7 +78,7 @@ export const JournalWorkspace = ({
                   ))
                 ) : (
                   <div class="rounded-xl border border-dashed border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-300">
-                    No journal entries for this day.
+                    {text.workspace.noEntries}
                   </div>
                 )}
               </div>

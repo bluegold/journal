@@ -1,4 +1,5 @@
 import { createWorkspaceLinkAttrs } from '../lib/htmx'
+import { uiText } from '../lib/i18n'
 
 type CalendarMonthCell = {
   dateKey: string | null
@@ -78,6 +79,7 @@ export const buildCalendarMonthView = (
 }
 
 export const CalendarMonth = ({ view }: CalendarMonthProps) => {
+  const text = uiText.ja
   return (
     <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-3 shadow-[0_18px_48px_-36px_rgba(2,6,23,0.95)] backdrop-blur">
       <div class="flex items-center justify-between gap-3">
@@ -90,19 +92,19 @@ export const CalendarMonth = ({ view }: CalendarMonthProps) => {
             {...createWorkspaceLinkAttrs(view.todayHref)}
             class="rounded-full border border-cyan-300/50 bg-cyan-300/15 px-3 py-1 text-xs text-cyan-50 transition hover:border-cyan-200/70 hover:bg-cyan-300/25"
           >
-            Today
+            {text.calendar.today}
           </a>
           <a
             {...createWorkspaceLinkAttrs(view.previousMonthHref)}
             class="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
           >
-            Prev
+            {text.calendar.previousMonth}
           </a>
           <a
             {...createWorkspaceLinkAttrs(view.nextMonthHref)}
             class="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
           >
-            Next
+            {text.calendar.nextMonth}
           </a>
         </div>
       </div>

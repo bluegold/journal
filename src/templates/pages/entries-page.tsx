@@ -10,6 +10,7 @@ import {
   formatMonthKey,
   shiftMonth,
 } from '../../lib/entries-navigation'
+import { uiText } from '../../lib/i18n'
 import type { JournalEntryRow, JournalUserRow } from '../../types/journal'
 
 type EntriesPageProps = {
@@ -25,6 +26,7 @@ type EntriesPageProps = {
 }
 
 export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, selectedEntryTagNames, query }: EntriesPageProps) => {
+  const text = uiText.ja
   const selection = resolveEntriesSelection(entries, query)
 
   const calendarView = buildCalendarMonthView(
@@ -75,8 +77,8 @@ export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, selec
         />
       }
       menuItems={[
-        { label: 'Entries', href: '/entries' },
-        { label: 'Search', href: '/search' },
+        { label: text.nav.entries, href: '/entries' },
+        { label: text.nav.search, href: '/search' },
       ]}
     />
   )

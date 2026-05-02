@@ -10,6 +10,7 @@ import {
   parseDateKey,
   shiftMonth,
 } from '../../lib/entries-navigation'
+import { uiText } from '../../lib/i18n'
 import type { JournalEntryRow, JournalUserRow } from '../../types/journal'
 
 type EntryEditPageProps = {
@@ -21,6 +22,7 @@ type EntryEditPageProps = {
 }
 
 export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText }: EntryEditPageProps) => {
+  const text = uiText.ja
   const entryDate = parseDateKey(entry.journal_date) ?? new Date()
   const selection = resolveEntriesSelection(entries, {
     month: formatMonthKey(entryDate),
@@ -71,8 +73,8 @@ export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText }: E
         />
       }
       menuItems={[
-        { label: 'Entries', href: '/entries' },
-        { label: 'Search', href: '/search' },
+        { label: text.nav.entries, href: '/entries' },
+        { label: text.nav.search, href: '/search' },
       ]}
     />
   )

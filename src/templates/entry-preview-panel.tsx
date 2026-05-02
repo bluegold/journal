@@ -1,3 +1,5 @@
+import { uiText } from '../lib/i18n'
+
 type EntryPreviewOverlayProps = {
   renderedBodyHtml: string
 }
@@ -7,6 +9,7 @@ export const EntryPreviewSlot = () => {
 }
 
 export const EntryPreviewOverlay = ({ renderedBodyHtml }: EntryPreviewOverlayProps) => {
+  const text = uiText.ja
   return (
     <section
       id="entry-preview-overlay"
@@ -17,7 +20,7 @@ export const EntryPreviewOverlay = ({ renderedBodyHtml }: EntryPreviewOverlayPro
       <button
         type="button"
         class="absolute inset-0 z-0 cursor-default"
-        aria-label="Close preview overlay"
+        aria-label={text.preview.closeOverlay}
         hx-get="/entries/preview/close"
         hx-target="#entry-preview-overlay"
         hx-swap="outerHTML"
@@ -30,7 +33,7 @@ export const EntryPreviewOverlay = ({ renderedBodyHtml }: EntryPreviewOverlayPro
             <h4 class="mt-2 text-lg font-semibold text-slate-50">Rendered markdown</h4>
           </div>
           <div class="flex items-center gap-2">
-            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">live</span>
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">{text.preview.live}</span>
             <button
               type="button"
               class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
@@ -38,7 +41,7 @@ export const EntryPreviewOverlay = ({ renderedBodyHtml }: EntryPreviewOverlayPro
               hx-target="#entry-preview-overlay"
               hx-swap="outerHTML"
             >
-              Close
+              {text.preview.close}
             </button>
           </div>
         </div>

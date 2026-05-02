@@ -9,6 +9,7 @@ import {
   formatMonthKey,
   shiftMonth,
 } from '../../lib/entries-navigation'
+import { uiText } from '../../lib/i18n'
 import type { JournalUserRow } from '../../types/journal'
 
 type HomePageProps = {
@@ -16,6 +17,7 @@ type HomePageProps = {
 }
 
 export const HomePage = ({ currentUser }: HomePageProps) => {
+  const text = uiText.ja
   const monthDate = new Date()
   const monthKey = formatMonthKey(monthDate)
   const previousMonthDate = shiftMonth(monthDate, -1)
@@ -38,8 +40,8 @@ export const HomePage = ({ currentUser }: HomePageProps) => {
       newEntryHref={buildNewEntryHref({ monthKey: formatMonthKey(monthDate), dateKey: formatDateKey(monthDate) })}
       detailPane={<EntryDetailPanel entry={null} renderedBodyHtml={null} entryTags={[]} />}
       menuItems={[
-        { label: 'Entries', href: '/entries' },
-        { label: 'Search', href: '/search' },
+        { label: text.nav.entries, href: '/entries' },
+        { label: text.nav.search, href: '/search' },
       ]}
     />
   )

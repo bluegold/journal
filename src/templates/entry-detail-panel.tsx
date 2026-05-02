@@ -1,5 +1,6 @@
 import type { JournalEntryRow } from '../types/journal'
 import { createWorkspaceLinkAttrs } from '../lib/htmx'
+import { uiText } from '../lib/i18n'
 
 type EntryDetailPanelProps = {
   entry: JournalEntryRow | null
@@ -22,14 +23,13 @@ const formatTimestamp = (iso: string): string => {
 }
 
 export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref, deleteHref }: EntryDetailPanelProps) => {
+  const text = uiText.ja
   if (!entry) {
     return (
       <section class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/90 p-4 text-slate-300">
         <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Content area</p>
         <h2 class="mt-1 text-lg font-semibold text-slate-50">Select a journal entry</h2>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-          Pick a day on the calendar and select an entry from the list, or start a new one with the <strong class="font-medium text-slate-200">+ New</strong> button.
-        </p>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{text.detail.noEntryDescription}</p>
       </section>
     )
   }
@@ -59,7 +59,7 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
                 })}
                 class="rounded-full border border-slate-600 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
               >
-                Edit
+                {text.detail.edit}
               </a>
             ) : null}
             {deleteHref ? (
@@ -67,16 +67,18 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
                 type="button"
                 class="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs text-red-100 transition hover:border-red-400/50 hover:bg-red-500/20 hover:text-white"
                 hx-post={deleteHref}
-                hx-confirm="Delete this entry?"
+                hx-confirm={text.detail.deleteConfirm}
                 hx-target="#journal-workspace"
                 hx-swap="outerHTML"
                 hx-push-url="true"
               >
-                Delete
+                {text.detail.delete}
               </button>
             ) : null}
           </div>
-          <p class="mt-1 text-[11px] text-slate-400">Updated {formatTimestamp(entry.updated_at)}</p>
+          <p class="mt-1 text-[11px] text-slate-400">
+            {text.detail.updated} {formatTimestamp(entry.updated_at)}
+          </p>
         </div>
       </div>
 
@@ -85,7 +87,7 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
           <p class="text-[10px] font-semibold tracking-[0.2em] text-cyan-100 uppercase">Markdown body</p>
           {entryTags.length > 0 ? (
             <div class="flex flex-wrap items-center justify-end gap-1.5">
-              <span class="text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">Tags</span>
+              <span class="text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">{text.detail.tags}</span>
               {entryTags.map((tagName) => (
                 <a
                   href={`/search?tag=${encodeURIComponent(tagName)}`}
@@ -109,7 +111,7 @@ export const EntryDetailPanel = ({ entry, renderedBodyHtml, entryTags, editHref,
             <div class="h-3 w-3/4 rounded-full bg-white/10" />
             <div class="h-3 w-5/6 rounded-full bg-white/10" />
             <div class="h-28 rounded-xl border border-dashed border-slate-700 bg-slate-950/70 p-4 font-mono text-xs text-slate-400">
-              R2 body preview will appear here.
+              {text.detail.noBody}
             </div>
           </div>
         )}

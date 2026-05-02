@@ -1,5 +1,6 @@
 import type { JournalTagStat } from '../lib/tag-stats'
 import { createWorkspaceLinkAttrs } from '../lib/htmx'
+import { uiText } from '../lib/i18n'
 
 type TagAutocompleteFieldProps = {
   fieldId: string
@@ -11,11 +12,14 @@ type TagAutocompleteFieldProps = {
 }
 
 const getSuggestionsTitle = (query: string, suggestions: JournalTagStat[]): string => {
+  const text = uiText.ja
   if (query.length === 0) {
-    return suggestions.length > 0 ? 'Popular tags' : 'No tags yet'
+    return suggestions.length > 0 ? text.tags.popularTags : text.tags.noTags
   }
 
-  return suggestions.length > 0 ? `Matches for "${query}"` : `No matches for "${query}"`
+  return suggestions.length > 0
+    ? text.tags.matchesFor.replace('{{query}}', query)
+    : text.tags.noMatchesFor.replace('{{query}}', query)
 }
 
 export const TagAutocompleteSuggestions = ({
@@ -24,6 +28,7 @@ export const TagAutocompleteSuggestions = ({
   query,
   suggestions,
 }: Pick<TagAutocompleteFieldProps, 'fieldId' | 'formId' | 'query' | 'suggestions'>) => {
+  const text = uiText.ja
   return (
     <div
       id={`${fieldId}-suggestions`}
@@ -34,7 +39,10 @@ export const TagAutocompleteSuggestions = ({
         <p class="text-[10px] font-semibold tracking-[0.2em] text-slate-500 uppercase">
           {getSuggestionsTitle(query, suggestions)}
         </p>
-        <span class="text-[10px] text-slate-500">{suggestions.length} shown</span>
+        <span class="text-[10px] text-slate-500">
+          {suggestions.length}
+          {text.tags.shown}
+        </span>
       </div>
 
       {suggestions.length > 0 ? (
@@ -56,7 +64,7 @@ export const TagAutocompleteSuggestions = ({
           ))}
         </div>
       ) : (
-        <p class="mt-3 text-sm text-slate-500">Type to narrow the list.</p>
+        <p class="mt-3 text-sm text-slate-500">{text.tags.narrowHint}</p>
       )}
     </div>
   )
@@ -70,17 +78,18 @@ export const TagAutocompleteField = ({
   suggestions,
   focusEnd = false,
 }: TagAutocompleteFieldProps) => {
+  const text = uiText.ja
   return (
     <div id={`${fieldId}-field`} class="space-y-2">
       <input type="hidden" name="tags_field_id" value={fieldId} />
       <input type="hidden" name="tags_form_id" value={formId} />
       <label class="block space-y-2">
-        <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">Tags</span>
+        <span class="text-xs font-medium tracking-[0.18em] text-slate-400 uppercase">{text.tags.label}</span>
         <textarea
           id={`${fieldId}-input`}
           class="textarea min-h-20 w-full"
           name="tags"
-          placeholder="work, ideas, project"
+          placeholder={text.tags.placeholder}
           data-focus-end={focusEnd ? 'true' : undefined}
           hx-get="/tags/autocomplete"
           hx-trigger="input changed delay:250ms"
@@ -91,7 +100,7 @@ export const TagAutocompleteField = ({
         >
           {value}
         </textarea>
-        <p class="text-xs text-slate-500">Comma or newline separated. Lower-cased and deduplicated on save.</p>
+        <p class="text-xs text-slate-500">{text.tags.helper}</p>
       </label>
 
       <TagAutocompleteSuggestions fieldId={fieldId} formId={formId} query={query} suggestions={suggestions} />
