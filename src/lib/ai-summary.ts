@@ -100,9 +100,15 @@ export const createAiSummaryQueueMessage = (
   }
 }
 
-export const enqueueAiSummary = (queue: Queue, entryId: string, entryUpdatedAt: string, requestedAt?: string): void => {
-  void queue.send(createAiSummaryQueueMessage(entryId, entryUpdatedAt, requestedAt)).catch((error: unknown) => {
+export const enqueueAiSummary = async (
+  queue: Queue,
+  entryId: string,
+  entryUpdatedAt: string,
+  requestedAt?: string
+): Promise<void> => {
+  await queue.send(createAiSummaryQueueMessage(entryId, entryUpdatedAt, requestedAt)).catch((error: unknown) => {
     console.error('Failed to enqueue AI summary job', error)
+    throw error
   })
 }
 

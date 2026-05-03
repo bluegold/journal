@@ -87,7 +87,7 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
         processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(entryId, timestamp, timestamp))
       )
     } else {
-      enqueueAiSummary(c.env.AI_QUEUE, entryId, timestamp, timestamp)
+      await enqueueAiSummary(c.env.AI_QUEUE, entryId, timestamp, timestamp)
     }
 
     const href = buildEntriesHref({
@@ -212,7 +212,7 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
         processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(currentEntry.id, timestamp, timestamp))
       )
     } else {
-      enqueueAiSummary(c.env.AI_QUEUE, currentEntry.id, timestamp, timestamp)
+      await enqueueAiSummary(c.env.AI_QUEUE, currentEntry.id, timestamp, timestamp)
     }
 
     if (nextBodyKey !== previousBodyKey) {
