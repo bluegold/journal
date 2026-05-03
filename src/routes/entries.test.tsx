@@ -191,7 +191,7 @@ describe('entries route', () => {
     expect(body).toContain(text.editor.cancel)
   })
 
-  it('shows ai summary in the edit form and can copy it into summary', async () => {
+  it('shows accepted ai summary as confirmed in the edit form', async () => {
     const { response, body } = await requestApp('/entries/entry-2/edit?month=2026-04&date=2026-04-22', {
       db: {
         initialUsers: [createUserRow()],
@@ -201,7 +201,7 @@ describe('entries route', () => {
             user_id: 'user-1',
             journal_date: '2026-04-22',
             title: 'Editable entry',
-            summary: 'Editable summary',
+            summary: 'AI generated summary',
             ai_summary: 'AI generated summary',
             ai_summary_model: '@cf/meta/llama-3.2-3b-instruct',
             ai_summary_generated_at: '2026-05-02T16:46:33.090Z',
@@ -224,7 +224,8 @@ describe('entries route', () => {
     expect(response.status).toBe(200)
     expect(body).toContain(text.editor.aiSummary)
     expect(body).toContain('AI generated summary')
-    expect(body).toContain(text.editor.copyAiSummary)
+    expect(body).toContain(text.editor.aiSummaryAccepted)
+    expect(body).not.toContain(text.editor.copyAiSummary)
   })
 
   it('renders the edit entry fragment for htmx requests', async () => {
@@ -1045,4 +1046,3 @@ describe('entries route', () => {
     })
   })
 })
-

@@ -22,6 +22,9 @@ export const EntryEditPanel = ({
   cancelHref,
 }: EntryEditPanelProps) => {
   const text = uiText.ja
+  const summaryValue = entry.summary?.trim() ?? ''
+  const aiSummaryValue = entry.ai_summary?.trim() ?? ''
+  const isAiSummaryAccepted = summaryValue.length > 0 && summaryValue === aiSummaryValue
   return (
     <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 shadow-[0_18px_54px_-36px_rgba(2,6,23,0.95)]">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
@@ -92,18 +95,26 @@ export const EntryEditPanel = ({
           <div class="space-y-1.5">
             <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.editor.aiSummary}</span>
             {entry.ai_summary ? (
-              <div class="space-y-2 rounded-2xl border border-cyan-300/30 bg-cyan-300/10 p-3">
-                <p class="whitespace-pre-wrap text-sm leading-6 text-cyan-50">{entry.ai_summary}</p>
-                <button
-                  type="button"
-                  hx-post={acceptAiSummaryHref}
-                  hx-target="#journal-workspace"
-                  hx-swap="outerHTML"
-                  hx-push-url="true"
-                  class="btn btn-sm btn-outline border-cyan-200/40 bg-cyan-300/15 text-cyan-50 hover:border-cyan-200/70 hover:bg-cyan-300/25 hover:text-white"
-                >
-                  {text.editor.copyAiSummary}
-                </button>
+              <div class="border border-dashed border-slate-700 bg-slate-950/70 p-3 text-sm leading-6 text-slate-400" style="border-radius: var(--radius)">
+                {isAiSummaryAccepted ? (
+                  <div>
+                    {text.editor.aiSummaryAccepted}
+                  </div>
+                ) : (
+                  <div class="space-y-2">
+                    <p class="whitespace-pre-wrap text-sm leading-6 text-slate-300">{entry.ai_summary}</p>
+                    <button
+                      type="button"
+                      hx-post={acceptAiSummaryHref}
+                      hx-target="#journal-workspace"
+                      hx-swap="outerHTML"
+                      hx-push-url="true"
+                      class="btn btn-sm btn-outline border-cyan-200/40 bg-cyan-300/15 text-cyan-50 hover:border-cyan-200/70 hover:bg-cyan-300/25 hover:text-white"
+                    >
+                      {text.editor.copyAiSummary}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div class="rounded-2xl border border-dashed border-slate-700 bg-slate-950/70 p-3 text-sm leading-6 text-slate-400">

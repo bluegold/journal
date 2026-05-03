@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { requestApp } from '../test-support'
+import { createEntryRow } from '../test-support'
+import { createUserRow } from '../test-support/fixtures'
 import { uiText } from '../lib/i18n'
 
 describe('home route', () => {
@@ -19,6 +21,25 @@ describe('home route', () => {
     expect(body).toContain('Calendar')
     expect(body).toContain('Content area')
     expect(body).toContain(text.detail.noEntryTitle)
+  })
+
+  it('shows entry markers on the initial calendar', async () => {
+    const { response, body } = await requestApp('/', {
+      db: {
+        initialUsers: [createUserRow()],
+        initialEntries: [
+          createEntryRow({
+            journal_date: '2026-04-22',
+            title: 'Initial marker',
+          }),
+        ],
+      },
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('data-date="2026-04-22"')
+    expect(body).toContain('h-1.5 w-1.5 rounded-full bg-cyan-300')
+    expect(body).toContain('2026年4月')
   })
 
   it('falls back to the default avatar image when Access avatar is missing', async () => {

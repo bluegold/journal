@@ -36,6 +36,7 @@ export const uiText = {
       aiSummary: 'AI 要約',
       copyAiSummary: '要約にコピー',
       noAiSummary: 'AI 要約はまだありません。',
+      aiSummaryAccepted: 'AI 要約が採用されました。',
       journalDate: '日付',
       title: 'タイトル',
       markdown: 'Markdown',
