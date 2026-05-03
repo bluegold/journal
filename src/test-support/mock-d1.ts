@@ -388,6 +388,13 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
     return { results: [...state.entryTags] as T[] }
   }
 
+  if (normalizedSql.startsWith('SELECT * FROM entry_ai_tag_candidates WHERE entry_id = ? ORDER BY id ASC')) {
+    const entryId = String(params[0] ?? '')
+    return {
+      results: state.entryAiTagCandidates.filter((candidate) => candidate.entry_id === entryId).sort((a, b) => a.id - b.id) as T[],
+    }
+  }
+
   if (normalizedSql.startsWith('SELECT * FROM entry_ai_tag_candidates')) {
     return { results: sortByCreatedAtDesc(state.entryAiTagCandidates) as T[] }
   }

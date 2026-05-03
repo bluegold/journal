@@ -19,9 +19,10 @@ type EntryEditPageProps = {
   entry: JournalEntryRow
   body: string
   tagsText: string
+  aiTagCandidates: string[]
 }
 
-export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText }: EntryEditPageProps) => {
+export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText, aiTagCandidates }: EntryEditPageProps) => {
   const text = uiText.ja
   const entryDate = parseDateKey(entry.journal_date) ?? new Date()
   const selection = resolveEntriesSelection(entries, {
@@ -64,6 +65,7 @@ export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText }: E
           entry={entry}
           body={body}
           tagsText={tagsText}
+          aiTagCandidates={aiTagCandidates}
           updateHref={`/entries/${entry.id}`}
           acceptAiSummaryHref={`/entries/${entry.id}/accept-ai-summary`}
           cancelHref={buildEntriesHref({

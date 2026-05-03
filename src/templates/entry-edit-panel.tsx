@@ -8,6 +8,7 @@ type EntryEditPanelProps = {
   entry: JournalEntryRow
   body: string
   tagsText: string
+  aiTagCandidates: string[]
   updateHref: string
   acceptAiSummaryHref: string
   cancelHref: string
@@ -17,6 +18,7 @@ export const EntryEditPanel = ({
   entry,
   body,
   tagsText,
+  aiTagCandidates,
   updateHref,
   acceptAiSummaryHref,
   cancelHref,
@@ -142,6 +144,64 @@ export const EntryEditPanel = ({
             query=""
             suggestions={[]}
           />
+
+          <div class="space-y-1.5 xl:col-span-2">
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.editor.aiTagRecommendations}</span>
+              {aiTagCandidates.length > 0 ? (
+                <button
+                  type="button"
+                  hx-post={`/entries/${entry.id}/ai-tags/discard-all`}
+                  hx-target="#journal-content"
+                  hx-swap="outerHTML"
+                  hx-push-url="true"
+                  class="btn btn-xs btn-outline"
+                >
+                  {text.editor.discardAllAiTags}
+                </button>
+              ) : null}
+            </div>
+
+            {aiTagCandidates.length > 0 ? (
+              <div class="space-y-2">
+                {aiTagCandidates.map((tagName) => (
+                  <div
+                    key={tagName}
+                    class="flex flex-wrap items-center justify-between gap-2 border border-slate-700 bg-slate-950/70 p-3"
+                    style="border-radius: var(--radius)"
+                  >
+                    <span class="badge badge-outline">{tagName}</span>
+                    <div class="button-group">
+                      <button
+                        type="button"
+                        hx-post={`/entries/${entry.id}/ai-tags/${encodeURIComponent(tagName)}/accept`}
+                        hx-target="#journal-content"
+                        hx-swap="outerHTML"
+                        hx-push-url="true"
+                        class="btn btn-xs btn-primary"
+                      >
+                        {text.editor.acceptAiTag}
+                      </button>
+                      <button
+                        type="button"
+                        hx-post={`/entries/${entry.id}/ai-tags/${encodeURIComponent(tagName)}/discard`}
+                        hx-target="#journal-content"
+                        hx-swap="outerHTML"
+                        hx-push-url="true"
+                        class="btn btn-xs btn-outline"
+                      >
+                        {text.editor.discardAiTag}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="border border-dashed border-slate-700 bg-slate-950/70 p-3 text-sm leading-6 text-slate-400" style="border-radius: var(--radius)">
+                {text.editor.noAiTagRecommendations}
+              </div>
+            )}
+          </div>
         </div>
       </form>
 

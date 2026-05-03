@@ -1,6 +1,9 @@
 import type { Bindings } from '../types/bindings'
 import type { JournalEntryRow } from '../types/journal'
 import { loadEntryBody } from './entry-body'
+import { AI_SUMMARY_SYSTEM_PROMPT } from './ai-prompts.generated'
+import { stripFencedCodeBlocks } from './ai-text'
+import { recommendAiTagCandidatesForEntry } from './ai-tags'
 
 export type AiSummaryQueueMessage = {
   type: 'summarize_entry'
@@ -12,12 +15,6 @@ export type AiSummaryQueueMessage = {
 const AI_SUMMARY_MODEL = '@cf/meta/llama-3.2-3b-instruct'
 const MAX_INPUT_CHARS = 12_000
 const MAX_OUTPUT_TOKENS = 240
-const AI_SUMMARY_SYSTEM_PROMPT =
-  'あなたはジャーナルアプリの一覧画面に表示する短い要約を作成します。\n本文と同じ言語で、自然な1〜2文のプレーンテキストだけを返してください。前置き、見出し、箇条書き、ラベル、引用符は不要です。"筆者"、"The writer"、"この文章では" のような主語や導入で始めないでください。\n 本文全体から、中心的な出来事、進捗、判断、気づきだけを残してください。作業手順を時系列に並べたり、本文の文を切り貼りしたりしないでください。細かい実装内容、画面名、カラム名、状態名、時刻、個別の操作は、重要でない限り省いてください。\nマークダウンの見出し行、タイトル行、日付だけの行は、本文の内容を理解するための補助情報として扱い、要約文には含めないでください。特に、`#` で始まる行や「本日の記録」「作業ログ」「日記」「メモ」のようなタイトル語を、要約の先頭や本文中に再利用しないでください。\n「何をしたか」だけでなく、「何が決まったか」「次に何が残ったか」が自然に分かる要約にしてください。\n出力してよいのは要約文だけです。\n\n 本文:\n'
-
-const stripFencedCodeBlocks = (text: string): string => {
-  return text.replace(/```[\s\S]*?```/g, '').trim()
-}
 
 const buildSummaryPromptPreview = (entry: Pick<JournalEntryRow, 'title' | 'journal_date'>): string => {
   const parts: string[] = []
@@ -116,7 +113,7 @@ export const processAiSummaryQueueMessage = async (
   env: Pick<Bindings, 'AI' | 'DB' | 'JOURNAL_BUCKET'>,
   message: AiSummaryQueueMessage
 ): Promise<void> => {
-  console.log('AI summary job started', {
+  console.log('AI entry enrichment job started', {
     entryId: message.entryId,
     entryUpdatedAt: message.entryUpdatedAt,
     requestedAt: message.requestedAt,
@@ -127,14 +124,14 @@ export const processAiSummaryQueueMessage = async (
     .first<JournalEntryRow>()
 
   if (!currentEntry || currentEntry.deleted_at != null) {
-    console.log('AI summary job skipped: entry missing or deleted', {
+    console.log('AI entry enrichment job skipped: entry missing or deleted', {
       entryId: message.entryId,
     })
     return
   }
 
   if (currentEntry.updated_at !== message.entryUpdatedAt) {
-    console.log('AI summary job skipped: entry changed since enqueue', {
+    console.log('AI entry enrichment job skipped: entry changed since enqueue', {
       entryId: message.entryId,
       currentUpdatedAt: currentEntry.updated_at,
       queuedUpdatedAt: message.entryUpdatedAt,
@@ -144,7 +141,7 @@ export const processAiSummaryQueueMessage = async (
 
   const body = await loadEntryBody(env.JOURNAL_BUCKET, currentEntry.body_key)
   if (!body || body.trim().length === 0) {
-    console.log('AI summary job skipped: entry body missing', {
+    console.log('AI entry enrichment job skipped: entry body missing', {
       entryId: message.entryId,
     })
     return
@@ -152,7 +149,7 @@ export const processAiSummaryQueueMessage = async (
 
   const bodyWithoutCodeBlocks = stripFencedCodeBlocks(body)
   if (bodyWithoutCodeBlocks.length === 0) {
-    console.log('AI summary job skipped: entry body only contains code blocks', {
+    console.log('AI entry enrichment job skipped: entry body only contains code blocks', {
       entryId: message.entryId,
     })
     return
@@ -169,37 +166,56 @@ export const processAiSummaryQueueMessage = async (
     inputLength: buildSummaryMessages(currentEntry, body).at(1)?.content.length ?? 0,
   })
 
-  const generated = await env.AI.run(AI_SUMMARY_MODEL, {
-    messages: buildSummaryMessages(currentEntry, body),
-    max_tokens: MAX_OUTPUT_TOKENS,
-    temperature: 0.2,
-  })
-  console.log('AI summary job raw response', {
-    entryId: message.entryId,
-    response: generated,
-  })
-  const aiSummary = normalizeSummary(extractSummary(generated))
-
-  if (aiSummary.length === 0) {
-    console.log('AI summary job skipped: model returned empty summary', {
-      entryId: message.entryId,
+  try {
+    const generated = await env.AI.run(AI_SUMMARY_MODEL, {
+      messages: buildSummaryMessages(currentEntry, body),
+      max_tokens: MAX_OUTPUT_TOKENS,
+      temperature: 0.2,
     })
-    return
+    console.log('AI summary job raw response', {
+      entryId: message.entryId,
+      response: generated,
+    })
+    const aiSummary = normalizeSummary(extractSummary(generated))
+
+    if (aiSummary.length === 0) {
+      console.log('AI summary job skipped: model returned empty summary', {
+        entryId: message.entryId,
+      })
+    } else {
+      const generatedAt = new Date().toISOString()
+
+      const updateStatement = env.DB.prepare(
+        'UPDATE entries SET ai_summary = ?, ai_summary_model = ?, ai_summary_generated_at = ? WHERE id = ? AND updated_at = ?'
+      )
+        .bind(aiSummary, AI_SUMMARY_MODEL, generatedAt, currentEntry.id, message.entryUpdatedAt)
+
+      await updateStatement.run()
+
+      console.log('AI summary job stored summary', {
+        entryId: message.entryId,
+        generatedAt,
+      })
+    }
+  } catch (error) {
+    console.error('AI summary job failed', {
+      entryId: message.entryId,
+      error,
+    })
   }
 
-  const generatedAt = new Date().toISOString()
-
-  const updateStatement = env.DB.prepare(
-    'UPDATE entries SET ai_summary = ?, ai_summary_model = ?, ai_summary_generated_at = ? WHERE id = ? AND updated_at = ?'
-  )
-    .bind(aiSummary, AI_SUMMARY_MODEL, generatedAt, currentEntry.id, message.entryUpdatedAt)
-
-  await updateStatement.run()
-
-  console.log('AI summary job stored summary', {
-    entryId: message.entryId,
-    generatedAt,
-  })
+  try {
+    await recommendAiTagCandidatesForEntry({
+      env,
+      entry: currentEntry,
+      body,
+    })
+  } catch (error) {
+    console.error('AI tag job failed', {
+      entryId: message.entryId,
+      error,
+    })
+  }
 }
 
 export const handleAiSummaryQueueBatch = async (

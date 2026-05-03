@@ -43,6 +43,7 @@ npm run dev
 - check: TypeScript 型チェック
 - lint / format: biome を用いた静的検査と整形
 - test / test:watch / test:coverage: vitest を用いたテスト
+- generate:prompts: `prompts/*.txt` から AI プロンプト定義を生成
 
 環境変数とバインディング
 - wrangler.jsonc に Workers, D1, R2, AI, Queue のバインディングが定義されています。
@@ -54,7 +55,7 @@ npm run dev
 - entries: id, journal_date, title, status, body_key, summary, ai_summary, ai_summary_model, ai_summary_generated_at, created_at, updated_at, deleted_at
 - tags: 正規化された承認タグ
 - entry_tags: entries ⇄ tags の junction
-- entry_ai_tags: AI 候補タグ（state: candidate/accepted/discarded）
+- entry_ai_tag_candidates: AI 候補タグ（採用前の提案を保持）
 
 詳細は docs/ と migrations/0001_init.sql を参照してください。
 
@@ -63,6 +64,7 @@ npm run dev
 - 保存時に本文の処理は必須ではなく、保存後にキューへメッセージを発行して非同期で AI 処理を行います。
 - AI 要約は Workers AI の要約モデルを使い、生成日時・モデル名を記録します。
 - UI では AI 候補は承認操作を通じて明示的に採用/破棄できるようにします。
+- AI プロンプトは `prompts/*.txt` に置き、`npm run generate:prompts` で生成物へ反映します。
 
 ## エクスポート
 

@@ -1038,7 +1038,7 @@ describe('entries route', () => {
 
     expect(response.status).toBe(303)
     expect(env.AI_QUEUE.state.messages).toEqual([])
-    expect(env.AI.state.calls).toHaveLength(1)
+    expect(env.AI.state.calls).toHaveLength(2)
     expect(env.DB.state.entries[0]).toMatchObject({
       title: 'Local entry',
       ai_summary: 'Local summary',

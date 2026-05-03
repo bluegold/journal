@@ -10,6 +10,9 @@ export type MockEnvOptions = {
   r2?: MockR2Options
   ai?: {
     summary?: string
+    tags?: string[]
+    summaryError?: string
+    tagsError?: string
   }
 }
 
@@ -27,6 +30,7 @@ export type MockAiState = {
     inputs: Record<string, unknown>
   }>
   summary: string
+  tags: string[]
 }
 
 export type MockAi = Ai & {
@@ -62,12 +66,27 @@ export const createMockAi = (options: MockEnvOptions['ai'] = {}): MockAi => {
   const state: MockAiState = {
     calls: [],
     summary: options?.summary ?? 'AI summary',
+    tags: options?.tags ?? ['planning', 'ideas'],
   }
 
   return {
     state,
     async run(model: string, inputs: Record<string, unknown>) {
       state.calls.push({ model, inputs })
+      const messages = inputs.messages as Array<{ role: string; content: string }> | undefined
+      const systemPrompt = messages?.[0]?.content ?? ''
+
+      if (String(systemPrompt).includes('JSON のみ')) {
+        if (options?.tagsError) {
+          throw new Error(options.tagsError)
+        }
+        return { tags: state.tags }
+      }
+
+      if (options?.summaryError) {
+        throw new Error(options.summaryError)
+      }
+
       return { summary: state.summary }
     },
   } as never

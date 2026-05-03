@@ -1,6 +1,7 @@
 import type { Hono } from 'hono'
 import { isHtmxRequest } from '../lib/htmx'
 import { buildEntriesHref, formatDateKey, formatMonthKey, parseDateKey } from '../lib/entries-navigation'
+import { loadEntryAiTagCandidateNames } from '../lib/ai-tags'
 import { loadEntryBody } from '../lib/entry-body'
 import { loadEntryTagNames } from '../lib/entry-tags'
 import { renderMarkdown } from '../lib/render-markdown'
@@ -82,6 +83,7 @@ export const registerEntriesReadRoutes = (app: Hono<{ Bindings: Bindings; Variab
 
     const body = (await loadEntryBody(c.env.JOURNAL_BUCKET, entry.body_key)) ?? ''
     const tagNames = await loadEntryTagNames(c.env.DB, c.var.currentUser.id, entry.id)
+    const aiTagCandidates = await loadEntryAiTagCandidateNames(c.env.DB, entry.id)
 
     if (isHtmxRequest(c.req.raw)) {
       return c.html(
@@ -89,6 +91,7 @@ export const registerEntriesReadRoutes = (app: Hono<{ Bindings: Bindings; Variab
           entry={entry}
           body={body}
           tagsText={formatTagList(tagNames)}
+          aiTagCandidates={aiTagCandidates}
           updateHref={`/entries/${entry.id}`}
           acceptAiSummaryHref={`/entries/${entry.id}/accept-ai-summary`}
           cancelHref={buildEntriesHref({
@@ -107,6 +110,7 @@ export const registerEntriesReadRoutes = (app: Hono<{ Bindings: Bindings; Variab
         entry={entry}
         body={body}
         tagsText={formatTagList(tagNames)}
+        aiTagCandidates={aiTagCandidates}
       />
     )
   })

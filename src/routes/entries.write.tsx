@@ -4,6 +4,11 @@ import { buildEntryBodyKey } from '../lib/entry-body-key'
 import { loadEntryBody } from '../lib/entry-body'
 import { replaceEntryTags } from '../lib/entry-tags'
 import { createAiSummaryQueueMessage, enqueueAiSummary, processAiSummaryQueueMessage } from '../lib/ai-summary'
+import {
+  acceptAiTagCandidate,
+  discardAiTagCandidate,
+  discardAllAiTagCandidates,
+} from '../lib/ai-tags'
 import { renderMarkdown } from '../lib/render-markdown'
 import { EntryPreviewOverlay, EntryPreviewSlot } from '../templates/entry-preview-panel'
 import { findEntryById, loadUserEntries, normalizeBody, parseJournalDate } from './entries.shared'
@@ -254,6 +259,81 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
       dateKey: currentEntry.journal_date,
       entryId: currentEntry.id,
     })
+    const response = c.redirect(href, 303)
+    response.headers.set('HX-Redirect', href)
+    return response
+  })
+
+  app.post('/entries/:id/ai-tags/:tagName/accept', async (c) => {
+    const entryId = c.req.param('id')
+    const tagName = c.req.param('tagName')
+    const entries = await loadUserEntries(c)
+    const currentEntry = findEntryById(entries, entryId)
+
+    if (!currentEntry) {
+      return c.text('Entry not found.', 404)
+    }
+
+    const timestamp = new Date().toISOString()
+    const accepted = await acceptAiTagCandidate({
+      db: c.env.DB,
+      userId: c.var.currentUser.id,
+      entryId: currentEntry.id,
+      tagName,
+      timestamp,
+    })
+
+    if (!accepted) {
+      return c.text('AI tag candidate not found.', 404)
+    }
+
+    const href = `/entries/${currentEntry.id}/edit`
+    const response = c.redirect(href, 303)
+    response.headers.set('HX-Redirect', href)
+    return response
+  })
+
+  app.post('/entries/:id/ai-tags/:tagName/discard', async (c) => {
+    const entryId = c.req.param('id')
+    const tagName = c.req.param('tagName')
+    const entries = await loadUserEntries(c)
+    const currentEntry = findEntryById(entries, entryId)
+
+    if (!currentEntry) {
+      return c.text('Entry not found.', 404)
+    }
+
+    const discarded = await discardAiTagCandidate({
+      db: c.env.DB,
+      entryId: currentEntry.id,
+      tagName,
+    })
+
+    if (!discarded) {
+      return c.text('AI tag candidate not found.', 404)
+    }
+
+    const href = `/entries/${currentEntry.id}/edit`
+    const response = c.redirect(href, 303)
+    response.headers.set('HX-Redirect', href)
+    return response
+  })
+
+  app.post('/entries/:id/ai-tags/discard-all', async (c) => {
+    const entryId = c.req.param('id')
+    const entries = await loadUserEntries(c)
+    const currentEntry = findEntryById(entries, entryId)
+
+    if (!currentEntry) {
+      return c.text('Entry not found.', 404)
+    }
+
+    await discardAllAiTagCandidates({
+      db: c.env.DB,
+      entryId: currentEntry.id,
+    })
+
+    const href = `/entries/${currentEntry.id}/edit`
     const response = c.redirect(href, 303)
     response.headers.set('HX-Redirect', href)
     return response
