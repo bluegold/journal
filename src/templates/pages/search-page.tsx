@@ -131,7 +131,7 @@ const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagSt
         <div class="space-y-4">
           <section class="rounded-2xl border border-slate-700/80 bg-slate-950/90 p-4 shadow-[0_18px_54px_-36px_rgba(2,6,23,0.95)]">
             <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Search</p>
-            <h1 class="mt-1 text-2xl font-semibold text-slate-50">Find entries</h1>
+            <h1 class="mt-1 text-2xl font-semibold text-slate-50">{text.search.title}</h1>
             <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{text.search.description}</p>
 
             <form class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px_auto]" method="get" action="/search">
@@ -147,12 +147,12 @@ const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagSt
                 <input class="input w-full" type="search" name="tag" value={normalizedTag} placeholder={text.search.placeholderTag} />
               </label>
 
-              <div class="flex items-end gap-2">
-                <button type="submit" class="btn btn-primary w-full lg:w-auto">
+              <div class="button-group flex w-full items-end lg:w-auto">
+                <button type="submit" class="btn btn-primary flex-1 lg:flex-none">
                   {text.search.search}
                 </button>
                 {hasActiveFilters ? (
-                  <a href="/search" class="btn w-full lg:w-auto">
+                  <a href="/search" class="btn btn-outline flex-1 lg:flex-none">
                     {text.search.clear}
                   </a>
                 ) : null}
@@ -167,13 +167,13 @@ const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagSt
                     <a
                       href={buildTagHref(query, tagStat.name, month, date)}
                       class={[
-                        'rounded-full border px-3 py-1 text-xs transition',
+                        'badge transition',
                         normalizedTag === tagStat.name
-                          ? 'border-cyan-300/50 bg-cyan-300/15 text-cyan-50'
-                          : 'border-slate-700 bg-slate-900 text-slate-200 hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white',
+                          ? 'badge-primary'
+                          : 'badge-outline hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white',
                       ].join(' ')}
                     >
-                      {tagStat.name} <span class="text-slate-400">{tagStat.usage_count}</span>
+                      {tagStat.name} <span class="ml-1 opacity-70">{tagStat.usage_count}</span>
                     </a>
                   ))}
                 </div>
@@ -185,7 +185,12 @@ const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagSt
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
               <div>
                 <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Results</p>
-                <h2 class="mt-1 text-lg font-semibold text-slate-50">{text.search.resultCount.replace('{{count}}', `${results.length}`)}</h2>
+                <div class="mt-1 flex items-center gap-3">
+                  <h2 class="text-lg font-semibold text-slate-50">{text.search.search}</h2>
+                  <span class="badge badge-secondary">
+                    {text.search.resultCount.replace('{{count}}', `${results.length}`)}
+                  </span>
+                </div>
               </div>
               <p class="text-sm text-slate-400">
                 {text.search.queryLabel}: <span class="text-slate-200">{query || 'all'}</span>
@@ -211,8 +216,10 @@ const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagSt
                 ))}
               </div>
             ) : (
-              <div class="mt-4 rounded-xl border border-dashed border-slate-700 bg-slate-900/70 p-4 text-sm text-slate-300">
-                {text.search.noMatches}
+              <div class="alert mt-4 border-dashed border-slate-700 bg-slate-900/70">
+                <section>
+                  <p>{text.search.noMatches}</p>
+                </section>
               </div>
             )}
           </section>

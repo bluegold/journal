@@ -9,6 +9,7 @@ import {
   createUserRow,
   requestApp,
 } from '../test-support'
+import { uiText } from '../lib/i18n'
 
 const accessHeaders = {
   'cf-access-authenticated-user-email': 'tester@example.com',
@@ -18,6 +19,8 @@ const accessHeaders = {
 }
 
 describe('entries route', () => {
+  const text = uiText.ja
+
   it('shows the selected day and entry list from query params', async () => {
     const { response, body } = await requestApp('/entries?month=2026-04&date=2026-04-22&entry=entry-2', {
       db: {
@@ -86,7 +89,7 @@ describe('entries route', () => {
     expect(body).toContain('Tester')
     expect(body).toContain('Calendar')
     expect(body).toContain('2026-04-22')
-    expect(body).toContain('タグ')
+    expect(body).toContain(text.detail.tags)
     expect(body).toContain('travel')
     expect(body).toContain('href="/search?tag=travel"')
     expect(body).toContain('Selected article')
@@ -117,13 +120,13 @@ describe('entries route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('Create a new entry')
-    expect(body).toContain('下書き')
+    expect(body).toContain(text.editor.createTitle)
+    expect(body).toContain(text.editor.draft)
     expect(body).toContain('name="journal_date"')
     expect(body).toContain('value="2026-04-22"')
     expect(body).toContain('Morning entry')
     expect(body).toContain('Summary one')
-    expect(body).toContain('キャンセル')
+    expect(body).toContain(text.editor.cancel)
     expect(body).toContain('ring-1 ring-cyan-300/50')
   })
 
@@ -176,16 +179,16 @@ describe('entries route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('Edit the selected entry')
+    expect(body).toContain(text.editor.editTitle)
     expect(body).toContain('name="journal_date"')
     expect(body).toContain('value="2026-04-22"')
     expect(body).toContain('Editable entry')
     expect(body).toContain('Original body.')
     expect(body).toContain('name="tags"')
     expect(body).toContain('ideas, work')
-    expect(body).toContain('変更を保存')
-    expect(body).toContain('プレビュー')
-    expect(body).toContain('キャンセル')
+    expect(body).toContain(text.editor.saveChanges)
+    expect(body).toContain(text.editor.preview)
+    expect(body).toContain(text.editor.cancel)
   })
 
   it('shows ai summary in the edit form and can copy it into summary', async () => {
@@ -219,9 +222,9 @@ describe('entries route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('AI 要約')
+    expect(body).toContain(text.editor.aiSummary)
     expect(body).toContain('AI generated summary')
-    expect(body).toContain('要約にコピー')
+    expect(body).toContain(text.editor.copyAiSummary)
   })
 
   it('renders the edit entry fragment for htmx requests', async () => {
@@ -275,10 +278,10 @@ describe('entries route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('id="journal-content"')
-    expect(body).toContain('Edit the selected entry')
+    expect(body).toContain(text.editor.editTitle)
     expect(body).toContain('Original body.')
-    expect(body).toContain('プレビュー')
-    expect(body).toContain('キャンセル')
+    expect(body).toContain(text.editor.preview)
+    expect(body).toContain(text.editor.cancel)
   })
 
   it('renders the edit entry form with an empty body when R2 has no content', async () => {
@@ -302,10 +305,10 @@ describe('entries route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('Edit the selected entry')
+    expect(body).toContain(text.editor.editTitle)
     expect(body).toContain('name="body"')
     expect(body).not.toContain('Original body.')
-    expect(body).toContain('プレビュー')
+    expect(body).toContain(text.editor.preview)
   })
 
   it('returns 404 when editing, updating, or deleting a missing entry', async () => {
@@ -585,7 +588,7 @@ describe('entries route', () => {
     const followBody = await followResponse.text()
 
     expect(followResponse.status).toBe(200)
-    expect(followBody).toContain('この日の記録はありません。')
+    expect(followBody).toContain(text.workspace.noEntries)
     expect(followBody).not.toContain('Entry to delete')
   })
 
@@ -603,7 +606,7 @@ describe('entries route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('id="journal-content"')
-    expect(body).toContain('Create a new entry')
+    expect(body).toContain(text.editor.createTitle)
     expect(body).toContain('name="journal_date"')
     expect(body).toContain('value="')
   })
@@ -679,7 +682,7 @@ describe('entries route', () => {
     expect(response.status).toBe(200)
     expect(body).toContain('id="entry-preview-overlay"')
     expect(body).toContain('fixed inset-0')
-    expect(body).toContain('Rendered markdown')
+    expect(body).toContain(text.editor.preview)
     expect(body).toContain('<h1>Preview title</h1>')
     expect(body).toContain('Hello preview.')
   })
@@ -704,7 +707,7 @@ describe('entries route', () => {
     expect(response.status).toBe(200)
     expect(body).toContain('id="entry-preview-overlay"')
     expect(body).toContain('<h1>Untitled</h1>')
-    expect(body).toContain('閉じる')
+    expect(body).toContain(text.preview.close)
   })
 
   it('closes the preview overlay back to a hidden slot', async () => {
@@ -1042,3 +1045,4 @@ describe('entries route', () => {
     })
   })
 })
+

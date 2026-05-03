@@ -136,7 +136,8 @@ Use **Tailwind CSS + Basecoat UI** as the default styling stack.
 
 ### Expectations
 
-- Prefer Tailwind utility classes in server-rendered templates.
+- Prioritize using **Basecoat UI components** (`.btn`, `.badge`, `.card`, `.button-group`, `.alert`, etc.) for new UI elements to maintain consistency and leverage the existing design system.
+- Prefer Tailwind utility classes in server-rendered templates for layout and fine-grained styling.
 - Use Basecoat UI where it provides simple, durable primitives that fit htmx-driven pages.
 - Keep the UI readable for long markdown entries and metadata-heavy editing screens.
 

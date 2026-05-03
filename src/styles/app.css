@@ -20,8 +20,8 @@
   --accent: #1d4ed8;
   --accent-foreground: #eff6ff;
   --destructive: #f87171;
-  --border: rgba(148, 163, 184, 0.18);
-  --input: rgba(15, 23, 42, 0.88);
+  --border: rgba(148, 163, 184, 0.24);
+  --input: rgba(148, 163, 184, 0.32);
   --ring: rgba(34, 211, 238, 0.45);
   --sidebar: rgba(2, 6, 23, 0.82);
   --sidebar-foreground: #e2e8f0;
@@ -29,7 +29,52 @@
   --sidebar-accent-foreground: #e2e8f0;
   --sidebar-border: rgba(148, 163, 184, 0.18);
   --sidebar-ring: rgba(34, 211, 238, 0.45);
-  --radius: 1rem;
+  --radius: 0.5rem;
+}
+
+@layer components {
+  /* Ensure neutral buttons don't inherit the dark primary-foreground color */
+  .btn:not(.btn-primary) {
+    color: var(--foreground);
+  }
+
+  .btn-outline {
+    border-color: var(--input);
+  }
+
+  /* Sync component radius with global --radius */
+  .badge {
+    border-radius: calc(var(--radius) * 0.6); /* Slightly sharper for small elements */
+  }
+
+  /* Basecoat UI's .badge defaults to primary colors, we want it neutral */
+  .badge:not(.badge-primary):not(.badge-secondary):not(.badge-destructive) {
+    background-color: transparent;
+    border-color: var(--border);
+    color: var(--foreground);
+  }
+
+  .card,
+  .rounded-2xl {
+    border-radius: var(--radius);
+  }
+
+  /* Status specific badge styles */
+  .badge-private {
+    @apply border-amber-500/30 bg-amber-500/10 text-amber-200/90;
+  }
+
+  .badge-live {
+    @apply border-emerald-500/30 bg-emerald-500/15 text-emerald-100;
+  }
+
+  .badge-editing {
+    @apply border-emerald-500/30 bg-emerald-500/15 text-emerald-50;
+  }
+
+  .badge-draft {
+    @apply border-cyan-300/40 bg-cyan-300/15 text-cyan-50;
+  }
 }
 
 html,
@@ -103,6 +148,12 @@ body {
 
 button:not(:disabled) {
   cursor: pointer;
+}
+
+.btn-outline,
+.btn-sm-outline {
+  color: var(--foreground);
+  border-color: rgba(148, 163, 184, 0.35);
 }
 
 .input,

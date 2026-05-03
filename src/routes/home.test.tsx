@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { requestApp } from '../test-support'
+import { uiText } from '../lib/i18n'
 
 describe('home route', () => {
+  const text = uiText.ja
+
   it('renders the landing page', async () => {
     const { response, body } = await requestApp('/')
 
@@ -15,7 +18,7 @@ describe('home route', () => {
     expect(body).toContain('Tester')
     expect(body).toContain('Calendar')
     expect(body).toContain('Content area')
-    expect(body).toContain('Select a journal entry')
+    expect(body).toContain(text.detail.noEntryTitle)
   })
 
   it('falls back to the default avatar image when Access avatar is missing', async () => {

@@ -27,31 +27,35 @@ export const EntryEditPanel = ({
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
         <div class="min-w-0">
           <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Editor</p>
-          <h3 class="mt-1 truncate text-xl font-semibold text-slate-50">Edit the selected entry</h3>
+          <div class="mt-1 flex items-center gap-3">
+            <h3 class="truncate text-xl font-semibold text-slate-50">{text.editor.editTitle}</h3>
+            <span class="badge badge-editing">
+              {text.editor.editing}
+            </span>
+          </div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-          <button type="submit" form="entry-edit-form" class="btn btn-primary h-7 px-3 text-xs">
-            {text.editor.saveChanges}
-          </button>
-          <button
-            type="button"
-            class="rounded-full border border-slate-600 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
-            hx-post="/entries/preview"
-            hx-include="#entry-edit-form"
-            hx-target="#entry-preview-overlay"
-            hx-swap="outerHTML"
-          >
-            {text.editor.preview}
-          </button>
-          <div class="rounded-full border border-emerald-300/40 bg-emerald-300/15 px-3 py-1 text-xs text-emerald-50">
-            {text.editor.editing}
+          <div class="button-group">
+            <button type="submit" form="entry-edit-form" class="btn btn-sm btn-primary">
+              {text.editor.saveChanges}
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline"
+              hx-post="/entries/preview"
+              hx-include="#entry-edit-form"
+              hx-target="#entry-preview-overlay"
+              hx-swap="outerHTML"
+            >
+              {text.editor.preview}
+            </button>
+            <a
+              {...createWorkspaceLinkAttrs(cancelHref, { target: '#journal-workspace' })}
+              class="btn btn-sm btn-outline"
+            >
+              {text.editor.cancel}
+            </a>
           </div>
-          <a
-            {...createWorkspaceLinkAttrs(cancelHref, { target: '#journal-workspace' })}
-            class="inline-flex h-7 items-center rounded-full border border-slate-600 bg-slate-900 px-3 text-xs leading-none text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
-          >
-            {text.editor.cancel}
-          </a>
         </div>
       </div>
 
@@ -96,7 +100,7 @@ export const EntryEditPanel = ({
                   hx-target="#journal-workspace"
                   hx-swap="outerHTML"
                   hx-push-url="true"
-                  class="rounded-full border border-cyan-200/40 bg-cyan-300/15 px-3 py-1 text-xs text-cyan-50 transition hover:border-cyan-200/70 hover:bg-cyan-300/25 hover:text-white"
+                  class="btn btn-sm btn-outline border-cyan-200/40 bg-cyan-300/15 text-cyan-50 hover:border-cyan-200/70 hover:bg-cyan-300/25 hover:text-white"
                 >
                   {text.editor.copyAiSummary}
                 </button>

@@ -88,22 +88,22 @@ export const CalendarMonth = ({ view, linkTarget = '#journal-workspace' }: Calen
           <p class="text-[10px] font-semibold tracking-[0.22em] text-cyan-100 uppercase">Calendar</p>
           <h2 class="mt-1 text-lg font-semibold text-slate-100">{view.monthLabel}</h2>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="button-group">
           <a
             {...createWorkspaceLinkAttrs(view.todayHref, { target: linkTarget })}
-            class="rounded-full border border-cyan-300/50 bg-cyan-300/15 px-3 py-1 text-xs text-cyan-50 transition hover:border-cyan-200/70 hover:bg-cyan-300/25"
+            class="btn btn-sm btn-outline border-cyan-300/50 bg-cyan-300/15 text-cyan-50 hover:border-cyan-200/70 hover:bg-cyan-300/25"
           >
             {text.calendar.today}
           </a>
           <a
             {...createWorkspaceLinkAttrs(view.previousMonthHref, { target: linkTarget })}
-            class="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
+            class="btn btn-sm btn-outline"
           >
             {text.calendar.previousMonth}
           </a>
           <a
             {...createWorkspaceLinkAttrs(view.nextMonthHref, { target: linkTarget })}
-            class="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-400/10 hover:text-white"
+            class="btn btn-sm btn-outline"
           >
             {text.calendar.nextMonth}
           </a>

@@ -24,7 +24,10 @@ export const EntryCard = ({ entry, active = false, href, showDate = false }: Ent
             <h3 class="truncate text-sm font-semibold text-slate-100">{entry.title || 'Untitled'}</h3>
             {showDate ? <p class="mt-1 text-[11px] text-slate-400">{entry.journal_date}</p> : null}
           </div>
-          <span class="mt-0.5 rounded-full border border-slate-600 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-200">
+          <span class={[
+            'badge badge-outline mt-0.5 text-[10px]',
+            entry.status === 'private' ? 'badge-private' : ''
+          ].join(' ')}>
             {entry.status}
           </span>
         </div>
@@ -41,7 +44,10 @@ export const EntryCard = ({ entry, active = false, href, showDate = false }: Ent
             <h3 class="truncate text-sm font-semibold text-slate-100">{entry.title || 'Untitled'}</h3>
             {showDate ? <p class="mt-1 text-[11px] text-slate-400">{entry.journal_date}</p> : null}
           </div>
-          <span class="mt-0.5 rounded-full border border-slate-600 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-200">
+          <span class={[
+            'badge badge-outline mt-0.5 text-[10px]',
+            entry.status === 'private' ? 'badge-private' : ''
+          ].join(' ')}>
             {entry.status}
           </span>
         </div>

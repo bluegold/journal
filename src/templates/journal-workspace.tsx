@@ -60,7 +60,7 @@ export const JournalWorkspace = ({
                     hx-target="#journal-content"
                     hx-swap="outerHTML"
                     hx-push-url="true"
-                    class="rounded-full border border-cyan-300/50 bg-cyan-300/15 px-3 py-1 text-xs font-medium text-cyan-50 transition hover:border-cyan-200/70 hover:bg-cyan-300/25"
+                    class="btn btn-sm btn-outline border-cyan-300/50 bg-cyan-300/15 text-cyan-50 hover:border-cyan-200/70 hover:bg-cyan-300/25"
                   >
                     {text.workspace.newEntry}
                   </a>
@@ -77,7 +77,7 @@ export const JournalWorkspace = ({
                     />
                   ))
                 ) : (
-                  <div class="rounded-xl border border-dashed border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-300">
+                  <div class="border border-dashed border-slate-700 bg-slate-900/70 p-3 text-sm text-slate-300" style="border-radius: var(--radius)">
                     {text.workspace.noEntries}
                   </div>
                 )}

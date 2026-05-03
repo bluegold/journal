@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createEntryRow, createEntryTagRow, createTagRow, createUserRow, requestApp } from '../test-support'
+import { uiText } from '../lib/i18n'
 
 describe('search route', () => {
+  const text = uiText.ja
+
   it('filters entries by title and summary', async () => {
     const { response, body } = await requestApp('/search?q=apple', {
       db: {
@@ -31,9 +34,9 @@ describe('search route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('Find entries')
+    expect(body).toContain(text.search.title)
     expect(body).toContain('Calendar')
-    expect(body).toContain('検索語:')
+    expect(body).toContain(`${text.search.queryLabel}:`)
     expect(body).toContain('Apple notes')
     expect(body).toContain('2026-04-22')
     expect(body).toContain('Daily work log')
@@ -69,7 +72,7 @@ describe('search route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('一致する記事はありません。')
+    expect(body).toContain(text.search.noMatches)
     expect(body).not.toContain('Plain note')
     expect(body).not.toContain('Deleted note')
     expect(body).not.toContain('Should stay hidden')
@@ -95,7 +98,7 @@ describe('search route', () => {
     })
 
     expect(response.status).toBe(200)
-    expect(body).toContain('タグ:')
+    expect(body).toContain(`${text.search.tagFilterLabel}:`)
     expect(body).toContain('Work log')
     expect(body).not.toContain('Private note')
   })
@@ -139,6 +142,6 @@ describe('search route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toContain('Results')
-    expect(body).toContain('一致する記事はありません。')
+    expect(body).toContain(text.search.noMatches)
   })
 })

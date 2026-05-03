@@ -54,12 +54,10 @@ export const TagAutocompleteSuggestions = ({
                 pushUrl: false,
               })}
               hx-include={`#${formId}`}
-              class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
+              class="badge badge-outline gap-2 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-white"
             >
               <span>{tag.name}</span>
-              <span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-400">
-                {tag.usage_count}
-              </span>
+              <span class="opacity-70">{tag.usage_count}</span>
             </a>
           ))}
         </div>

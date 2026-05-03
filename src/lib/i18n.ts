@@ -15,6 +15,7 @@ export const uiText = {
       noEntries: 'この日の記録はありません。',
     },
     detail: {
+      noEntryTitle: '記事を選択してください',
       noEntryDescription: 'カレンダーで日付を選び、一覧から記事を選ぶか、+ 新規で作成してください。',
       updated: '更新',
       tags: 'タグ',
@@ -25,6 +26,8 @@ export const uiText = {
       noBody: 'R2 の本文プレビューがここに表示されます。',
     },
     editor: {
+      editTitle: '記事を編集',
+      createTitle: '新規記事を作成',
       save: '保存',
       saveChanges: '変更を保存',
       preview: 'プレビュー',
@@ -43,6 +46,7 @@ export const uiText = {
       cancel: 'キャンセル',
     },
     search: {
+      title: '記事を検索',
       description: '自由入力はタイトルと要約を検索し、タグは承認済みタグで別に絞り込みます。',
       freeTextLabel: 'タイトル / 要約',
       tagLabel: '承認済みタグ',
