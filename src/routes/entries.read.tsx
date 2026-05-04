@@ -36,6 +36,7 @@ export const registerEntriesReadRoutes = (app: Hono<{ Bindings: Bindings; Variab
         entries={entries}
         selectedEntryBodyHtml={selectedEntryBodyHtml}
         selectedEntryTagNames={selectedEntryTagNames}
+        journalConfig={c.var.journalConfig}
         query={{
           month: c.req.query('month'),
           date: c.req.query('date'),
@@ -62,6 +63,7 @@ export const registerEntriesReadRoutes = (app: Hono<{ Bindings: Bindings; Variab
       <NewEntryPage
         currentUser={c.var.currentUser}
         entries={rows}
+        journalConfig={c.var.journalConfig}
         query={{
           month: c.req.query('month'),
           date: c.req.query('date'),
@@ -111,6 +113,7 @@ export const registerEntriesReadRoutes = (app: Hono<{ Bindings: Bindings; Variab
         body={body}
         tagsText={formatTagList(tagNames)}
         aiTagCandidates={aiTagCandidates}
+        journalConfig={c.var.journalConfig}
       />
     )
   })

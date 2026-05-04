@@ -5,6 +5,7 @@ import { JournalHeader } from './journal-header'
 import { JournalContentPane } from './journal-content-pane'
 import type { CalendarMonthView } from './calendar-month'
 import type { JournalEntryRow, JournalUserRow } from '../types/journal'
+import type { JournalConfig } from '../lib/journal-config'
 import { uiText } from '../lib/i18n'
 
 type JournalWorkspaceProps = {
@@ -20,6 +21,7 @@ type JournalWorkspaceProps = {
     label: string
     href: string
   }>
+  journalConfig: JournalConfig
 }
 
 export const JournalWorkspace = ({
@@ -32,13 +34,14 @@ export const JournalWorkspace = ({
   newEntryHref,
   detailPane,
   menuItems,
+  journalConfig,
 }: JournalWorkspaceProps) => {
   const selectedDateKey = selectedDateLabel?.trim() ?? null
   const text = uiText.ja
 
   return (
     <div id="journal-workspace" class="min-h-screen">
-      <JournalHeader currentUser={currentUser} menuItems={menuItems} />
+      <JournalHeader currentUser={currentUser} menuItems={menuItems} journalConfig={journalConfig} />
 
       <main class="mx-auto w-full max-w-[1680px] px-3 py-3 sm:px-4 lg:px-5">
         <div class="grid gap-3 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">

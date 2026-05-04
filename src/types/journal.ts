@@ -1,3 +1,5 @@
+import type { JournalConfig } from '../lib/journal-config'
+
 export type JournalEntryRow = {
   id: string
   user_id: string
@@ -46,4 +48,5 @@ export type JournalUserRow = {
 
 export type JournalContextVariables = {
   currentUser: JournalUserRow
+  journalConfig: JournalConfig
 }

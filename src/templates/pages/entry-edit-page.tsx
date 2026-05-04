@@ -11,6 +11,7 @@ import {
   shiftMonth,
 } from '../../lib/entries-navigation'
 import { uiText } from '../../lib/i18n'
+import type { JournalConfig } from '../../lib/journal-config'
 import type { JournalEntryRow, JournalUserRow } from '../../types/journal'
 
 type EntryEditPageProps = {
@@ -20,9 +21,10 @@ type EntryEditPageProps = {
   body: string
   tagsText: string
   aiTagCandidates: string[]
+  journalConfig: JournalConfig
 }
 
-export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText, aiTagCandidates }: EntryEditPageProps) => {
+export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText, aiTagCandidates, journalConfig }: EntryEditPageProps) => {
   const text = uiText.ja
   const entryDate = parseDateKey(entry.journal_date) ?? new Date()
   const selection = resolveEntriesSelection(entries, {
@@ -79,6 +81,7 @@ export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText, aiT
         { label: text.nav.entries, href: '/entries' },
         { label: text.nav.search, href: '/search' },
       ]}
+      journalConfig={journalConfig}
     />
   )
 }

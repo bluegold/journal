@@ -8,5 +8,5 @@ export const homeRoutes = new Hono<{ Bindings: Bindings; Variables: JournalConte
 
 homeRoutes.get('/', async (c) => {
   const entries = await loadUserEntries(c)
-  return c.render(<HomePage currentUser={c.var.currentUser} entries={entries} />)
+  return c.render(<HomePage currentUser={c.var.currentUser} entries={entries} journalConfig={c.var.journalConfig} />)
 })

@@ -14,6 +14,7 @@ export type MockEnvOptions = {
     summaryError?: string
     tagsError?: string
   }
+  ACCESS_LOGOUT_URL?: string
 }
 
 export type MockQueueState = {
@@ -42,6 +43,7 @@ export type MockEnv = {
   JOURNAL_BUCKET: MockR2Bucket
   AI_QUEUE: MockQueue
   AI: MockAi
+  ACCESS_LOGOUT_URL?: string
 }
 
 export const createMockQueue = (): MockQueue => {
@@ -98,5 +100,6 @@ export const createMockEnv = async (options: MockEnvOptions = {}): Promise<MockE
     JOURNAL_BUCKET: await createMockR2Bucket(options.r2),
     AI_QUEUE: createMockQueue(),
     AI: createMockAi(options.ai),
+    ACCESS_LOGOUT_URL: options.ACCESS_LOGOUT_URL,
   }
 }

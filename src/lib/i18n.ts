@@ -3,6 +3,7 @@ export const uiText = {
     nav: {
       entries: '一覧',
       search: '検索',
+      logout: 'ログアウト',
     },
     calendar: {
       today: '今日',

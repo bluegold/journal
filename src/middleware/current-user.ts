@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'hono'
 import { readAccessIdentity, readDevAccessIdentity, upsertAccessUser } from '../auth/access'
+import { buildJournalConfig } from '../lib/journal-config'
 import type { Bindings } from '../types/bindings'
 import type { JournalContextVariables } from '../types/journal'
 
@@ -15,6 +16,7 @@ export const currentUserMiddleware: MiddlewareHandler<{
 
   const currentUser = await upsertAccessUser(c.env.DB, identity)
   c.set('currentUser', currentUser)
+  c.set('journalConfig', buildJournalConfig(c.env))
 
   await next()
 }

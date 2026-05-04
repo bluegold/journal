@@ -10,14 +10,16 @@ import {
 } from '../../lib/entries-navigation'
 import { resolveEntriesSelection } from '../../lib/entries-selection'
 import { uiText } from '../../lib/i18n'
+import type { JournalConfig } from '../../lib/journal-config'
 import type { JournalEntryRow, JournalUserRow } from '../../types/journal'
 
 type HomePageProps = {
   currentUser: JournalUserRow
   entries: JournalEntryRow[]
+  journalConfig: JournalConfig
 }
 
-export const HomePage = ({ currentUser, entries }: HomePageProps) => {
+export const HomePage = ({ currentUser, entries, journalConfig }: HomePageProps) => {
   const text = uiText.ja
   const selection = resolveEntriesSelection(entries, {})
   const monthDate = selection.monthDate
@@ -51,6 +53,7 @@ export const HomePage = ({ currentUser, entries }: HomePageProps) => {
         { label: text.nav.entries, href: '/entries' },
         { label: text.nav.search, href: '/search' },
       ]}
+      journalConfig={journalConfig}
     />
   )
 }

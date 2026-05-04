@@ -11,6 +11,7 @@ import {
   shiftMonth,
 } from '../../lib/entries-navigation'
 import { uiText } from '../../lib/i18n'
+import type { JournalConfig } from '../../lib/journal-config'
 import type { JournalEntryRow, JournalUserRow } from '../../types/journal'
 
 type EntriesPageProps = {
@@ -18,6 +19,7 @@ type EntriesPageProps = {
   entries: JournalEntryRow[]
   selectedEntryBodyHtml: string | null
   selectedEntryTagNames: string[]
+  journalConfig: JournalConfig
   query?: {
     month?: string | null
     date?: string | null
@@ -25,7 +27,7 @@ type EntriesPageProps = {
   }
 }
 
-export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, selectedEntryTagNames, query }: EntriesPageProps) => {
+export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, selectedEntryTagNames, journalConfig, query }: EntriesPageProps) => {
   const text = uiText.ja
   const selection = resolveEntriesSelection(entries, query)
 
@@ -80,6 +82,7 @@ export const EntriesPage = ({ currentUser, entries, selectedEntryBodyHtml, selec
         { label: text.nav.entries, href: '/entries' },
         { label: text.nav.search, href: '/search' },
       ]}
+      journalConfig={journalConfig}
     />
   )
 }

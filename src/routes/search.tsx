@@ -93,6 +93,7 @@ searchRoutes.get('/search', async (c) => {
       results={results}
       tagStats={tagStats}
       calendarView={calendarView}
+      journalConfig={c.var.journalConfig}
     />
   )
 
@@ -107,6 +108,7 @@ searchRoutes.get('/search', async (c) => {
         results={results}
         tagStats={tagStats}
         calendarView={calendarView}
+        journalConfig={c.var.journalConfig}
       />
     )
   }

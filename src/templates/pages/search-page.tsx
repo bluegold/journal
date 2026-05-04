@@ -7,6 +7,7 @@ import { buildEntriesHref } from '../../lib/entries-navigation'
 import { normalizeTagName } from '../../lib/tags'
 import type { CalendarMonthView } from '../calendar-month'
 import type { JournalUserRow } from '../../types/journal'
+import type { JournalConfig } from '../../lib/journal-config'
 import { uiText } from '../../lib/i18n'
 
 type SearchPageProps = {
@@ -18,6 +19,7 @@ type SearchPageProps = {
   date: string
   results: SearchEntryMatch[]
   tagStats: JournalTagStat[]
+  journalConfig: JournalConfig
 }
 
 const buildSearchHref = (options: {
@@ -56,7 +58,7 @@ const buildTagHref = (query: string, tag: string, month: string, date: string): 
   return buildSearchHref({ query, tag, month, date })
 }
 
-export const SearchPage = ({ currentUser, calendarView, query, tag, month, date, results, tagStats }: SearchPageProps) => {
+export const SearchPage = ({ currentUser, calendarView, query, tag, month, date, results, tagStats, journalConfig }: SearchPageProps) => {
   return (
     <SearchPageShell
       currentUser={currentUser}
@@ -67,6 +69,7 @@ export const SearchPage = ({ currentUser, calendarView, query, tag, month, date,
       date={date}
       results={results}
       tagStats={tagStats}
+      journalConfig={journalConfig}
     />
   )
 }
@@ -88,7 +91,7 @@ export const SearchContentPane = (props: SearchPageProps) => {
   )
 }
 
-const SearchPageShell = ({ currentUser, calendarView, query, tag, month, date, results, tagStats }: SearchPageProps) => {
+const SearchPageShell = ({ currentUser, calendarView, query, tag, month, date, results, tagStats, journalConfig }: SearchPageProps) => {
   const text = uiText.ja
 
   return (
@@ -99,6 +102,7 @@ const SearchPageShell = ({ currentUser, calendarView, query, tag, month, date, r
           { label: text.nav.entries, href: '/entries' },
           { label: text.nav.search, href: '/search' },
         ]}
+        journalConfig={journalConfig}
       />
 
       <div id="search-workspace" class="min-h-screen">
@@ -116,7 +120,7 @@ const SearchPageShell = ({ currentUser, calendarView, query, tag, month, date, r
   )
 }
 
-const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagStats }: Omit<SearchPageProps, 'currentUser'>) => {
+const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagStats }: Omit<SearchPageProps, 'currentUser' | 'journalConfig'>) => {
   const normalizedTag = normalizeTagName(tag) ?? ''
   const hasActiveFilters = query.trim().length > 0 || normalizedTag.length > 0 || month.trim().length > 0 || date.trim().length > 0
   const text = uiText.ja

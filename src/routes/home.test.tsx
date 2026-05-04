@@ -18,9 +18,23 @@ describe('home route', () => {
     expect(body).toContain('hx-target="#journal-workspace"')
     expect(body).toContain('htmx:afterSwap')
     expect(body).toContain('Tester')
+    expect(body).toContain('tester@example.com')
     expect(body).toContain('Calendar')
     expect(body).toContain('Content area')
     expect(body).toContain(text.detail.noEntryTitle)
+    expect(body).toContain('popovertarget="journal-user-menu"')
+    expect(body).toContain('disabled=""')
+  })
+
+  it('shows the logout button when the access logout url is configured', async () => {
+    const { response, body } = await requestApp('/', {
+      ACCESS_LOGOUT_URL: 'https://example.com/logout',
+    })
+
+    expect(response.status).toBe(200)
+    expect(body).toContain('href="https://example.com/logout"')
+    expect(body).toContain(text.nav.logout)
+    expect(body).toContain('tester@example.com')
   })
 
   it('shows entry markers on the initial calendar', async () => {
