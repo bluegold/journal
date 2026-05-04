@@ -5,7 +5,8 @@ import {
   indentWithTab,
 } from '@codemirror/commands'
 import { markdown, markdownKeymap } from '@codemirror/lang-markdown'
-import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
+import { tags } from '@lezer/highlight'
 import {
   EditorView,
   keymap,
@@ -19,6 +20,28 @@ import {
 } from '@codemirror/view'
 
 const mountedEditors = new WeakMap<HTMLTextAreaElement, EditorView>()
+
+const journalHighlightStyle = HighlightStyle.define([
+  { tag: tags.meta, color: '#fb7185', fontWeight: 'bold' },
+  { tag: tags.link, textDecoration: 'underline' },
+  { tag: tags.heading, textDecoration: 'underline', fontWeight: 'bold' },
+  { tag: tags.emphasis, fontStyle: 'italic' },
+  { tag: tags.strong, fontWeight: 'bold' },
+  { tag: tags.strikethrough, textDecoration: 'line-through' },
+  { tag: tags.keyword, color: '#c084fc' },
+  { tag: [tags.atom, tags.bool, tags.url, tags.contentSeparator, tags.labelName], color: '#7dd3fc' },
+  { tag: [tags.literal, tags.inserted], color: '#86efac' },
+  { tag: [tags.string, tags.deleted], color: '#fca5a5' },
+  { tag: [tags.regexp, tags.escape, tags.special(tags.string)], color: '#fb923c' },
+  { tag: tags.definition(tags.variableName), color: '#93c5fd' },
+  { tag: tags.local(tags.variableName), color: '#c4b5fd' },
+  { tag: [tags.typeName, tags.namespace], color: '#5eead4' },
+  { tag: tags.className, color: '#67e8f9' },
+  { tag: [tags.special(tags.variableName), tags.macroName], color: '#7dd3fc' },
+  { tag: tags.definition(tags.propertyName), color: '#93c5fd' },
+  { tag: tags.comment, color: '#fbbf24' },
+  { tag: tags.invalid, color: '#f87171' },
+])
 
 const editorTheme = EditorView.theme({
   '&': {
@@ -37,7 +60,7 @@ const editorTheme = EditorView.theme({
   },
   '.cm-scroller': {
     minHeight: '52vh',
-    fontFamily: 'ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace',
+    fontFamily: '"Noto Sans Mono CJK JP", "Noto Sans Mono", "Source Han Mono", "BIZ UDGothic", "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace',
     lineHeight: '1.5rem',
   },
   '.cm-content': {
@@ -88,7 +111,7 @@ const createEditorExtensions = (textarea: HTMLTextAreaElement) => {
     rectangularSelection(),
     crosshairCursor(),
     highlightActiveLine(),
-    syntaxHighlighting(defaultHighlightStyle),
+    syntaxHighlighting(journalHighlightStyle),
     keymap.of([...markdownKeymap, indentWithTab]),
     keymap.of([...defaultKeymap, ...historyKeymap]),
     markdown(),
