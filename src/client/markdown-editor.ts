@@ -102,6 +102,31 @@ const focusEditorEnd = (view: EditorView) => {
   view.focus()
 }
 
+const maybeInsertCodeFence = (
+  view: EditorView,
+  position: number,
+) => {
+  const state = view.state
+  if (position < 2) return false
+
+  const line = state.doc.lineAt(position)
+  const lineBeforeCursor = state.sliceDoc(line.from, position)
+
+  if (!/^[ \t]{0,3}``$/.test(lineBeforeCursor)) return false
+
+  view.dispatch({
+    changes: {
+      from: position - 2,
+      to: position,
+      insert: '```\n\n```',
+    },
+    selection: { anchor: position + 2 },
+    scrollIntoView: true,
+  })
+
+  return true
+}
+
 const createEditorExtensions = (textarea: HTMLTextAreaElement) => {
   const extensions = [
     highlightSpecialChars(),
@@ -114,6 +139,21 @@ const createEditorExtensions = (textarea: HTMLTextAreaElement) => {
     syntaxHighlighting(journalHighlightStyle),
     keymap.of([...markdownKeymap, indentWithTab]),
     keymap.of([...defaultKeymap, ...historyKeymap]),
+    EditorView.domEventHandlers({
+      beforeinput(event, view) {
+        if (!(event instanceof InputEvent)) return false
+        if (event.inputType !== 'insertText' || event.data !== '`') return false
+        if (view.state.readOnly) return false
+
+        const selection = view.state.selection.main
+        if (!selection.empty) return false
+
+        if (!maybeInsertCodeFence(view, selection.from)) return false
+
+        event.preventDefault()
+        return true
+      },
+    }),
     markdown(),
     EditorView.lineWrapping,
     editorTheme,
