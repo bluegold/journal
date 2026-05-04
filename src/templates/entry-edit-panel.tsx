@@ -88,7 +88,12 @@ export const EntryEditPanel = ({
 
         <label class="block space-y-1.5">
           <span class="text-[10px] font-medium tracking-[0.18em] text-slate-300 uppercase">{text.editor.markdown}</span>
-          <textarea class="textarea min-h-[52vh] w-full font-mono text-sm leading-6" name="body" placeholder={text.editor.placeholderMarkdown}>
+          <textarea
+            class="textarea min-h-[52vh] w-full font-mono text-sm leading-6"
+            name="body"
+            placeholder={text.editor.placeholderMarkdown}
+            data-markdown-editor="codemirror"
+          >
             {body}
           </textarea>
         </label>

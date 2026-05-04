@@ -37,9 +37,11 @@ npm run dev
 ```
 
 利用可能なスクリプト（package.json より）
-- dev: 開発モード（wrangler と tailwind の並列起動）
+- dev: 開発モード（wrangler、tailwind、CodeMirror エディタ bundle の並列起動）
+- dev:editor: CodeMirror エディタ用クライアントスクリプトの watch build
 - build:css: Tailwind を使った CSS ビルド
-- deploy: CSS ビルド後に wrangler deploy
+- build:editor: CodeMirror エディタ用クライアントスクリプトの bundle
+- deploy: CSS とエディタ script をビルドしてから wrangler deploy
 - check: TypeScript 型チェック
 - lint / format: biome を用いた静的検査と整形
 - test / test:watch / test:coverage: vitest を用いたテスト

@@ -128,6 +128,7 @@ describe('entries route', () => {
     expect(body).toContain('Summary one')
     expect(body).toContain(text.editor.cancel)
     expect(body).toContain('ring-1 ring-cyan-300/50')
+    expect(body).toContain('data-markdown-editor="codemirror"')
   })
 
   it('renders the edit entry form for the selected entry', async () => {
@@ -189,6 +190,7 @@ describe('entries route', () => {
     expect(body).toContain(text.editor.saveChanges)
     expect(body).toContain(text.editor.preview)
     expect(body).toContain(text.editor.cancel)
+    expect(body).toContain('data-markdown-editor="codemirror"')
   })
 
   it('shows accepted ai summary as confirmed in the edit form', async () => {

@@ -16,6 +16,7 @@ export const AppLayout = ({ title, children }: AppLayoutProps) => {
         <title>{title}</title>
         <link rel="icon" type="image/png" href="/favicon.png" />
         <link rel="stylesheet" href="/app.css" />
+        <script type="module" src="/markdown-editor.mjs" />
         <script
           src="https://unpkg.com/htmx.org@2.0.4"
           integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"

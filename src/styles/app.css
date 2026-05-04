@@ -176,6 +176,14 @@ button:not(:disabled) {
   outline-offset: 2px;
 }
 
+.cm-journal-editor-host {
+  min-height: 52vh;
+}
+
+.cm-journal-editor-host .cm-editor {
+  min-height: 52vh;
+}
+
 .markdown-body {
   color: #e2e8f0;
   font-size: 0.95rem;
