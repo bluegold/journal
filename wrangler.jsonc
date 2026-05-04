@@ -27,6 +27,10 @@
     "binding": "AI"
   },
 
+  "vars": {
+    "ACCESS_LOGOUT_URL": "https://tkaneko188.cloudflareaccess.com/cdn-cgi/access/logout"
+  },
+
   "queues": {
     "producers": [
       {
