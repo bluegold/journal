@@ -78,6 +78,7 @@ npm run dev
 - ユニットテスト / 結合テストには vitest を使用します。
 - lint/format チェックは biome ベースで行います。
 - 重要な変更はテストを追加してからマージしてください。
+- GitHub Actions の CI は `.github/workflows/ci.yml` で `build:css`, `build:editor`, `check`, `lint`, `test` を実行します。
 
 ## 貢献ガイドライン
 
