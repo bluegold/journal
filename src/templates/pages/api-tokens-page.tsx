@@ -112,33 +112,41 @@ export const ApiTokensPage = ({
               </div>
 
               {apiTokens.length > 0 ? (
-                <div class="mt-4 space-y-3">
-                  {apiTokens.map((apiToken) => (
-                    <article class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                      <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div class="min-w-0">
-                          <h3 class="truncate text-base font-semibold text-slate-100">{apiToken.name}</h3>
-                          <p class="mt-1 font-mono text-sm text-slate-300">{apiToken.token_prefix}…</p>
-                          <dl class="mt-3 grid gap-1 text-sm text-slate-400">
-                            <div>
-                              <dt class="inline text-slate-500">{text.apiTokens.createdAt}: </dt>
-                              <dd class="inline text-slate-300">{formatTimestamp(apiToken.created_at)}</dd>
-                            </div>
-                            <div>
-                              <dt class="inline text-slate-500">{text.apiTokens.lastUsedAt}: </dt>
-                              <dd class="inline text-slate-300">{formatTimestamp(apiToken.last_used_at)}</dd>
-                            </div>
-                          </dl>
-                        </div>
-
-                        <form method="post" action={`/settings/api-tokens/${apiToken.id}/delete`}>
-                          <button type="submit" class="btn btn-sm btn-outline text-rose-100 hover:bg-rose-400/10">
-                            {text.apiTokens.deleteAction}
-                          </button>
-                        </form>
-                      </div>
-                    </article>
-                  ))}
+                <div class="mt-4 overflow-x-auto">
+                  <table class="table w-full min-w-[720px]">
+                    <thead>
+                      <tr class="text-slate-400">
+                        <th>{text.apiTokens.nameLabel}</th>
+                        <th>Prefix</th>
+                        <th>{text.apiTokens.createdAt}</th>
+                        <th>{text.apiTokens.lastUsedAt}</th>
+                        <th class="text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {apiTokens.map((apiToken) => (
+                        <tr class="border-slate-800">
+                          <td class="font-medium text-slate-100">{apiToken.name}</td>
+                          <td class="font-mono text-sm text-slate-300">{apiToken.token_prefix}…</td>
+                          <td class="text-sm text-slate-300">{formatTimestamp(apiToken.created_at)}</td>
+                          <td class="text-sm text-slate-300">
+                            {apiToken.last_used_at ? (
+                              formatTimestamp(apiToken.last_used_at)
+                            ) : (
+                              <span class="badge badge-outline">{text.apiTokens.neverUsed}</span>
+                            )}
+                          </td>
+                          <td class="text-right">
+                            <form method="post" action={`/settings/api-tokens/${apiToken.id}/delete`}>
+                              <button type="submit" class="btn btn-sm btn-outline text-rose-100 hover:bg-rose-400/10">
+                                {text.apiTokens.deleteAction}
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
                 <Alert tone="neutral" className="mt-4">
