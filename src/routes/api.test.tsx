@@ -12,6 +12,52 @@ import {
 import app from '../app'
 
 describe('api routes', () => {
+  it('pings the authenticated API user', async () => {
+    const plaintextToken = 'jrnl_ping'
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialApiTokens: [
+          createApiTokenRow({
+            name: 'Default token',
+            token_hash: await hashApiToken(plaintextToken),
+            last_used_at: null,
+          }),
+        ],
+      },
+    })
+
+    const response = await app.request(
+      '/api/ping',
+      {
+        headers: {
+          authorization: `Bearer ${plaintextToken}`,
+        },
+      },
+      env
+    )
+    const body = await response.json<{
+      ok: boolean
+      user: { id: string; email: string; name: string }
+      token: { id: string; name: string }
+    }>()
+
+    expect(response.status).toBe(200)
+    expect(body).toEqual({
+      ok: true,
+      user: {
+        id: 'user-1',
+        email: 'tester@example.com',
+        name: 'Tester',
+      },
+      token: {
+        id: 'token-1',
+        name: 'Default token',
+      },
+    })
+    expect(env.DB.state.apiTokens[0]?.last_used_at).toMatch(/T/)
+  })
+
   it('creates an entry through the bearer-token protected API', async () => {
     const plaintextToken = 'jrnl_postentry'
     const env = await createMockEnv({

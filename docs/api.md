@@ -70,6 +70,27 @@ Detail responses additionally include:
 
 ## Endpoints
 
+### `GET /api/ping`
+
+Check that the bearer token is valid and identify the authenticated user.
+
+Response:
+
+```json
+{
+  "ok": true,
+  "user": {
+    "id": "user-1",
+    "email": "tester@example.com",
+    "name": "Tester"
+  },
+  "token": {
+    "id": "token-1",
+    "name": "Default token"
+  }
+}
+```
+
 ### `GET /api/entries`
 
 List entries for the authenticated user.

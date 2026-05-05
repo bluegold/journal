@@ -146,6 +146,21 @@ const apiError = (code: ApiErrorCode, message: string) => ({
 
 export const apiRoutes = new Hono<{ Bindings: Bindings; Variables: JournalApiContextVariables }>()
 
+apiRoutes.get('/ping', (c) => {
+  return c.json({
+    ok: true,
+    user: {
+      id: c.var.currentUser.id,
+      email: c.var.currentUser.email,
+      name: c.var.currentUser.name,
+    },
+    token: {
+      id: c.var.currentApiToken.id,
+      name: c.var.currentApiToken.name,
+    },
+  })
+})
+
 apiRoutes.get('/entries', async (c) => {
   const entries = await loadApiEntryRows(c.env.DB, c.var.currentUser.id)
   const { tags, entryTags } = await loadApiSearchRows(c.env.DB)
