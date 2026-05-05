@@ -70,6 +70,8 @@ npm run dev
 - ブラウザ UI は Cloudflare Access を前提にしています。
 - プログラム利用向けには、アバターメニュー内の `APIトークン管理` からユーザー単位の API トークンを発行・削除できます。
 - API トークンの平文は作成直後に一度だけ表示され、DB には hash のみ保存されます。
+- `/api/*` は `Authorization: Bearer <token>` で認証します。
+- API の詳細は [docs/api.md](./docs/api.md) を参照してください。
 
 ## AI ワークフロー
 

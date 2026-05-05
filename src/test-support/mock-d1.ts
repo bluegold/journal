@@ -264,6 +264,19 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
     }
   }
 
+  if (normalizedSql === 'UPDATE api_tokens SET last_used_at = ? WHERE id = ?') {
+    const lastUsedAt = params[0] != null ? String(params[0]) : null
+    const tokenId = String(params[1] ?? '')
+    const current = state.apiTokens.find((apiToken) => apiToken.id === tokenId)
+
+    if (!current) {
+      return { success: true, meta: { changes: 0 } }
+    }
+
+    current.last_used_at = lastUsedAt
+    return { success: true, meta: { changes: 1 } }
+  }
+
   if (normalizedSql.startsWith('DELETE FROM entries')) {
     const entryId = String(params[0] ?? '')
     const before = state.entries.length
@@ -458,6 +471,11 @@ const firstStatement = <T>(sql: string, params: unknown[], state: MockD1State) =
   if (normalizedSql.startsWith('SELECT * FROM users WHERE email = ? LIMIT 1')) {
     const email = String(params[0] ?? '')
     return (state.users.find((user) => user.email === email) ?? null) as T | null
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM api_tokens WHERE token_hash = ? LIMIT 1')) {
+    const tokenHash = String(params[0] ?? '')
+    return (state.apiTokens.find((apiToken) => apiToken.token_hash === tokenHash) ?? null) as T | null
   }
 
   if (normalizedSql.startsWith('SELECT * FROM tags WHERE id = ? LIMIT 1')) {

@@ -60,3 +60,8 @@ export type JournalContextVariables = {
   currentUser: JournalUserRow
   journalConfig: JournalConfig
 }
+
+export type JournalApiContextVariables = {
+  currentUser: JournalUserRow
+  currentApiToken: JournalApiTokenRow
+}

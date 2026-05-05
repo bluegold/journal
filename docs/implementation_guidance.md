@@ -62,6 +62,7 @@ For local `wrangler dev`, the app accepts Access-style user values from `.dev.va
 - `DEV_ACCESS_USER_AVATAR`
 
 See [Environment Variables](./environment_variables.md) for the full list of runtime bindings and local development variables.
+For programmatic integration details, see [API Documentation](./api.md).
 
 If Access headers are present, they win. The local vars are only a fallback for development.
 

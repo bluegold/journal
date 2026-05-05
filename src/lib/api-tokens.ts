@@ -1,15 +1,9 @@
 import { generateUuidv7 } from './uuidv7'
+import { hashApiToken } from '../auth/api-token'
 import type { JournalApiTokenRow } from '../types/journal'
-
-const encoder = new TextEncoder()
 
 const bytesToHex = (bytes: Uint8Array): string => {
   return Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('')
-}
-
-const digestToHex = async (value: string): Promise<string> => {
-  const digest = await crypto.subtle.digest('SHA-256', encoder.encode(value))
-  return bytesToHex(new Uint8Array(digest))
 }
 
 const createPlaintextToken = (): string => {
@@ -45,7 +39,7 @@ export const createApiToken = async ({
     id: generateUuidv7(),
     user_id: userId,
     name,
-    token_hash: await digestToHex(plaintextToken),
+    token_hash: await hashApiToken(plaintextToken),
     token_prefix: createTokenPrefix(plaintextToken),
     created_at: timestamp,
     last_used_at: null,
