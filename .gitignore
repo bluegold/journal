@@ -1,5 +1,7 @@
 public/app.css
 public/markdown-editor.mjs
+public/app.*.css
+public/markdown-editor.*.mjs
 .wrangler/
 node_modules/
 coverage/

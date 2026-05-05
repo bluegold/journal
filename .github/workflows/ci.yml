@@ -30,6 +30,9 @@ jobs:
       - name: Build editor bundle
         run: npm run build:editor
 
+      - name: Build assets manifest
+        run: npm run build:assets
+
       - name: Type check
         run: npm run check
 

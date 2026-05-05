@@ -1,5 +1,6 @@
 import type { Child } from 'hono/jsx'
 import { embeddedDiagramsBootScript } from '../client/embedded-diagrams-script'
+import { assetUrl } from '../lib/assets'
 
 type AppLayoutProps = {
   title: string
@@ -15,8 +16,8 @@ export const AppLayout = ({ title, children }: AppLayoutProps) => {
         <meta name="theme-color" content="#020617" />
         <title>{title}</title>
         <link rel="icon" type="image/png" href="/favicon.png" />
-        <link rel="stylesheet" href="/app.css" />
-        <script type="module" src="/markdown-editor.mjs" />
+        <link rel="stylesheet" href={assetUrl('app.css')} />
+        <script type="module" src={assetUrl('markdown-editor.mjs')} />
         <script
           src="https://unpkg.com/htmx.org@2.0.4"
           integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"

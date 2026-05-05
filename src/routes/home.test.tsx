@@ -3,6 +3,7 @@ import { requestApp } from '../test-support'
 import { createEntryRow } from '../test-support'
 import { createUserRow } from '../test-support/fixtures'
 import { uiText } from '../lib/i18n'
+import { assetUrl } from '../lib/assets'
 
 describe('home route', () => {
   const text = uiText.ja
@@ -14,7 +15,8 @@ describe('home route', () => {
     expect(body).toContain('<html lang="ja"')
     expect(body).toContain('href="/favicon.png"')
     expect(body).toContain('src="/favicon.png"')
-    expect(body).toContain('src="/markdown-editor.mjs"')
+    expect(body).toContain(`href="${assetUrl('app.css')}"`)
+    expect(body).toContain(`src="${assetUrl('markdown-editor.mjs')}"`)
     expect(body).toContain('href="/"')
     expect(body).toContain('hx-target="#journal-workspace"')
     expect(body).toContain('htmx:afterSwap')

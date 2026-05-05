@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!public/markdown-editor.mjs"]
+    "includes": ["**", "!public"]
   },
   "css": {
     "parser": {

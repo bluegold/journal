@@ -39,9 +39,12 @@ npm run dev
 利用可能なスクリプト（package.json より）
 - dev: 開発モード（wrangler、tailwind、CodeMirror エディタ bundle の並列起動）
 - dev:editor: CodeMirror エディタ用クライアントスクリプトの watch build
+- dev:assets: CSS / editor bundle の hash 付き public アセットと manifest を watch 生成
 - build:css: Tailwind を使った CSS ビルド
 - build:editor: CodeMirror エディタ用クライアントスクリプトの bundle
-- deploy: CSS とエディタ script をビルドしてから wrangler deploy
+- assets:clobber: hash 付き public アセットを削除
+- build:assets: hash 付き public アセットと manifest を生成
+- deploy: CSS / エディタ script / assets manifest をビルドしてから wrangler deploy
 - check: TypeScript 型チェック
 - lint / format: biome を用いた静的検査と整形
 - test / test:watch / test:coverage: vitest を用いたテスト
@@ -78,7 +81,7 @@ npm run dev
 - ユニットテスト / 結合テストには vitest を使用します。
 - lint/format チェックは biome ベースで行います。
 - 重要な変更はテストを追加してからマージしてください。
-- GitHub Actions の CI は `.github/workflows/ci.yml` で `build:css`, `build:editor`, `check`, `lint`, `test` を実行します。
+- GitHub Actions の CI は `.github/workflows/ci.yml` で `build:css`, `build:editor`, `build:assets`, `check`, `lint`, `test` を実行します。
 
 ## 貢献ガイドライン
 
