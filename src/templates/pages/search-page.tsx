@@ -1,4 +1,5 @@
 import { JournalHeader } from '../journal-header'
+import { Alert } from '../alert'
 import { CalendarMonth } from '../calendar-month'
 import { EntryCard } from '../entry-card'
 import type { JournalTagStat } from '../../lib/tag-stats'
@@ -220,11 +221,9 @@ const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagSt
                 ))}
               </div>
             ) : (
-              <div class="alert mt-4 border-dashed border-slate-700 bg-slate-900/70">
-                <section>
+              <Alert tone="neutral" className="mt-4">
                   <p>{text.search.noMatches}</p>
-                </section>
-              </div>
+              </Alert>
             )}
           </section>
         </div>

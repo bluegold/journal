@@ -44,12 +44,23 @@ export type EntryAiTagCandidateRow = {
   created_at: string
 }
 
+export type ApiTokenRow = {
+  id: string
+  user_id: string
+  name: string
+  token_hash: string
+  token_prefix: string
+  created_at: string
+  last_used_at: string | null
+}
+
 export type MockD1Options = {
   initialUsers?: UserRow[]
   initialEntries?: EntryRow[]
   initialTags?: TagRow[]
   initialEntryTags?: EntryTagRow[]
   initialEntryAiTagCandidates?: EntryAiTagCandidateRow[]
+  initialApiTokens?: ApiTokenRow[]
 }
 
 export type MockD1State = {
@@ -58,6 +69,7 @@ export type MockD1State = {
   tags: TagRow[]
   entryTags: EntryTagRow[]
   entryAiTagCandidates: EntryAiTagCandidateRow[]
+  apiTokens: ApiTokenRow[]
   nextUserId: number
   nextTagId: number
   nextCandidateId: number

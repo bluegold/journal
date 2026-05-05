@@ -6,6 +6,7 @@ import { entriesRoutes } from './routes/entries'
 import { homeRoutes } from './routes/home'
 import { searchRoutes } from './routes/search'
 import { tagsRoutes } from './routes/tags'
+import { apiTokenRoutes } from './routes/api-tokens'
 import type { Bindings } from './types/bindings'
 import type { JournalContextVariables } from './types/journal'
 
@@ -17,6 +18,7 @@ app.route('/', homeRoutes)
 app.route('/', entriesRoutes)
 app.route('/', searchRoutes)
 app.route('/', tagsRoutes)
+app.route('/', apiTokenRoutes)
 
 type JournalWorker = ExportedHandler<Bindings, AiSummaryQueueMessage> & {
   request: typeof app.request

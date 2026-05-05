@@ -1,4 +1,5 @@
 import type {
+  ApiTokenRow,
   EntryAiTagCandidateRow,
   EntryRow,
   EntryTagRow,
@@ -53,6 +54,19 @@ export const createEntryTagRow = (overrides: Partial<EntryTagRow> = {}): EntryTa
     entry_id: 'entry-1',
     tag_id: 1,
     created_at: '2026-04-22T00:00:00.000Z',
+    ...overrides,
+  }
+}
+
+export const createApiTokenRow = (overrides: Partial<ApiTokenRow> = {}): ApiTokenRow => {
+  return {
+    id: 'token-1',
+    user_id: 'user-1',
+    name: 'codex-dev',
+    token_hash: 'abc123hash',
+    token_prefix: 'jrnl_deadbeefcafe00',
+    created_at: '2026-05-05T00:00:00.000Z',
+    last_used_at: null,
     ...overrides,
   }
 }

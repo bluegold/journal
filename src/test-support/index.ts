@@ -1,6 +1,7 @@
 export { createMockD1 } from './mock-d1'
 export { createMockAi, createMockEnv, createMockQueue } from './mock-env'
 export {
+  createApiTokenRow,
   createEntryAiTagCandidateRow,
   createEntryRow,
   createEntryTagRow,

@@ -1,4 +1,5 @@
 import type {
+  ApiTokenRow,
   EntryAiTagCandidateRow,
   EntryRow,
   EntryTagRow,
@@ -23,6 +24,7 @@ const cloneUser = (user: UserRow): UserRow => ({ ...user })
 const cloneTag = (tag: TagRow): TagRow => ({ ...tag })
 const cloneEntryTag = (entryTag: EntryTagRow): EntryTagRow => ({ ...entryTag })
 const cloneCandidate = (candidate: EntryAiTagCandidateRow): EntryAiTagCandidateRow => ({ ...candidate })
+const cloneApiToken = (apiToken: ApiTokenRow): ApiTokenRow => ({ ...apiToken })
 
 const deriveNextNumericId = (ids: string[]): number => {
   let max = 0
@@ -48,6 +50,7 @@ const createInitialState = (options: MockD1Options): MockD1State => {
   const tags = [...(options.initialTags ?? [])].map(cloneTag)
   const entryTags = [...(options.initialEntryTags ?? [])].map(cloneEntryTag)
   const entryAiTagCandidates = [...(options.initialEntryAiTagCandidates ?? [])].map(cloneCandidate)
+  const apiTokens = [...(options.initialApiTokens ?? [])].map(cloneApiToken)
 
   return {
     users,
@@ -55,6 +58,7 @@ const createInitialState = (options: MockD1Options): MockD1State => {
     tags,
     entryTags,
     entryAiTagCandidates,
+    apiTokens,
     nextUserId: deriveNextNumericId(users.map((user) => user.id)),
     nextTagId: tags.reduce((max, tag) => Math.max(max, tag.id), 0) + 1,
     nextCandidateId: entryAiTagCandidates.reduce((max, candidate) => Math.max(max, candidate.id), 0) + 1,
@@ -336,6 +340,21 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
     return { success: true, meta: { changes: 1 } }
   }
 
+  if (normalizedSql.startsWith('INSERT INTO api_tokens')) {
+    const apiToken: ApiTokenRow = {
+      id: String(params[0] ?? ''),
+      user_id: String(params[1] ?? ''),
+      name: String(params[2] ?? ''),
+      token_hash: String(params[3] ?? ''),
+      token_prefix: String(params[4] ?? ''),
+      created_at: String(params[5] ?? ''),
+      last_used_at: params[6] != null ? String(params[6]) : null,
+    }
+
+    state.apiTokens = [...state.apiTokens.filter((current) => current.id !== apiToken.id), apiToken]
+    return { success: true, meta: { changes: 1 } }
+  }
+
   if (normalizedSql.startsWith('DELETE FROM entry_ai_tag_candidates')) {
     const entryId = String(params[0] ?? '')
     const tagName = params[1] != null ? String(params[1]) : null
@@ -354,6 +373,14 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
     })
 
     return { success: true, meta: { changes: before - state.entryAiTagCandidates.length } }
+  }
+
+  if (normalizedSql === 'DELETE FROM api_tokens WHERE id = ? AND user_id = ?') {
+    const tokenId = String(params[0] ?? '')
+    const userId = String(params[1] ?? '')
+    const before = state.apiTokens.length
+    state.apiTokens = state.apiTokens.filter((apiToken) => !(apiToken.id === tokenId && apiToken.user_id === userId))
+    return { success: true, meta: { changes: before - state.apiTokens.length } }
   }
 
   return { success: true, meta: { changes: 0 } }
@@ -397,6 +424,13 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
 
   if (normalizedSql.startsWith('SELECT * FROM entry_ai_tag_candidates')) {
     return { results: sortByCreatedAtDesc(state.entryAiTagCandidates) as T[] }
+  }
+
+  if (normalizedSql === 'SELECT * FROM api_tokens WHERE user_id = ? ORDER BY created_at DESC, id DESC') {
+    const userId = String(params[0] ?? '')
+    return {
+      results: sortByCreatedAtDesc(state.apiTokens.filter((apiToken) => apiToken.user_id === userId)) as T[],
+    }
   }
 
   return { results: [] as T[] }

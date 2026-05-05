@@ -46,6 +46,16 @@ export type JournalUserRow = {
   updated_at: string
 }
 
+export type JournalApiTokenRow = {
+  id: string
+  user_id: string
+  name: string
+  token_hash: string
+  token_prefix: string
+  created_at: string
+  last_used_at: string | null
+}
+
 export type JournalContextVariables = {
   currentUser: JournalUserRow
   journalConfig: JournalConfig

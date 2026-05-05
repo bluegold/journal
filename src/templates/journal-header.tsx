@@ -15,6 +15,7 @@ export const JournalHeader = ({ currentUser, menuItems, journalConfig }: Journal
   const avatarSrc = currentUser.avatar_url ?? '/unknown_avatar.png'
   const text = uiText.ja
   const userMenuId = 'journal-user-menu'
+  const apiTokenHref = '/settings/api-tokens'
   const logoutButton = journalConfig.logoutHref ? (
     <a href={journalConfig.logoutHref} class="btn btn-sm btn-outline w-full justify-center">
       {text.nav.logout}
@@ -85,6 +86,10 @@ export const JournalHeader = ({ currentUser, menuItems, journalConfig }: Journal
                   <p class="truncate text-xs text-slate-400">{currentUser.email}</p>
                 </div>
               </div>
+
+              <a href={apiTokenHref} class="btn btn-sm btn-outline w-full justify-center">
+                {text.nav.apiTokens}
+              </a>
 
               {logoutButton}
             </div>

@@ -3,7 +3,29 @@ export const uiText = {
     nav: {
       entries: '一覧',
       search: '検索',
+      apiTokens: 'APIトークン管理',
       logout: 'ログアウト',
+    },
+    apiTokens: {
+      title: 'APIトークン管理',
+      description:
+        '外部プログラムや LLM から Journal API を呼び出すためのトークンを管理します。平文トークンは作成直後に一度だけ表示され、以後は再表示できません。',
+      createTitle: '新規トークンを作成',
+      createDescription: '用途が分かる名前を付けてください。DB には hash のみ保存します。',
+      createAction: 'トークンを作成',
+      nameLabel: '名前',
+      namePlaceholder: '例: codex-dev, nightly-import',
+      listTitle: '発行済みトークン',
+      empty: 'まだ API トークンはありません。',
+      created: '「{{name}}」のトークンを発行しました。',
+      createdHelp: 'この値はあとから再表示できません。必要なら今ここで控えてください。',
+      createdAt: '作成日時',
+      lastUsedAt: '最終使用日時',
+      neverUsed: '未使用',
+      deleteAction: '削除',
+      errors: {
+        nameRequired: 'トークン名を入力してください。',
+      },
     },
     calendar: {
       today: '今日',

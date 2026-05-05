@@ -26,6 +26,7 @@ describe('home route', () => {
     expect(body).toContain('Content area')
     expect(body).toContain(text.detail.noEntryTitle)
     expect(body).toContain('popovertarget="journal-user-menu"')
+    expect(body).toContain('href="/settings/api-tokens"')
     expect(body).toContain('disabled=""')
   })
 

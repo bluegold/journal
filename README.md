@@ -61,8 +61,15 @@ npm run dev
 - tags: 正規化された承認タグ
 - entry_tags: entries ⇄ tags の junction
 - entry_ai_tag_candidates: AI 候補タグ（採用前の提案を保持）
+- api_tokens: プログラム用 API トークン（hash のみ保存）
 
 詳細は docs/ と migrations/0001_init.sql を参照してください。
+
+## 認証メモ
+
+- ブラウザ UI は Cloudflare Access を前提にしています。
+- プログラム利用向けには、アバターメニュー内の `APIトークン管理` からユーザー単位の API トークンを発行・削除できます。
+- API トークンの平文は作成直後に一度だけ表示され、DB には hash のみ保存されます。
 
 ## AI ワークフロー
 
