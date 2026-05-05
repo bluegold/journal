@@ -8,3 +8,6 @@ coverage/
 .vitest/
 .codex
 .dev.vars
+.mise/
+.envrc
+tmp/
