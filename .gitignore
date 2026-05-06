@@ -2,6 +2,7 @@ public/app.css
 public/markdown-editor.mjs
 public/app.*.css
 public/markdown-editor.*.mjs
+src/lib/asset-manifest.generated.ts
 .wrangler/
 node_modules/
 coverage/
