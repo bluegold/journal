@@ -7,6 +7,7 @@ import {
   buildNewEntryHref,
   buildTodayEntriesHref,
   formatDateKey,
+  buildMonthKeyFromDateKey,
   formatMonthKey,
   shiftMonth,
 } from '../../lib/entries-navigation'
@@ -38,7 +39,7 @@ export const NewEntryPage = ({ currentUser, entries, journalConfig, query }: New
       todayHref: buildTodayEntriesHref(),
       previousMonthHref: buildEntriesHref({ monthKey: formatMonthKey(previousMonthDate) }),
       nextMonthHref: buildEntriesHref({ monthKey: formatMonthKey(nextMonthDate) }),
-      dayHref: (dateKey) => buildNewEntryHref({ monthKey: selection.monthKey, dateKey }),
+      dayHref: (dateKey) => buildNewEntryHref({ monthKey: buildMonthKeyFromDateKey(dateKey), dateKey }),
     }
   )
 

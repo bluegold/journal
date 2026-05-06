@@ -11,6 +11,10 @@ export const formatMonthKey = (date: Date): string => {
   return `${year}-${month}`
 }
 
+export const buildMonthKeyFromDateKey = (dateKey: string): string => {
+  return dateKey.slice(0, 7)
+}
+
 export const parseDateKey = (value: string | null | undefined): Date | null => {
   if (!value) {
     return null

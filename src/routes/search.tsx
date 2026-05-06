@@ -11,6 +11,7 @@ import {
   formatMonthKey,
   parseDateKey,
   parseMonthKey,
+  buildMonthKeyFromDateKey,
   shiftMonth,
 } from '../lib/entries-navigation'
 
@@ -79,7 +80,7 @@ searchRoutes.get('/search', async (c) => {
       todayHref: buildSearchHref({ q, tag, month: formatMonthKey(monthDate), date: formatDateKey(monthDate) }),
       previousMonthHref: buildSearchHref({ q, tag, month: formatMonthKey(previousMonthDate) }),
       nextMonthHref: buildSearchHref({ q, tag, month: formatMonthKey(nextMonthDate) }),
-      dayHref: (dateKey) => buildSearchHref({ q, tag, month: monthKey, date: dateKey }),
+      dayHref: (dateKey) => buildSearchHref({ q, tag, month: buildMonthKeyFromDateKey(dateKey), date: dateKey }),
     }
   )
 

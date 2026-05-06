@@ -6,6 +6,7 @@ import {
   buildEntriesHref,
   buildTodayEntriesHref,
   buildTodayNewEntryHref,
+  buildMonthKeyFromDateKey,
   formatMonthKey,
   parseDateKey,
   shiftMonth,
@@ -43,7 +44,7 @@ export const EntryEditPage = ({ currentUser, entries, entry, body, tagsText, aiT
       todayHref: buildTodayEntriesHref(),
       previousMonthHref: buildEntriesHref({ monthKey: formatMonthKey(previousMonthDate) }),
       nextMonthHref: buildEntriesHref({ monthKey: formatMonthKey(nextMonthDate) }),
-      dayHref: (dateKey) => buildEntriesHref({ monthKey: selection.monthKey, dateKey }),
+      dayHref: (dateKey) => buildEntriesHref({ monthKey: buildMonthKeyFromDateKey(dateKey), dateKey }),
     }
   )
 

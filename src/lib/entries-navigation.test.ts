@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildEntryEditHref,
   buildEntriesHref,
+  buildMonthKeyFromDateKey,
   buildNewEntryHref,
   buildTodayNewEntryHref,
   formatDateKey,
@@ -26,6 +27,7 @@ describe('entries navigation helpers', () => {
     expect(formatMonthKey(date)).toBe('2026-04')
     expect(parseMonthKey('2026-04')).toEqual(date)
     expect(parseMonthKey('2026-00')).toBeNull()
+    expect(buildMonthKeyFromDateKey('2026-04-22')).toBe('2026-04')
   })
 
   it('shifts months and builds query hrefs', () => {
