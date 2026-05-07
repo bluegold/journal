@@ -2,7 +2,7 @@
 @import "basecoat-css";
 
 @source "./**/*.{ts,tsx}";
-@source "!../../public-site/**/*";
+@source "!./public-site/**/*";
 
 :root {
   color-scheme: dark;

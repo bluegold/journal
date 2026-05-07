@@ -213,6 +213,43 @@ describe('api routes', () => {
     expect(body.items[0]).toEqual(expect.objectContaining({ id: 'entry-1', tags: ['work'] }))
   })
 
+  it('filters entries by multiple tags from repeated tags[] query params', async () => {
+    const plaintextToken = 'jrnl_listentries_multi_tags'
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialApiTokens: [createApiTokenRow({ token_hash: await hashApiToken(plaintextToken) })],
+        initialTags: [
+          createTagRow({ id: 1, name: 'zoffy' }),
+          createTagRow({ id: 2, name: 'backend' }),
+          createTagRow({ id: 3, name: 'design' }),
+        ],
+        initialEntries: [
+          createEntryRow({ id: 'entry-1', title: 'Zoffy backend log', summary: 'Project notes' }),
+          createEntryRow({ id: 'entry-2', title: 'Backend only', summary: 'Private summary', journal_date: '2026-05-04' }),
+          createEntryRow({ id: 'entry-3', title: 'Design only', summary: 'Design summary', journal_date: '2026-05-03' }),
+        ],
+        initialEntryTags: [
+          createEntryTagRow({ entry_id: 'entry-1', tag_id: 1 }),
+          createEntryTagRow({ entry_id: 'entry-1', tag_id: 2 }),
+          createEntryTagRow({ entry_id: 'entry-2', tag_id: 2 }),
+          createEntryTagRow({ entry_id: 'entry-3', tag_id: 3 }),
+        ],
+      },
+    })
+
+    const response = await app.request(
+      '/api/entries?tags[]=zoffy&tags[]=backend',
+      { headers: { authorization: `Bearer ${plaintextToken}` } },
+      env
+    )
+    const body = await response.json<{ items: Array<{ id: string; tags: string[] }> }>()
+
+    expect(response.status).toBe(200)
+    expect(body.items).toHaveLength(1)
+    expect(body.items[0]).toEqual(expect.objectContaining({ id: 'entry-1', tags: ['backend', 'zoffy'] }))
+  })
+
   it('returns entry detail with body and ai candidates', async () => {
     const plaintextToken = 'jrnl_detailentry'
     const env = await createMockEnv({

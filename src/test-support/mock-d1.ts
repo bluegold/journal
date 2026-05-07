@@ -403,6 +403,33 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
   const normalizedSql = normalizeSql(sql)
   state.queries.push({ sql: normalizedSql, params: [...params] })
 
+  if (
+    normalizedSql.startsWith('SELECT * FROM entries WHERE user_id = ? AND deleted_at IS NULL ORDER BY journal_date DESC, created_at DESC')
+  ) {
+    const userId = String(params[0] ?? '')
+    return {
+      results: sortEntriesByJournalDateDesc(
+        state.entries.filter((entry) => entry.user_id === userId && entry.deleted_at == null)
+      ) as T[],
+    }
+  }
+
+  if (
+    normalizedSql.startsWith(
+      'SELECT * FROM entries WHERE user_id = ? AND deleted_at IS NULL AND id IN ('
+    )
+  ) {
+    const userId = String(params[0] ?? '')
+    const entryIds = params.slice(1).map((value) => String(value))
+    return {
+      results: sortEntriesByJournalDateDesc(
+        state.entries.filter(
+          (entry) => entry.user_id === userId && entry.deleted_at == null && entryIds.includes(entry.id)
+        )
+      ) as T[],
+    }
+  }
+
   if (normalizedSql.startsWith('SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC')) {
     const userId = String(params[0] ?? '')
     return {
@@ -424,8 +451,54 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
     return { results: sortByCreatedAtDesc(state.tags) as T[] }
   }
 
+  if (normalizedSql.startsWith('SELECT id FROM tags WHERE user_id = ? AND name IN (')) {
+    const userId = String(params[0] ?? '')
+    const requestedNames = params.slice(1).map((value) => String(value))
+    return {
+      results: state.tags
+        .filter((tag) => tag.user_id === userId && requestedNames.includes(tag.name))
+        .map((tag) => ({ id: tag.id })) as T[],
+    }
+  }
+
   if (normalizedSql.startsWith('SELECT * FROM entry_tags')) {
     return { results: [...state.entryTags] as T[] }
+  }
+
+  if (normalizedSql.startsWith('SELECT entry_id FROM entry_tags WHERE tag_id = ? GROUP BY entry_id')) {
+    const tagId = Number(params[0] ?? 0)
+    return {
+      results: [...new Set(state.entryTags.filter((entryTag) => entryTag.tag_id === tagId).map((entryTag) => entryTag.entry_id))].map(
+        (entry_id) => ({ entry_id })
+      ) as T[],
+    }
+  }
+
+  if (
+    normalizedSql.startsWith(
+      'SELECT entry_id FROM entry_tags WHERE tag_id IN ('
+    ) &&
+    normalizedSql.includes('HAVING COUNT(tag_id) = ?')
+  ) {
+    const tagIds = params.slice(0, -1).map((value) => Number(value))
+    const requiredCount = Number(params[params.length - 1] ?? 0)
+    const grouped = new Map<string, Set<number>>()
+
+    for (const entryTag of state.entryTags) {
+      if (!tagIds.includes(entryTag.tag_id)) {
+        continue
+      }
+
+      const current = grouped.get(entryTag.entry_id) ?? new Set<number>()
+      current.add(entryTag.tag_id)
+      grouped.set(entryTag.entry_id, current)
+    }
+
+    return {
+      results: [...grouped.entries()]
+        .filter(([, values]) => values.size === requiredCount)
+        .map(([entry_id]) => ({ entry_id })) as T[],
+    }
   }
 
   if (normalizedSql.startsWith('SELECT * FROM entry_ai_tag_candidates WHERE entry_id = ? ORDER BY id ASC')) {

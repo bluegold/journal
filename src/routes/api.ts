@@ -10,14 +10,11 @@ import {
 } from '../lib/ai-tags'
 import { loadEntryBody } from '../lib/entry-body'
 import { loadEntryTagNames, replaceEntryTags } from '../lib/entry-tags'
-import { searchEntries } from '../lib/search'
 import { generateUuidv7 } from '../lib/uuidv7'
 import type { Bindings } from '../types/bindings'
 import type {
   JournalApiContextVariables,
   JournalEntryRow,
-  JournalEntryTagRow,
-  JournalTagRow,
 } from '../types/journal'
 import { normalizeBody, parseJournalDate } from './entries.shared'
 
@@ -94,8 +91,28 @@ const parseUpdateEntryPayload = async (request: Request): Promise<UpdateEntryPay
 
 const loadApiEntryRows = async (db: D1Database, userId: string): Promise<JournalEntryRow[]> => {
   const rows = await db
-    .prepare('SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC')
+    .prepare('SELECT * FROM entries WHERE user_id = ? AND deleted_at IS NULL ORDER BY journal_date DESC, created_at DESC')
     .bind(userId)
+    .all<JournalEntryRow>()
+
+  return rows.results
+}
+
+const loadApiEntryRowsByIds = async (
+  db: D1Database,
+  userId: string,
+  entryIds: string[]
+): Promise<JournalEntryRow[]> => {
+  if (entryIds.length === 0) {
+    return []
+  }
+
+  const placeholders = entryIds.map(() => '?').join(', ')
+  const rows = await db
+    .prepare(
+      `SELECT * FROM entries WHERE user_id = ? AND deleted_at IS NULL AND id IN (${placeholders}) ORDER BY journal_date DESC, created_at DESC`
+    )
+    .bind(userId, ...entryIds)
     .all<JournalEntryRow>()
 
   return rows.results
@@ -105,18 +122,99 @@ const findApiEntryById = (entries: JournalEntryRow[], entryId: string): JournalE
   return entries.find((entry) => entry.id === entryId && entry.deleted_at == null) ?? null
 }
 
-const loadApiSearchRows = async (
-  db: D1Database
-): Promise<{ tags: JournalTagRow[]; entryTags: JournalEntryTagRow[] }> => {
-  const [tagRows, entryTagRows] = await Promise.all([
-    db.prepare('SELECT * FROM tags').all<JournalTagRow>(),
-    db.prepare('SELECT * FROM entry_tags').all<JournalEntryTagRow>(),
-  ])
+const parseRequestedTags = (request: Request): string[] => {
+  const url = new URL(request.url)
+  const rawValues = [
+    ...url.searchParams.getAll('tags[]'),
+    ...url.searchParams.getAll('tags'),
+    ...url.searchParams.getAll('tag'),
+  ]
 
-  return {
-    tags: tagRows.results,
-    entryTags: entryTagRows.results,
+  const tags = rawValues
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim().toLowerCase())
+    .filter((value) => value.length > 0)
+
+  return [...new Set(tags)]
+}
+
+const loadMatchingEntryRowsByTags = async (
+  db: D1Database,
+  userId: string,
+  requestedTags: string[]
+): Promise<JournalEntryRow[]> => {
+  if (requestedTags.length === 0) {
+    return loadApiEntryRows(db, userId)
   }
+
+  const tagPlaceholders = requestedTags.map(() => '?').join(', ')
+  const tagIdRows = await db
+    .prepare(`SELECT id FROM tags WHERE user_id = ? AND name IN (${tagPlaceholders})`)
+    .bind(userId, ...requestedTags)
+    .all<{ id: number }>()
+
+  const tagIds = tagIdRows.results.map((row) => row.id)
+  if (tagIds.length !== requestedTags.length) {
+    return []
+  }
+
+  if (tagIds.length === 1) {
+    const entryIdRows = await db
+      .prepare('SELECT entry_id FROM entry_tags WHERE tag_id = ? GROUP BY entry_id')
+      .bind(tagIds[0])
+      .all<{ entry_id: string }>()
+
+    return loadApiEntryRowsByIds(
+      db,
+      userId,
+      entryIdRows.results.map((row) => row.entry_id)
+    )
+  }
+
+  const entryTagPlaceholders = tagIds.map(() => '?').join(', ')
+  const entryIdRows = await db
+    .prepare(
+      `SELECT entry_id FROM entry_tags WHERE tag_id IN (${entryTagPlaceholders}) GROUP BY entry_id HAVING COUNT(tag_id) = ?`
+    )
+    .bind(...tagIds, tagIds.length)
+    .all<{ entry_id: string }>()
+
+  return loadApiEntryRowsByIds(
+    db,
+    userId,
+    entryIdRows.results.map((row) => row.entry_id)
+  )
+}
+
+const matchesEntryText = (entry: JournalEntryRow, query: string): boolean => {
+  const normalizedQuery = query.trim().toLowerCase()
+  if (normalizedQuery.length === 0) {
+    return true
+  }
+
+  return [entry.title, entry.summary ?? ''].some((value) => value.toLowerCase().includes(normalizedQuery))
+}
+
+const filterEntryRows = (
+  entries: JournalEntryRow[],
+  query: string,
+  month?: string | null,
+  date?: string | null
+): JournalEntryRow[] => {
+  const normalizedMonth = month?.trim() ?? ''
+  const normalizedDate = date?.trim() ?? ''
+
+  return entries.filter((entry) => {
+    if (normalizedDate.length > 0 && entry.journal_date !== normalizedDate) {
+      return false
+    }
+
+    if (normalizedMonth.length > 0 && !entry.journal_date.startsWith(normalizedMonth)) {
+      return false
+    }
+
+    return matchesEntryText(entry, query)
+  })
 }
 
 const buildApiEntrySummary = async (
@@ -162,20 +260,11 @@ apiRoutes.get('/ping', (c) => {
 })
 
 apiRoutes.get('/entries', async (c) => {
-  const entries = await loadApiEntryRows(c.env.DB, c.var.currentUser.id)
-  const { tags, entryTags } = await loadApiSearchRows(c.env.DB)
-  const results = searchEntries({
-    entries,
-    tags,
-    entryTags,
-    userId: c.var.currentUser.id,
-    query: c.req.query('q') ?? '',
-    tag: c.req.query('tag') ?? '',
-    month: c.req.query('month'),
-    date: c.req.query('date'),
-  })
+  const requestedTags = parseRequestedTags(c.req.raw)
+  const entries = await loadMatchingEntryRowsByTags(c.env.DB, c.var.currentUser.id, requestedTags)
+  const results = filterEntryRows(entries, c.req.query('q') ?? '', c.req.query('month'), c.req.query('date'))
 
-  const items = await Promise.all(results.map((result) => buildApiEntrySummary(c.env.DB, c.var.currentUser.id, result.entry)))
+  const items = await Promise.all(results.map((entry) => buildApiEntrySummary(c.env.DB, c.var.currentUser.id, entry)))
   return c.json({ items })
 })
 

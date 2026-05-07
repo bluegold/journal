@@ -1,5 +1,5 @@
 export const assetManifest = {
-  'app.css': '/app.8fb94e42.css',
+  'app.css': '/app.9574c206.css',
   'markdown-editor.mjs': '/markdown-editor.353e810b.mjs',
 } as const
 

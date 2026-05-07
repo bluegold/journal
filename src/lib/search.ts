@@ -3,11 +3,14 @@ import { normalizeTagName } from './tags'
 
 type SearchEntriesOptions = {
   entries: JournalEntryRow[]
-  tags: JournalTagRow[]
-  entryTags: JournalEntryTagRow[]
   userId: string
   query: string
-  tag: string
+  requestedTags?: string[]
+  tag?: string
+  tagRows?: JournalTagRow[]
+  entryTagRows?: JournalEntryTagRow[]
+  tags?: JournalTagRow[]
+  entryTags?: JournalEntryTagRow[]
   month?: string | null
   date?: string | null
 }
@@ -50,18 +53,23 @@ const buildTagNamesByEntryId = (
 
 export const searchEntries = ({
   entries,
-  tags,
-  entryTags,
   userId,
   query,
+  requestedTags,
   tag,
+  tagRows,
+  entryTagRows,
+  tags,
+  entryTags,
   month,
   date,
 }: SearchEntriesOptions): SearchEntryMatch[] => {
-  const normalizedTag = normalizeTagName(tag)
+  const normalizedTags = (requestedTags ?? (tag ? [tag] : []))
+    .map((tagName) => normalizeTagName(tagName))
+    .filter((tagName): tagName is string => Boolean(tagName))
   const normalizedMonth = month?.trim() ?? ''
   const normalizedDate = date?.trim() ?? ''
-  const tagNamesByEntryId = buildTagNamesByEntryId(tags, entryTags, userId)
+  const tagNamesByEntryId = buildTagNamesByEntryId(tagRows ?? tags ?? [], entryTagRows ?? entryTags ?? [], userId)
 
   return entries
     .filter((entry) => entry.user_id === userId && entry.deleted_at == null)
@@ -85,10 +93,10 @@ export const searchEntries = ({
         return false
       }
 
-      if (!normalizedTag) {
+      if (normalizedTags.length === 0) {
         return true
       }
 
-      return tagNames.includes(normalizedTag)
+      return normalizedTags.some((tag) => tagNames.includes(tag))
     })
 }
