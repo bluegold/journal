@@ -1,8 +1,8 @@
 ---
-const { title } = Astro.props
+const { title: _title } = Astro.props
 
 const symbols = ['M', 'A', 'T', 'R', 'I', 'X', '0', '1']
-const columns = Array.from({ length: 14 }, (_, columnIndex) =>
+const _columns = Array.from({ length: 14 }, (_, columnIndex) =>
   Array.from({ length: 18 }, (_, rowIndex) => {
     const symbol = symbols[(columnIndex + rowIndex) % symbols.length]
     const top = -(60 + rowIndex * 7.5 + (columnIndex % 5) * 6.5)
@@ -24,7 +24,7 @@ const columns = Array.from({ length: 14 }, (_, columnIndex) =>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
+    <title>{_title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -149,6 +149,12 @@ const columns = Array.from({ length: 14 }, (_, columnIndex) =>
         letter-spacing: 0.22em;
         text-transform: uppercase;
         background: rgba(255, 255, 255, 0.03);
+      }
+
+      .site-chip--disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        pointer-events: none;
       }
 
       .site-matrix {
@@ -675,7 +681,7 @@ const columns = Array.from({ length: 14 }, (_, columnIndex) =>
     <div class="site-shell">
       <div class="site-matrix" aria-hidden="true">
         <div class="site-columns">
-          {columns.map((column, columnIndex) => (
+          {_columns.map((column, columnIndex) => (
             <div
               class="site-column"
               style={`left: ${(columnIndex + 1) * 6.5}vw; animation-delay: ${columnIndex * 0.08}s;`}

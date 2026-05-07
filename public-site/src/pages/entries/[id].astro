@@ -1,69 +1,59 @@
 ---
 import { marked } from 'marked'
 import Layout from '../../layouts/Layout.astro'
-import projects from '../../config/projects.json'
+import _projects from '../../config/projects.json'
+import { getEntry, getEntries } from '../../lib/api'
 
-export function getStaticPaths() {
-  return projects.flatMap((project) =>
-    [1, 2, 3].map((sampleIndex) => ({
-      params: { id: `${project.slug}-sample-${sampleIndex}` },
-      props: { project, sampleIndex },
-    })),
-  )
+export async function getStaticPaths() {
+  const canUseAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
+
+  if (!canUseAPI) {
+    return []
+  }
+
+  const paths = []
+
+  for (const project of _projects) {
+    try {
+      const entries = await getEntries(project.tags)
+      const sortedEntries = [...entries].sort((left, right) => right.journalDate.localeCompare(left.journalDate))
+
+      sortedEntries.forEach((entry, index) => {
+        paths.push({
+          params: { id: entry.id },
+          props: {
+            id: entry.id,
+            project,
+            prevId: sortedEntries[index - 1]?.id,
+            nextId: sortedEntries[index + 1]?.id,
+          },
+        })
+      })
+    } catch {
+    }
+  }
+
+  return paths
 }
 
-const { id, project, sampleIndex } = Astro.props
+const canUseAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
+const { id: _id, project, prevId: _prevId, nextId: _nextId } = Astro.props
 
-const articleTitles = [
-  `${project.title} kickoff note`,
-  `${project.title} implementation log`,
-  `${project.title} follow-up`,
-]
+void Layout
+void _projects
 
-const articleDates = ['2026-05-07', '2026-05-04', '2026-04-29']
-
-const articleTitle = articleTitles[sampleIndex - 1]
-
-const markdown = `# ${articleTitle}
-
-This page demonstrates the article layout.
-
-## Notes
-
-- Date is prominent
-- Tags stay close to the header
-- Markdown blocks need breathing room
-
-> The body should stay readable even when it contains code, tables, and diagrams.
-
-### Code
-
-\`\`\`ts
-export function summarize(entry: string) {
-  return entry.trim()
+if (!canUseAPI) {
+  throw new Error('JOURNAL_BASE_URL and JOURNAL_API_TOKEN must be set to render article pages')
 }
-\`\`\`
 
-### Table
-
-| Field | Value |
-| --- | --- |
-| Project | ${project.title} |
-| Entry id | ${id} |
-| Status | Draft |
-
-### Diagram
-
-\`\`\`mermaid
-flowchart TD
-  A[Draft] --> B[Review]
-B --> C[Publish]
-\`\`\`
-`
-
-const bodyMarkdown = markdown.startsWith(`# ${articleTitle}\n\n`) ? markdown.slice(articleTitle.length + 4) : markdown
-
-const rendered = marked.parse(bodyMarkdown, { breaks: true })
+const entry = await getEntry(_id)
+const _articleTitle = entry.title
+const _articleDate = entry.journalDate
+const _articleTags = entry.tags.length > 0 ? entry.tags : project.tags
+const _bodyMarkdown = entry.body
+const _rendered = marked.parse(_bodyMarkdown, { breaks: true })
+const _prevHref = _prevId ? `/entries/${_prevId}/` : null
+const _nextHref = _nextId ? `/entries/${_nextId}/` : null
 ---
 
 <Layout title={`${project.title} article | Archive`}>
@@ -71,31 +61,47 @@ const rendered = marked.parse(bodyMarkdown, { breaks: true })
     <section class="site-pane site-article-head">
       <div class="site-page-heading">
         <p class="site-eyebrow">Article page</p>
-        <h1 class="site-title">{articleTitle}</h1>
+        <h1 class="site-title">{_articleTitle}</h1>
       </div>
 
       <div class="site-article-meta">
-        <div class="site-date">{articleDates[sampleIndex - 1]}</div>
+        <div class="site-date">{_articleDate}</div>
         <div class="site-tag-row">
-          {project.tags.map((tag) => <span class="site-tag">{tag}</span>)}
+          {_articleTags.map((tag) => <span class="site-tag">{tag}</span>)}
           <span class="site-tag">draft</span>
         </div>
       </div>
 
       <div class="site-article-nav">
         <a class="site-chip" href={`/${project.slug}/`}>Back to project</a>
-        <a class="site-chip" href={`/entries/${project.slug}-sample-${Math.max(sampleIndex - 1, 1)}/`}>Previous article</a>
-        <a class="site-chip" href={`/entries/${project.slug}-sample-${Math.min(sampleIndex + 1, 3)}/`}>Next article</a>
+        {_prevHref ? (
+          <a class="site-chip" href={_prevHref}>Previous article</a>
+        ) : (
+          <span class="site-chip site-chip--disabled" aria-disabled="true">Previous article</span>
+        )}
+        {_nextHref ? (
+          <a class="site-chip" href={_nextHref}>Next article</a>
+        ) : (
+          <span class="site-chip site-chip--disabled" aria-disabled="true">Next article</span>
+        )}
       </div>
     </section>
 
     <section class="site-pane">
       <div class="site-pane-inner">
-        <div class="site-article-body" set:html={rendered}></div>
+        <div class="site-article-body" set:html={_rendered}></div>
         <div class="site-article-nav" style="margin-top: 1.5rem;">
           <a class="site-chip" href={`/${project.slug}/`}>Back to project</a>
-          <a class="site-chip" href={`/entries/${project.slug}-sample-${Math.max(sampleIndex - 1, 1)}/`}>Previous article</a>
-          <a class="site-chip" href={`/entries/${project.slug}-sample-${Math.min(sampleIndex + 1, 3)}/`}>Next article</a>
+          {_prevHref ? (
+            <a class="site-chip" href={_prevHref}>Previous article</a>
+          ) : (
+            <span class="site-chip site-chip--disabled" aria-disabled="true">Previous article</span>
+          )}
+          {_nextHref ? (
+            <a class="site-chip" href={_nextHref}>Next article</a>
+          ) : (
+            <span class="site-chip site-chip--disabled" aria-disabled="true">Next article</span>
+          )}
         </div>
       </div>
     </section>

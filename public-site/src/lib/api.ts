@@ -38,14 +38,18 @@ async function fetchAPI(endpoint: string) {
 export async function getEntries(tags?: string[]): Promise<EntrySummary[]> {
   let endpoint = '/api/entries'
   if (tags && tags.length > 0) {
-    endpoint += `?tag=${tags.join(',')}`
+    const params = new URLSearchParams()
+    for (const tag of tags) {
+      params.append('tags[]', tag)
+    }
+    endpoint += `?${params.toString()}`
   }
 
   try {
     const data = await fetchAPI(endpoint)
     return data.items || []
-  } catch (error: any) {
-    if (error.message.includes('404')) {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('404')) {
       return []
     }
     throw error

@@ -31,7 +31,7 @@ export async function onRequest(context) {
     if (username === JOURNAL_USER && password === JOURNAL_PASS) {
       return await context.next();
     }
-  } catch (e) {
+  } catch (_e) {
     return new Response("Bad Request", { status: 400 });
   }
 

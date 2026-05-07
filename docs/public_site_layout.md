@@ -7,6 +7,8 @@ It is a working guide for the three page types that exist now:
 - project page
 - article page
 
+Layout samples live under `/sample/...` and mirror the same structure for debugging and visual checks.
+
 The layout is intentionally centralized and translucent. Background effects, spacing, and content blocks are separated so that moving a block between pages does not change its visual role.
 
 ## Shared Shell
@@ -243,4 +245,3 @@ This site is a static archive with three page types. The layout should stay simp
 - visible date emphasis
 - readable markdown rendering
 - easy navigation between top, project, and article pages
-

@@ -1,12 +1,13 @@
 ---
-import Layout from '../layouts/Layout.astro'
-import _projects from '../config/projects.json'
+import Layout from '../../layouts/Layout.astro'
+import projects from '../../config/projects.json'
 
-const _topBadges = ['Centered', 'Sticky header', 'Matrix background', 'Translucent panel']
+const topBadges = ['Centered', 'Sticky header', 'Matrix background', 'Translucent panel']
 
 void Layout
-void _projects
-void _topBadges
+void projects
+void topBadges
+
 ---
 
 <Layout title="Archive">
@@ -21,7 +22,7 @@ void _topBadges
           これはプロジェクトと記事に入るための入口。暗い背景、matrix rain、中央寄せの透過パネルを共通の土台にする。
         </p>
         <div class="site-badge-row">
-          {_topBadges.map((label) => <span class="site-badge">{label}</span>)}
+          {topBadges.map((label) => <span class="site-badge">{label}</span>)}
         </div>
       </div>
 
@@ -40,8 +41,8 @@ void _topBadges
     </section>
 
     <section class="site-project-grid" aria-label="Projects">
-      {_projects.map((project) => (
-        <a class="site-pane site-project-tile" href={`/${project.slug}/`}>
+      {projects.map((project) => (
+        <a class="site-pane site-project-tile" href={`/sample/${project.slug}/`}>
           <div class="site-pane-inner site-stack">
             <div class="site-meta-row">
               <div class="site-date">{project.title}</div>

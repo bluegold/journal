@@ -1,16 +1,9 @@
 ---
-import Layout from '../layouts/Layout.astro'
-import _projects from '../config/projects.json'
-import { getEntries } from '../lib/api'
-import { buildSampleEntries } from '../lib/sample-content'
-
-const canUseAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
-
-void Layout
-void _projects
+import Layout from '../../layouts/Layout.astro'
+import projects from '../../config/projects.json'
 
 export function getStaticPaths() {
-  return _projects.map((project) => ({
+  return projects.map((project) => ({
     params: { project: project.slug },
     props: { project },
   }))
@@ -18,24 +11,33 @@ export function getStaticPaths() {
 
 const { project } = Astro.props
 
-let _entries = buildSampleEntries(project)
+const entries = [
+  {
+    id: `${project.slug}-sample-1`,
+    date: '2026-05-07',
+    title: `${project.title} kickoff note`,
+    summary: 'The first note for this project page. It shows date prominence, summary width, and action placement.',
+    tags: project.tags,
+  },
+  {
+    id: `${project.slug}-sample-2`,
+    date: '2026-05-04',
+    title: 'Design review and implementation notes',
+    summary: 'A second sample entry to exercise the list layout, tags, and the detail button treatment.',
+    tags: [...project.tags, 'design'],
+  },
+  {
+    id: `${project.slug}-sample-3`,
+    date: '2026-04-29',
+    title: 'Follow-up and cleanup',
+    summary: 'A shorter entry with the same card structure, to make sure repeated items do not drift.',
+    tags: [...project.tags, 'cleanup'],
+  },
+]
 
-if (canUseAPI) {
-  try {
-    const apiEntries = await getEntries(project.tags)
-    _entries = apiEntries.map((entry) => ({
-      id: entry.id,
-      date: entry.journalDate,
-      title: entry.title,
-      summary: entry.summary,
-      tags: entry.tags,
-    }))
-  } catch {
-    _entries = buildSampleEntries(project)
-  }
-}
-
-void _entries
+void Layout
+void projects
+void entries
 ---
 
 <Layout title={`${project.title} | Archive`}>
@@ -70,7 +72,7 @@ void _entries
     </section>
 
     <section class="site-entry-list" aria-label="Entries">
-      {_entries.map((entry) => (
+      {entries.map((entry) => (
         <article class="site-pane site-entry-item">
           <div class="site-entry-meta">
             <div class="site-date">{entry.date}</div>
@@ -85,7 +87,7 @@ void _entries
               <p class="site-entry-summary">{entry.summary}</p>
             </div>
             <div class="site-action-row">
-              <a class="site-detail-button" href={`/entries/${entry.id}/`}>Open article</a>
+              <a class="site-detail-button" href={`/sample/entries/${entry.id}/`}>Open article</a>
             </div>
           </div>
         </article>
