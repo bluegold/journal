@@ -1,25 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro'
 import _projects from '../config/projects.json'
-import { getEntries } from '../lib/api'
-import { buildSampleEntries } from '../lib/sample-content'
+import { getArchiveStats, getEntries } from '../lib/api'
+import { buildArchiveMonthPath, buildArchiveMonths, buildArchiveYearGroups } from '../lib/archive'
+import { buildSampleArchiveMonths, buildSampleEntries } from '../lib/sample-content'
 
 const canUseAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
-
-type ArchiveYearGroup = {
-  year: string
-  months: Array<{
-    month: string
-    label: string
-    count: number
-  }>
-}
-
-type DisplayMonth = {
-  month: string
-  label: string
-  count: number
-}
 
 void Layout
 void _projects
@@ -34,10 +20,15 @@ export function getStaticPaths() {
 const { project } = Astro.props
 
 let _entries = buildSampleEntries(project)
+let _archiveMonths = buildArchiveMonths(buildSampleArchiveMonths(_entries))
 
 if (canUseAPI) {
   try {
-    const apiEntries = await getEntries(project.tags)
+    const [apiEntries, archiveStats] = await Promise.all([
+      getEntries(project.tags),
+      getArchiveStats(project.tags),
+    ])
+
     _entries = apiEntries.map((entry) => ({
       id: entry.id,
       date: entry.journalDate,
@@ -45,59 +36,25 @@ if (canUseAPI) {
       summary: entry.summary,
       tags: entry.tags,
     }))
+    _archiveMonths = buildArchiveMonths(archiveStats.months)
   } catch {
     _entries = buildSampleEntries(project)
+    _archiveMonths = buildArchiveMonths(buildSampleArchiveMonths(_entries))
   }
 }
 
 const _displayEntries = _entries.slice(0, 10)
-
-const _displayMonths = (() => {
-  const months = new Map<string, DisplayMonth>()
-
-  for (const entry of _displayEntries) {
-    const month = entry.date.slice(0, 7)
-    if (!months.has(month)) {
-      months.set(month, {
-        month,
-        label: `${month.slice(0, 4)}年${month.slice(5, 7)}月`,
-        count: 1,
-      })
-    } else {
-      const current = months.get(month)
-      if (!current) {
-        continue
-      }
-
-      months.set(month, {
-        ...current,
-        count: current.count + 1,
-      })
-    }
-  }
-
-  return [...months.values()]
-})()
-
-const _archiveYears = (() => {
-  const groups = new Map<string, Array<{ month: string; label: string; count: number }>>()
-
-  for (const month of _displayMonths) {
-    const year = month.month.slice(0, 4)
-    const months = groups.get(year)
-    if (months) {
-      months.push(month)
-    } else {
-      groups.set(year, [month])
-    }
-  }
-
-  return [...groups.entries()].map(([year, months]) => ({ year, months })) satisfies ArchiveYearGroup[]
-})()
+const _archiveYears = buildArchiveYearGroups(_archiveMonths).map((group) => ({
+  year: group.year,
+  months: group.months.map((month) => ({
+    ...month,
+    href: buildArchiveMonthPath(project.slug, month.month),
+  })),
+}))
 
 void _entries
 void _displayEntries
-void _displayMonths
+void _archiveMonths
 void _archiveYears
 ---
 
@@ -126,31 +83,26 @@ void _archiveYears
     <section class="site-project-archive-shell">
       <div class="site-project-archive-grid">
         <div class="site-entry-list" aria-label="Entries">
-          {_displayEntries.map((entry, index) => {
-            const month = entry.date.slice(0, 7)
-            const isFirstOfMonth = index === 0 || _displayEntries[index - 1].date.slice(0, 7) !== month
-
-            return (
-              <article class="site-pane site-entry-item" id={isFirstOfMonth ? `month-${month}` : undefined}>
-                <div class="site-entry-meta">
-                  <div class="site-date">{entry.date}</div>
-                  <div class="site-tag-row">
-                    {entry.tags.map((tag) => <span class="site-tag">{tag}</span>)}
-                  </div>
+          {_displayEntries.map((entry) => (
+            <article class="site-pane site-entry-item">
+              <div class="site-entry-meta">
+                <div class="site-date">{entry.date}</div>
+                <div class="site-tag-row">
+                  {entry.tags.map((tag) => <span class="site-tag">{tag}</span>)}
                 </div>
+              </div>
 
-                <div class="site-entry-content">
-                  <div>
-                    <h2 class="site-entry-title">{entry.title}</h2>
-                    <p class="site-entry-summary">{entry.summary}</p>
-                  </div>
-                  <div class="site-action-row">
-                    <a class="site-detail-button" href={`/entries/${entry.id}/`}>Open article</a>
-                  </div>
+              <div class="site-entry-content">
+                <div>
+                  <h2 class="site-entry-title">{entry.title}</h2>
+                  <p class="site-entry-summary">{entry.summary}</p>
                 </div>
-              </article>
-            )
-          })}
+                <div class="site-action-row">
+                  <a class="site-detail-button" href={`/entries/${entry.id}/`}>Open article</a>
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
 
         <aside class="site-pane site-pane--strong site-project-archive-sidebar">
@@ -159,10 +111,10 @@ void _archiveYears
               {_archiveYears.map((group) => (
                 <section class="site-project-archive-year-group">
                   <div class="site-date">{group.year}</div>
-                    <ul class="site-project-archive-month-list">
+                  <ul class="site-project-archive-month-list">
                     {group.months.map((month) => (
                       <li>
-                        <a class="site-project-archive-month-link" href={`#month-${month.month}`}>
+                        <a class="site-project-archive-month-link" href={month.href}>
                           <span>{month.label}</span>
                           <span>{month.count}件</span>
                         </a>

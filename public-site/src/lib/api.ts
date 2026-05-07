@@ -45,13 +45,20 @@ async function fetchAPI(endpoint: string) {
   return response.json()
 }
 
-export async function getEntries(tags?: string[]): Promise<EntrySummary[]> {
+export async function getEntries(tags?: string[], month?: string): Promise<EntrySummary[]> {
   let endpoint = '/api/entries'
   if (tags && tags.length > 0) {
     const params = new URLSearchParams()
     for (const tag of tags) {
       params.append('tags[]', tag)
     }
+    if (month && month.length > 0) {
+      params.set('month', month)
+    }
+    endpoint += `?${params.toString()}`
+  } else if (month && month.length > 0) {
+    const params = new URLSearchParams()
+    params.set('month', month)
     endpoint += `?${params.toString()}`
   }
 

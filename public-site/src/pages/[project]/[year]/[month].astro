@@ -1,0 +1,208 @@
+---
+import Layout from '../../../layouts/Layout.astro'
+import _projects from '../../../config/projects.json'
+import { getArchiveStats, getEntries } from '../../../lib/api'
+import { buildArchiveMonthPath, buildArchiveMonths, buildArchiveYearGroups } from '../../../lib/archive'
+import { buildSampleArchiveMonths, buildSampleEntries } from '../../../lib/sample-content'
+
+void Layout
+void _projects
+
+type ProjectConfig = (typeof _projects)[number]
+
+type ArchiveMonth = {
+  month: string
+  count: number
+  label: string
+}
+
+type ArchiveYearGroupView = {
+  year: string
+  months: Array<ArchiveMonth & { href: string; isCurrent: boolean }>
+}
+
+type StaticPathProps = {
+  project: ProjectConfig
+  archiveMonths: ArchiveMonth[]
+  currentMonth: ArchiveMonth
+}
+
+type StaticPath = {
+  params: { project: string; year: string; month: string }
+  props: StaticPathProps
+}
+
+export async function getStaticPaths() {
+  const paths = [] as StaticPath[]
+  const canUseAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
+
+  for (const project of _projects) {
+    const sampleArchiveMonths = buildArchiveMonths(buildSampleArchiveMonths(buildSampleEntries(project)))
+
+    if (!canUseAPI) {
+      for (const currentMonth of sampleArchiveMonths) {
+        paths.push({
+          params: {
+            project: project.slug,
+            year: currentMonth.month.slice(0, 4),
+            month: currentMonth.month.slice(5, 7),
+          },
+          props: {
+            project,
+            archiveMonths: sampleArchiveMonths,
+            currentMonth,
+          },
+        })
+      }
+
+      continue
+    }
+
+    try {
+      const archiveStats = await getArchiveStats(project.tags)
+      const archiveMonths = buildArchiveMonths(archiveStats.months)
+
+      for (const currentMonth of archiveMonths) {
+        paths.push({
+          params: {
+            project: project.slug,
+            year: currentMonth.month.slice(0, 4),
+            month: currentMonth.month.slice(5, 7),
+          },
+          props: {
+            project,
+            archiveMonths,
+            currentMonth,
+          },
+        })
+      }
+    } catch {
+      for (const currentMonth of sampleArchiveMonths) {
+        paths.push({
+          params: {
+            project: project.slug,
+            year: currentMonth.month.slice(0, 4),
+            month: currentMonth.month.slice(5, 7),
+          },
+          props: {
+            project,
+            archiveMonths: sampleArchiveMonths,
+            currentMonth,
+          },
+        })
+      }
+    }
+  }
+
+  return paths
+}
+
+const { project, archiveMonths, currentMonth } = Astro.props as StaticPathProps
+
+const monthKey = currentMonth.month
+const canUseMonthAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
+
+let _entries = buildSampleEntries(project).filter((entry) => entry.date.startsWith(monthKey))
+
+if (canUseMonthAPI) {
+  try {
+    const apiEntries = await getEntries(project.tags, monthKey)
+    _entries = apiEntries.map((entry) => ({
+      id: entry.id,
+      date: entry.journalDate,
+      title: entry.title,
+      summary: entry.summary,
+      tags: entry.tags,
+    }))
+  } catch {
+    _entries = buildSampleEntries(project).filter((entry) => entry.date.startsWith(monthKey))
+  }
+}
+
+const _archiveYears = buildArchiveYearGroups(archiveMonths)
+
+const _archiveYearViews = _archiveYears.map((group) => ({
+  year: group.year,
+  months: group.months.map((month) => ({
+    ...month,
+    href: buildArchiveMonthPath(project.slug, month.month),
+    isCurrent: month.month === monthKey,
+  })),
+})) satisfies ArchiveYearGroupView[]
+
+void _entries
+void _archiveYears
+---
+
+<Layout title={`${project.title} | ${currentMonth.label}`}>
+  <div class="site-stack">
+    <section class="site-pane site-project-hero-shell">
+      <div class="site-pane-inner">
+        <div class="site-project-hero-grid">
+          <div class="site-project-hero-copy">
+            <p class="site-eyebrow">Archive month</p>
+            <h1 class="site-title">{currentMonth.label}</h1>
+            <p class="site-project-subtitle">{project.title}</p>
+            <p class="site-copy">{project.summary}</p>
+            <div class="site-badge-row">
+              {project.tags.map((tag) => <span class="site-badge">{tag}</span>)}
+            </div>
+          </div>
+
+          <div class="site-pane site-pane--strong site-project-hero-panel" aria-hidden="true">
+            <div class="site-project-hero-image"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="site-project-archive-shell">
+      <div class="site-project-archive-grid">
+        <div class="site-entry-list" aria-label={`${currentMonth.label} entries`}>
+          {_entries.map((entry) => (
+            <article class="site-pane site-entry-item">
+              <div class="site-entry-meta">
+                <div class="site-date">{entry.date}</div>
+                <div class="site-tag-row">
+                  {entry.tags.map((tag) => <span class="site-tag">{tag}</span>)}
+                </div>
+              </div>
+
+              <div class="site-entry-content">
+                <div>
+                  <h2 class="site-entry-title">{entry.title}</h2>
+                  <p class="site-entry-summary">{entry.summary}</p>
+                </div>
+                <div class="site-action-row">
+                  <a class="site-detail-button" href={`/entries/${entry.id}/`}>Open article</a>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <aside class="site-pane site-pane--strong site-project-archive-sidebar">
+          <div class="site-pane-inner site-stack">
+            <div class="site-project-archive-year-list">
+              {_archiveYearViews.map((group) => (
+                <section class="site-project-archive-year-group">
+                  <div class="site-date">{group.year}</div>
+                  <ul class="site-project-archive-month-list">
+                    {group.months.map((month) => (
+                      <li>
+                        <a class="site-project-archive-month-link" href={month.href} aria-current={month.isCurrent ? 'page' : undefined}>
+                          <span>{month.label}</span>
+                          <span>{month.count}件</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+</Layout>

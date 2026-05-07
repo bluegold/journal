@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro'
 import _projects from '../../config/projects.json'
 import { getEntry, getEntries } from '../../lib/api'
+import { buildArchiveMonthPath } from '../../lib/archive'
 import { stripRedundantLeadingHeading } from '../../lib/markdown'
 import { renderMarkdown } from '../../lib/render-markdown'
 
@@ -53,6 +54,7 @@ const _articleDate = entry.journalDate
 const _articleTags = entry.tags.length > 0 ? entry.tags : project.tags
 const _bodyMarkdown = stripRedundantLeadingHeading(entry.body, _articleTitle)
 const _rendered = await renderMarkdown(_bodyMarkdown)
+const _monthHref = buildArchiveMonthPath(project.slug, _articleDate.slice(0, 7))
 const _prevHref = _prevId ? `/entries/${_prevId}/` : null
 const _nextHref = _nextId ? `/entries/${_nextId}/` : null
 ---
@@ -74,7 +76,7 @@ const _nextHref = _nextId ? `/entries/${_nextId}/` : null
       </div>
 
       <div class="site-article-nav">
-        <a class="site-chip" href={`/${project.slug}/`}>Back to project</a>
+        <a class="site-chip" href={_monthHref}>Back to month</a>
         {_prevHref ? (
           <a class="site-chip" href={_prevHref}>Previous article</a>
         ) : (
@@ -92,7 +94,7 @@ const _nextHref = _nextId ? `/entries/${_nextId}/` : null
       <div class="site-pane-inner">
         <div class="site-article-body" set:html={_rendered}></div>
         <div class="site-article-nav" style="margin-top: 1.5rem;">
-          <a class="site-chip" href={`/${project.slug}/`}>Back to project</a>
+          <a class="site-chip" href={_monthHref}>Back to month</a>
           {_prevHref ? (
             <a class="site-chip" href={_prevHref}>Previous article</a>
           ) : (
