@@ -6,6 +6,21 @@ import { buildSampleEntries } from '../lib/sample-content'
 
 const canUseAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
 
+type ArchiveYearGroup = {
+  year: string
+  months: Array<{
+    month: string
+    label: string
+    count: number
+  }>
+}
+
+type DisplayMonth = {
+  month: string
+  label: string
+  count: number
+}
+
 void Layout
 void _projects
 
@@ -35,7 +50,55 @@ if (canUseAPI) {
   }
 }
 
+const _displayEntries = _entries.slice(0, 10)
+
+const _displayMonths = (() => {
+  const months = new Map<string, DisplayMonth>()
+
+  for (const entry of _displayEntries) {
+    const month = entry.date.slice(0, 7)
+    if (!months.has(month)) {
+      months.set(month, {
+        month,
+        label: `${month.slice(0, 4)}年${month.slice(5, 7)}月`,
+        count: 1,
+      })
+    } else {
+      const current = months.get(month)
+      if (!current) {
+        continue
+      }
+
+      months.set(month, {
+        ...current,
+        count: current.count + 1,
+      })
+    }
+  }
+
+  return [...months.values()]
+})()
+
+const _archiveYears = (() => {
+  const groups = new Map<string, Array<{ month: string; label: string; count: number }>>()
+
+  for (const month of _displayMonths) {
+    const year = month.month.slice(0, 4)
+    const months = groups.get(year)
+    if (months) {
+      months.push(month)
+    } else {
+      groups.set(year, [month])
+    }
+  }
+
+  return [...groups.entries()].map(([year, months]) => ({ year, months })) satisfies ArchiveYearGroup[]
+})()
+
 void _entries
+void _displayEntries
+void _displayMonths
+void _archiveYears
 ---
 
 <Layout title={`${project.title} | Archive`}>
@@ -53,43 +116,65 @@ void _entries
             </div>
           </div>
 
-          <div class="site-pane site-pane--strong site-project-hero-panel">
-            <div class="site-pane-inner">
-              <div class="site-project-hero-image" aria-hidden="true"></div>
-              <div class="site-meta-row" style="margin-top: 1rem;">
-                <span class="site-date">2026 / 05</span>
-                <div class="site-article-nav">
-                  <span class="site-chip">Previous month</span>
-                  <span class="site-chip">Next month</span>
-                </div>
-              </div>
-            </div>
+          <div class="site-pane site-pane--strong site-project-hero-panel" aria-hidden="true">
+            <div class="site-project-hero-image"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="site-entry-list" aria-label="Entries">
-      {_entries.map((entry) => (
-        <article class="site-pane site-entry-item">
-          <div class="site-entry-meta">
-            <div class="site-date">{entry.date}</div>
-            <div class="site-tag-row">
-              {entry.tags.map((tag) => <span class="site-tag">{tag}</span>)}
-            </div>
-          </div>
+    <section class="site-project-archive-shell">
+      <div class="site-project-archive-grid">
+        <div class="site-entry-list" aria-label="Entries">
+          {_displayEntries.map((entry, index) => {
+            const month = entry.date.slice(0, 7)
+            const isFirstOfMonth = index === 0 || _displayEntries[index - 1].date.slice(0, 7) !== month
 
-          <div class="site-entry-content">
-            <div>
-              <h2 class="site-entry-title">{entry.title}</h2>
-              <p class="site-entry-summary">{entry.summary}</p>
-            </div>
-            <div class="site-action-row">
-              <a class="site-detail-button" href={`/entries/${entry.id}/`}>Open article</a>
+            return (
+              <article class="site-pane site-entry-item" id={isFirstOfMonth ? `month-${month}` : undefined}>
+                <div class="site-entry-meta">
+                  <div class="site-date">{entry.date}</div>
+                  <div class="site-tag-row">
+                    {entry.tags.map((tag) => <span class="site-tag">{tag}</span>)}
+                  </div>
+                </div>
+
+                <div class="site-entry-content">
+                  <div>
+                    <h2 class="site-entry-title">{entry.title}</h2>
+                    <p class="site-entry-summary">{entry.summary}</p>
+                  </div>
+                  <div class="site-action-row">
+                    <a class="site-detail-button" href={`/entries/${entry.id}/`}>Open article</a>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+
+        <aside class="site-pane site-pane--strong site-project-archive-sidebar">
+          <div class="site-pane-inner site-stack">
+            <div class="site-project-archive-year-list">
+              {_archiveYears.map((group) => (
+                <section class="site-project-archive-year-group">
+                  <div class="site-date">{group.year}</div>
+                    <ul class="site-project-archive-month-list">
+                    {group.months.map((month) => (
+                      <li>
+                        <a class="site-project-archive-month-link" href={`#month-${month.month}`}>
+                          <span>{month.label}</span>
+                          <span>{month.count}件</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
             </div>
           </div>
-        </article>
-      ))}
+        </aside>
+      </div>
     </section>
   </div>
 </Layout>

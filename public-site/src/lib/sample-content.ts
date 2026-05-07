@@ -16,6 +16,11 @@ export interface SampleEntry {
   tags: string[]
 }
 
+export interface SampleArchiveMonthStat {
+  month: string
+  count: number
+}
+
 export function buildSampleEntries(project: SiteProjectConfig): SampleEntry[] {
   return [
     {
@@ -40,6 +45,19 @@ export function buildSampleEntries(project: SiteProjectConfig): SampleEntry[] {
       tags: [...project.tags, 'cleanup'],
     },
   ]
+}
+
+export function buildSampleArchiveMonths(entries: SampleEntry[]): SampleArchiveMonthStat[] {
+  const counts = new Map<string, number>()
+
+  for (const entry of entries) {
+    const month = entry.date.slice(0, 7)
+    counts.set(month, (counts.get(month) ?? 0) + 1)
+  }
+
+  return [...counts.entries()]
+    .sort(([monthA], [monthB]) => monthB.localeCompare(monthA))
+    .map(([month, count]) => ({ month, count }))
 }
 
 export function buildSampleArticle(project: SiteProjectConfig, sampleIndex: number, id: string) {

@@ -16,6 +16,16 @@ export interface EntryDetail extends EntrySummary {
   body: string
 }
 
+export interface ArchiveMonthStat {
+  month: string
+  count: number
+}
+
+export interface ArchiveStats {
+  tags: string[]
+  months: ArchiveMonthStat[]
+}
+
 async function fetchAPI(endpoint: string) {
   if (!API_URL || !API_TOKEN) {
     throw new Error('JOURNAL_API_URL and JOURNAL_API_TOKEN must be set')
@@ -58,4 +68,24 @@ export async function getEntries(tags?: string[]): Promise<EntrySummary[]> {
 
 export async function getEntry(id: string): Promise<EntryDetail> {
   return fetchAPI(`/api/entries/${id}`)
+}
+
+export async function getArchiveStats(tags?: string[]): Promise<ArchiveStats> {
+  let endpoint = '/api/archive-stats'
+  if (tags && tags.length > 0) {
+    const params = new URLSearchParams()
+    for (const tag of tags) {
+      params.append('tags[]', tag)
+    }
+    endpoint += `?${params.toString()}`
+  }
+
+  try {
+    return await fetchAPI(endpoint)
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('404')) {
+      return { tags: tags ?? [], months: [] }
+    }
+    throw error
+  }
 }
