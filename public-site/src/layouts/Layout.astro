@@ -27,6 +27,8 @@ const _columns = Array.from({ length: 14 }, (_, columnIndex) =>
     <title>{_title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" crossOrigin="anonymous"></script>
+    <script src="/embedded-diagrams.js" defer></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:wght@500;600;700&display=swap"
       rel="stylesheet"
@@ -580,6 +582,17 @@ const _columns = Array.from({ length: 14 }, (_, columnIndex) =>
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 30px rgba(0, 0, 0, 0.22);
       }
 
+      .site-article-body .shiki {
+        margin: 0;
+        overflow-x: auto;
+        border-radius: 16px;
+      }
+
+      .site-article-body .shiki code {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.9rem;
+      }
+
       .site-article-body code {
         font-family: 'IBM Plex Mono', monospace;
         font-size: 0.9em;
@@ -614,6 +627,16 @@ const _columns = Array.from({ length: 14 }, (_, columnIndex) =>
       .site-article-body img {
         max-width: 100%;
         border-radius: 18px;
+      }
+
+      .site-article-body .mermaid {
+        margin: 1rem 0;
+        overflow-x: auto;
+      }
+
+      .site-article-body .mermaid svg {
+        max-width: 100%;
+        height: auto;
       }
 
       .site-article-body ul,

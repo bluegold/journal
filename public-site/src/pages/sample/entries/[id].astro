@@ -1,7 +1,8 @@
 ---
-import { marked } from 'marked'
 import Layout from '../../../layouts/Layout.astro'
 import _projects from '../../../config/projects.json'
+import { stripRedundantLeadingHeading } from '../../../lib/markdown'
+import { renderMarkdown } from '../../../lib/render-markdown'
 
 export function getStaticPaths() {
   return _projects.flatMap((project) =>
@@ -61,9 +62,9 @@ B --> C[Publish]
 \`\`\`
 `
 
-const bodyMarkdown = markdown.startsWith(`# ${articleTitle}\n\n`) ? markdown.slice(articleTitle.length + 4) : markdown
+const bodyMarkdown = stripRedundantLeadingHeading(markdown, articleTitle)
 
-const _rendered = marked.parse(bodyMarkdown, { breaks: true })
+const _rendered = await renderMarkdown(bodyMarkdown)
 
 void Layout
 void _projects

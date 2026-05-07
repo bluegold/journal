@@ -1,8 +1,9 @@
 ---
-import { marked } from 'marked'
 import Layout from '../../layouts/Layout.astro'
 import _projects from '../../config/projects.json'
 import { getEntry, getEntries } from '../../lib/api'
+import { stripRedundantLeadingHeading } from '../../lib/markdown'
+import { renderMarkdown } from '../../lib/render-markdown'
 
 export async function getStaticPaths() {
   const canUseAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
@@ -50,8 +51,8 @@ const entry = await getEntry(_id)
 const _articleTitle = entry.title
 const _articleDate = entry.journalDate
 const _articleTags = entry.tags.length > 0 ? entry.tags : project.tags
-const _bodyMarkdown = entry.body
-const _rendered = marked.parse(_bodyMarkdown, { breaks: true })
+const _bodyMarkdown = stripRedundantLeadingHeading(entry.body, _articleTitle)
+const _rendered = await renderMarkdown(_bodyMarkdown)
 const _prevHref = _prevId ? `/entries/${_prevId}/` : null
 const _nextHref = _nextId ? `/entries/${_nextId}/` : null
 ---
