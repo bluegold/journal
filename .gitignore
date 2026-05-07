@@ -11,3 +11,5 @@ coverage/
 .mise/
 .envrc
 tmp/
+public-site/dist/
+public-site/.astro/
