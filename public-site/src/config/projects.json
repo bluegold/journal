@@ -1,0 +1,23 @@
+[
+  {
+    "slug": "journal",
+    "title": "Journal",
+    "tags": ["journal"],
+    "description": "General journal entries and daily notes.",
+    "theme": "ink"
+  },
+  {
+    "slug": "ldf",
+    "title": "LDF",
+    "tags": ["ldf"],
+    "description": "Project LDF related updates and documentation.",
+    "theme": "aurora"
+  },
+  {
+    "slug": "zoffy-backend",
+    "title": "Zoffy Backend",
+    "tags": ["zoffy", "backend"],
+    "description": "Backend development logs for Zoffy.",
+    "theme": "matrix"
+  }
+]

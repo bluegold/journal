@@ -85,6 +85,41 @@ npm run dev
 - エントリは YAML フロントマター付き Markdown ファイルへエクスポート可能です（YYYY/MM/DD/... 構成を推奨）。
 - エクスポート時に未承認の AI タグは別フィールド（例: ai_tag_candidates）として出力してください。
 
+## 公開用静的サイト (Public Site)
+
+`public-site/` ディレクトリには、Journal API を Headless CMS として利用した Astro 製の公開用静的サイトが含まれています。
+
+### 特徴
+- **Astro + Tailwind CSS**: 高速な静的サイト生成と柔軟なデザイン。
+- **Anglefeint-inspired Design**: [Anglefeint](https://astro.build/themes/details/anglefeint/) テーマから着想を得た「シネマティック・マルチアトモスフィア」デザイン。
+    - **AI (Journal)**: 清潔感のあるミニマルスタイル。
+    - **Cyber (LDF)**: ネオンカラーとグロー効果のサイバーパンクスタイル。
+    - **Matrix (Zoffy)**: 緑のモノスペースとスキャンラインのターミナルスタイル。
+- **Basic 認証**: Cloudflare Pages Functions Middleware によるサイト全体の保護。
+- **動的プロジェクト管理**: `src/config/projects.json` で定義されたプロジェクト（タグ）ごとに自動でページを生成。
+
+### セットアップとビルド
+```bash
+cd public-site
+npm install
+
+# ビルド（環境変数を指定）
+JOURNAL_BASE_URL=https://your-api.com \
+JOURNAL_API_TOKEN=your_token \
+npm run build
+```
+
+### デプロイ (Cloudflare Pages)
+- **ビルドコマンド**: `cd public-site && npm run build`
+- **出力ディレクトリ**: `public-site/dist`
+- **必要な環境変数**:
+    - `JOURNAL_BASE_URL`: APIのURL
+    - `JOURNAL_API_TOKEN`: APIトークン
+    - `JOURNAL_USER`: Basic認証 ユーザー名
+    - `JOURNAL_PASS`: Basic認証 パスワード
+
+詳細は [docs/public_site_implementation_plan.md](./docs/public_site_implementation_plan.md) を参照してください。
+
 ## テストと CI
 
 - ユニットテスト / 結合テストには vitest を使用します。
