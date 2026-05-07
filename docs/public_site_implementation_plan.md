@@ -14,6 +14,7 @@ Building a public-facing static site for the Journal app using Astro, deployed o
 - `public-site/src/pages/`: Directory for page routes (including dynamic routes for projects).
 - `public-site/functions/_middleware.ts`: Cloudflare Pages middleware for Basic Auth.
 - `public-site/src/lib/api.ts`: Helper for Journal API interaction.
+- `docs/public_site_layout.md`: Current layout contract for the three public-site page types.
 - `docs/api.md`: API reference for fetching entries.
 
 ## Proposed Strategy

@@ -1,390 +1,64 @@
 ---
-const title = 'Archive'
+import Layout from '../layouts/Layout.astro'
+import projects from '../config/projects.json'
 
-const symbols = ['M', 'A', 'T', 'R', 'I', 'X', '0', '1']
-const columns = Array.from({ length: 14 }, (_, columnIndex) =>
-  Array.from({ length: 18 }, (_, rowIndex) => {
-    const symbol = symbols[(columnIndex + rowIndex) % symbols.length]
-    const top = -(60 + rowIndex * 7.5 + (columnIndex % 5) * 6.5)
-    return {
-      symbol,
-      top: `${top}vh`,
-      duration: `${4.2 + ((columnIndex + rowIndex) % 7) * 0.6}s`,
-      delay: `${(columnIndex * 0.14 + rowIndex * 0.08).toFixed(2)}s`,
-      opacity: `${0.26 + ((columnIndex + rowIndex) % 6) * 0.12}`,
-      size: `${0.9 + ((columnIndex + rowIndex) % 4) * 0.16}rem`,
-      drift: `${(((columnIndex * 3 + rowIndex) % 7) - 3) * 1.15}rem`,
-    }
-  }),
-)
+const topBadges = ['Centered', 'Sticky header', 'Matrix background', 'Translucent panel']
 ---
 
-<!doctype html>
-<html lang="ja" class="bg-black text-slate-100">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        color-scheme: dark;
-      }
-
-      html,
-      body {
-        margin: 0;
-        min-height: 100%;
-        background:
-          radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.12), transparent 30%),
-          radial-gradient(circle at 80% 0%, rgba(34, 197, 94, 0.1), transparent 24%),
-          #020308;
-        color: rgb(241 245 249);
-        font-family: 'Inter', sans-serif;
-        text-rendering: optimizeLegibility;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      .shell {
-        position: relative;
-        isolation: isolate;
-        min-height: 100vh;
-      }
-
-      .shell::before {
-        content: '';
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.03), transparent 18%);
-        z-index: -2;
-      }
-
-      .header {
-        position: sticky;
-        top: 0;
-        z-index: 40;
-        backdrop-filter: blur(20px);
-        background: rgba(2, 6, 23, 0.72);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      }
-
-      .container {
-        width: min(80%, 70rem);
-        margin: 0 auto;
-        padding-left: clamp(1rem, 3vw, 2rem);
-        padding-right: clamp(1rem, 3vw, 2rem);
-      }
-
-      .main {
-        width: min(80%, 70rem);
-        margin: 0 auto;
-        padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 2rem) clamp(4rem, 7vw, 6rem);
-      }
-
-      .stack {
-        display: flex;
-        flex-direction: column;
-        gap: clamp(2rem, 5vw, 4rem);
-      }
-
-      .surface {
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.09);
-        border-radius: 30px;
-        background: rgba(15, 23, 42, 0.46);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 24px 72px rgba(0, 0, 0, 0.34);
-      }
-
-      .surface-inner {
-        padding: clamp(1.5rem, 3vw, 2.5rem);
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        min-width: 0;
-      }
-
-      .brand-mark {
-        width: 0.75rem;
-        height: 0.75rem;
-        border-radius: 999px;
-        background: rgba(74, 222, 128, 0.95);
-        box-shadow: 0 0 20px rgba(74, 222, 128, 0.55);
-      }
-
-      .brand-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        letter-spacing: 0.28em;
-        text-transform: uppercase;
-      }
-
-      .brand-subtitle {
-        margin-top: 0.2rem;
-        font-size: 0.62rem;
-        letter-spacing: 0.3em;
-        text-transform: uppercase;
-        color: rgb(148 163 184);
-      }
-
-      .nav {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 0.5rem;
-      }
-
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 0.55rem 0.85rem;
-        font-size: 0.62rem;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        background: rgba(255, 255, 255, 0.03);
-      }
-
-      .hero {
-        display: grid;
-        gap: 1.25rem;
-      }
-
-      .hero-title {
-        margin: 0.5rem 0 0;
-        font-family: 'Cormorant Garamond', serif;
-        font-weight: 600;
-        font-size: clamp(2.6rem, 6vw, 5.8rem);
-        line-height: 0.9;
-      }
-
-      .hero-heading {
-        display: grid;
-        gap: 0.75rem;
-        max-width: 36rem;
-      }
-
-      .hero-heading::after {
-        content: '';
-        width: min(12rem, 42vw);
-        height: 1px;
-        background: linear-gradient(to right, rgba(74, 222, 128, 0.9), transparent);
-      }
-
-      .copy {
-        max-width: 42rem;
-        margin-top: 1rem;
-        line-height: 1.85;
-        color: rgb(203 213 225);
-      }
-
-      .section-eyebrow {
-        font-size: 0.68rem;
-        letter-spacing: 0.32em;
-        text-transform: uppercase;
-        color: rgb(148 163 184);
-      }
-
-      .badges {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 1.25rem;
-      }
-
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 0.55rem 0.85rem;
-        font-size: 0.62rem;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        background: rgba(255, 255, 255, 0.03);
-      }
-
-      .hero-card {
-        display: grid;
-        gap: 0.75rem;
-      }
-
-      .matrix {
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-        overflow: hidden;
-        mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
-      }
-
-      .column {
-        position: absolute;
-        top: -20vh;
-        bottom: -20vh;
-        width: 1.25rem;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 1rem;
-        line-height: 1;
-        color: rgba(74, 222, 128, 0.78);
-        text-shadow: 0 0 20px rgba(74, 222, 128, 0.42);
-        opacity: 0.96;
-      }
-
-      .columns {
-        position: relative;
-        width: 100%;
-        height: 100%;
-      }
-
-      .cell {
-        position: absolute;
-        left: 50%;
-        display: block;
-        transform-origin: center;
-        animation: fall linear infinite;
-        font-weight: 600;
-        will-change: transform, opacity;
-        --drift: 0rem;
-      }
-
-      @keyframes fall {
-        0% {
-          transform: translateX(var(--drift)) translateY(-34vh) rotate(0deg);
-          opacity: 0;
-        }
-        12% {
-          opacity: 1;
-        }
-        100% {
-          transform: translateX(calc(var(--drift) * 1.7)) translateY(250vh) rotate(360deg);
-          opacity: 0;
-        }
-      }
-
-      @media (min-width: 900px) {
-        .hero {
-          grid-template-columns: 1.1fr 0.9fr;
-        }
-
-        .hero-card {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 0.75rem;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="shell">
-      <div class="matrix" aria-hidden="true">
-        <div class="columns">
-          {columns.map((column, columnIndex) => (
-            <div
-              class="column"
-              style={`left: ${(columnIndex + 1) * 6.5}vw; animation-delay: ${columnIndex * 0.08}s;`}
-            >
-              {column.map((cell) => (
-                <span
-                  class="cell"
-                  style={`top: ${cell.top}; animation-delay: ${cell.delay}; animation-duration: ${cell.duration}; opacity: ${cell.opacity}; font-size: ${cell.size}; --drift: ${cell.drift};`}
-                >
-                  {cell.symbol}
-                </span>
-              ))}
-            </div>
-          ))}
+<Layout title="Archive">
+  <div class="site-stack">
+    <section class="site-pane site-pane--strong site-top-hero">
+      <div class="site-pane-inner site-top-hero-copy">
+        <div class="site-page-heading">
+          <p class="site-eyebrow">Top page</p>
+          <h1 class="site-title">Archive</h1>
+        </div>
+        <p class="site-copy">
+          これはプロジェクトと記事に入るための入口。暗い背景、matrix rain、中央寄せの透過パネルを共通の土台にする。
+        </p>
+        <div class="site-badge-row">
+          {topBadges.map((label) => <span class="site-badge">{label}</span>)}
         </div>
       </div>
 
-      <header class="header">
-        <div
-          class="container"
-          style="display:flex; align-items:center; justify-content:space-between; gap:1rem; padding-top:1rem; padding-bottom:1rem;"
-        >
-          <a href="/" class="brand">
-            <div class="brand-mark"></div>
+      <div class="site-pane site-pane--strong">
+        <div class="site-pane-inner site-stack">
+          <div class="site-project-tile-image" aria-hidden="true"></div>
+          <div class="site-meta-row">
+            <span class="site-date">Project index</span>
+            <span class="site-chip">Latest notes first</span>
+          </div>
+          <p class="site-summary">
+            Top は入口として、プロジェクト一覧へ進むための summary surface を置く。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="site-project-grid" aria-label="Projects">
+      {projects.map((project) => (
+        <a class="site-pane site-project-tile" href={`/${project.slug}/`}>
+          <div class="site-pane-inner site-stack">
+            <div class="site-meta-row">
+              <div class="site-date">{project.title}</div>
+              <div class="site-tag-row">
+                {project.tags.map((tag) => <span class="site-tag">{tag}</span>)}
+              </div>
+            </div>
+
+            <div class="site-project-tile-image" aria-hidden="true"></div>
+
             <div>
-              <div class="brand-title">Archive</div>
-              <div class="brand-subtitle">layout check</div>
-            </div>
-          </a>
-
-          <nav class="nav">
-            <a class="chip" href="/">Home</a>
-            <a class="chip" href="#hero">Hero</a>
-            <a class="chip" href="#cards">Cards</a>
-          </nav>
-        </div>
-      </header>
-
-      <main class="main">
-        <div class="stack">
-          <section id="hero" class="surface hero">
-            <div class="surface-inner">
-              <div class="hero-heading">
-                <p class="section-eyebrow">Layout preview</p>
-                <h1 class="hero-title">Centralized dark shell</h1>
-              </div>
-              <p class="copy">
-                これはレイアウト確認用の 1 ページだけの画面です。中央寄せ、sticky header、暗背景、matrix の落下、blur ありの translucent content area を先に確認する。
-              </p>
-              <div class="badges">
-                <span class="badge">Centered</span>
-                <span class="badge">Sticky header</span>
-                <span class="badge">Matrix background</span>
-                <span class="badge">Translucent panel</span>
-              </div>
+              <h2 class="site-project-tile-title">{project.subtitle}</h2>
+              <p class="site-project-tile-summary">{project.summary}</p>
             </div>
 
-            <div class="surface-inner">
-              <div class="surface" style="min-height: 100%;">
-                <div class="surface-inner">
-                  <p class="section-eyebrow">Content area</p>
-                  <p class="copy" style="margin-top: 0.75rem;">
-                    ここが blur のかかった透過領域。ページの主内容はこの箱に収める。
-                  </p>
-                  <div class="hero-card">
-                    <div class="badge" style="justify-content:flex-start;">Panel A</div>
-                    <div class="badge" style="justify-content:flex-start;">Panel B</div>
-                    <div class="badge" style="justify-content:flex-start;">Panel C</div>
-                  </div>
-                </div>
-              </div>
+            <div class="site-action-row">
+              <span class="site-detail-button">Open project</span>
             </div>
-          </section>
-
-          <section id="cards" class="grid">
-            <div class="surface">
-              <div class="surface-inner">
-                <p class="section-eyebrow">Secondary block</p>
-                <p class="copy">余白と分離の確認用のカード。今は API もデータも置かない。</p>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
-    </div>
-  </body>
-</html>
+          </div>
+        </a>
+      ))}
+    </section>
+  </div>
+</Layout>

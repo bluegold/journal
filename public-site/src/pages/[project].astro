@@ -1,0 +1,93 @@
+---
+import Layout from '../layouts/Layout.astro'
+import projects from '../config/projects.json'
+
+export function getStaticPaths() {
+  return projects.map((project) => ({
+    params: { project: project.slug },
+    props: { project },
+  }))
+}
+
+const { project } = Astro.props
+
+const entries = [
+  {
+    id: `${project.slug}-sample-1`,
+    date: '2026-05-07',
+    title: `${project.title} kickoff note`,
+    summary: 'The first note for this project page. It shows date prominence, summary width, and action placement.',
+    tags: project.tags,
+  },
+  {
+    id: `${project.slug}-sample-2`,
+    date: '2026-05-04',
+    title: 'Design review and implementation notes',
+    summary: 'A second sample entry to exercise the list layout, tags, and the detail button treatment.',
+    tags: [...project.tags, 'design'],
+  },
+  {
+    id: `${project.slug}-sample-3`,
+    date: '2026-04-29',
+    title: 'Follow-up and cleanup',
+    summary: 'A shorter entry with the same card structure, to make sure repeated items do not drift.',
+    tags: [...project.tags, 'cleanup'],
+  },
+]
+---
+
+<Layout title={`${project.title} | Archive`}>
+  <div class="site-stack">
+    <section class="site-pane site-project-hero-shell">
+      <div class="site-pane-inner">
+        <div class="site-project-hero-grid">
+          <div class="site-project-hero-copy">
+            <p class="site-eyebrow">Project page</p>
+            <h1 class="site-title">{project.title}</h1>
+            <p class="site-project-subtitle">{project.subtitle}</p>
+            <p class="site-copy">{project.summary}</p>
+            <div class="site-badge-row">
+              {project.tags.map((tag) => <span class="site-badge">{tag}</span>)}
+            </div>
+          </div>
+
+          <div class="site-pane site-pane--strong site-project-hero-panel">
+            <div class="site-pane-inner">
+              <div class="site-project-hero-image" aria-hidden="true"></div>
+              <div class="site-meta-row" style="margin-top: 1rem;">
+                <span class="site-date">2026 / 05</span>
+                <div class="site-article-nav">
+                  <span class="site-chip">Previous month</span>
+                  <span class="site-chip">Next month</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="site-entry-list" aria-label="Entries">
+      {entries.map((entry) => (
+        <article class="site-pane site-entry-item">
+          <div class="site-entry-meta">
+            <div class="site-date">{entry.date}</div>
+            <div class="site-tag-row">
+              {entry.tags.map((tag) => <span class="site-tag">{tag}</span>)}
+            </div>
+          </div>
+
+          <div class="site-entry-content">
+            <div>
+              <h2 class="site-entry-title">{entry.title}</h2>
+              <p class="site-entry-summary">{entry.summary}</p>
+            </div>
+            <div class="site-action-row">
+              <a class="site-detail-button" href={`/entries/${entry.id}/`}>Open article</a>
+            </div>
+          </div>
+        </article>
+      ))}
+    </section>
+  </div>
+</Layout>
