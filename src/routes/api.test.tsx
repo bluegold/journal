@@ -250,6 +250,52 @@ describe('api routes', () => {
     expect(body.items[0]).toEqual(expect.objectContaining({ id: 'entry-1', tags: ['backend', 'zoffy'] }))
   })
 
+  it('returns project archive stats grouped by month and echoes requested tags', async () => {
+    const plaintextToken = 'jrnl_archive_stats'
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialApiTokens: [createApiTokenRow({ token_hash: await hashApiToken(plaintextToken) })],
+        initialTags: [
+          createTagRow({ id: 1, name: 'zoffy' }),
+          createTagRow({ id: 2, name: 'backend' }),
+          createTagRow({ id: 3, name: 'design' }),
+        ],
+        initialEntries: [
+          createEntryRow({ id: 'entry-1', journal_date: '2026-05-05', title: 'May log' }),
+          createEntryRow({ id: 'entry-2', journal_date: '2026-04-21', title: 'April log' }),
+          createEntryRow({ id: 'entry-3', journal_date: '2026-04-03', title: 'Backend only' }),
+          createEntryRow({ id: 'entry-4', journal_date: '2026-03-30', title: 'Design only' }),
+        ],
+        initialEntryTags: [
+          createEntryTagRow({ entry_id: 'entry-1', tag_id: 1 }),
+          createEntryTagRow({ entry_id: 'entry-1', tag_id: 2 }),
+          createEntryTagRow({ entry_id: 'entry-2', tag_id: 1 }),
+          createEntryTagRow({ entry_id: 'entry-2', tag_id: 2 }),
+          createEntryTagRow({ entry_id: 'entry-3', tag_id: 2 }),
+          createEntryTagRow({ entry_id: 'entry-4', tag_id: 3 }),
+        ],
+      },
+    })
+
+    const response = await app.request(
+      '/api/archive-stats?tags[]=zoffy&tags[]=backend',
+      { headers: { authorization: `Bearer ${plaintextToken}` } },
+      env
+    )
+    const body = await response.json<{
+      tags: string[]
+      months: Array<{ month: string; count: number }>
+    }>()
+
+    expect(response.status).toBe(200)
+    expect(body.tags).toEqual(['zoffy', 'backend'])
+    expect(body.months).toEqual([
+      { month: '2026-05', count: 1 },
+      { month: '2026-04', count: 1 },
+    ])
+  })
+
   it('returns entry detail with body and ai candidates', async () => {
     const plaintextToken = 'jrnl_detailentry'
     const env = await createMockEnv({

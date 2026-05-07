@@ -430,6 +430,54 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
     }
   }
 
+  if (
+    normalizedSql ===
+    'SELECT substr(journal_date, 1, 7) AS month, COUNT(*) AS count FROM entries WHERE user_id = ? AND deleted_at IS NULL GROUP BY substr(journal_date, 1, 7) ORDER BY month DESC'
+  ) {
+    const userId = String(params[0] ?? '')
+    const counts = new Map<string, number>()
+
+    for (const entry of state.entries) {
+      if (entry.user_id !== userId || entry.deleted_at != null) {
+        continue
+      }
+
+      const month = entry.journal_date.slice(0, 7)
+      counts.set(month, (counts.get(month) ?? 0) + 1)
+    }
+
+    return {
+      results: [...counts.entries()]
+        .sort(([monthA], [monthB]) => monthB.localeCompare(monthA))
+        .map(([month, count]) => ({ month, count })) as T[],
+    }
+  }
+
+  if (
+    normalizedSql.startsWith(
+      'SELECT substr(journal_date, 1, 7) AS month, COUNT(*) AS count FROM entries WHERE user_id = ? AND deleted_at IS NULL AND id IN ('
+    )
+  ) {
+    const userId = String(params[0] ?? '')
+    const entryIds = params.slice(1).map((value) => String(value))
+    const counts = new Map<string, number>()
+
+    for (const entry of state.entries) {
+      if (entry.user_id !== userId || entry.deleted_at != null || !entryIds.includes(entry.id)) {
+        continue
+      }
+
+      const month = entry.journal_date.slice(0, 7)
+      counts.set(month, (counts.get(month) ?? 0) + 1)
+    }
+
+    return {
+      results: [...counts.entries()]
+        .sort(([monthA], [monthB]) => monthB.localeCompare(monthA))
+        .map(([month, count]) => ({ month, count })) as T[],
+    }
+  }
+
   if (normalizedSql.startsWith('SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC')) {
     const userId = String(params[0] ?? '')
     return {

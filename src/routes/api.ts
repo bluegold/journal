@@ -59,6 +59,11 @@ type ApiEntrySummary = {
   updatedAt: string
 }
 
+type ApiArchiveMonthStat = {
+  month: string
+  count: number
+}
+
 type ApiErrorCode =
   | 'invalid_json'
   | 'entry_not_found'
@@ -143,8 +148,23 @@ const loadMatchingEntryRowsByTags = async (
   userId: string,
   requestedTags: string[]
 ): Promise<JournalEntryRow[]> => {
+  const entryIds = await loadMatchingEntryIdsByTags(db, userId, requestedTags)
+
   if (requestedTags.length === 0) {
-    return loadApiEntryRows(db, userId)
+    return entryIds.length === 0 ? [] : loadApiEntryRowsByIds(db, userId, entryIds)
+  }
+
+  return loadApiEntryRowsByIds(db, userId, entryIds)
+}
+
+const loadMatchingEntryIdsByTags = async (
+  db: D1Database,
+  userId: string,
+  requestedTags: string[]
+): Promise<string[]> => {
+  if (requestedTags.length === 0) {
+    const entries = await loadApiEntryRows(db, userId)
+    return entries.map((entry) => entry.id)
   }
 
   const tagPlaceholders = requestedTags.map(() => '?').join(', ')
@@ -164,11 +184,7 @@ const loadMatchingEntryRowsByTags = async (
       .bind(tagIds[0])
       .all<{ entry_id: string }>()
 
-    return loadApiEntryRowsByIds(
-      db,
-      userId,
-      entryIdRows.results.map((row) => row.entry_id)
-    )
+    return entryIdRows.results.map((row) => row.entry_id)
   }
 
   const entryTagPlaceholders = tagIds.map(() => '?').join(', ')
@@ -179,11 +195,39 @@ const loadMatchingEntryRowsByTags = async (
     .bind(...tagIds, tagIds.length)
     .all<{ entry_id: string }>()
 
-  return loadApiEntryRowsByIds(
-    db,
-    userId,
-    entryIdRows.results.map((row) => row.entry_id)
-  )
+  return entryIdRows.results.map((row) => row.entry_id)
+}
+
+const loadArchiveMonthStats = async (
+  db: D1Database,
+  userId: string,
+  requestedTags: string[]
+): Promise<ApiArchiveMonthStat[]> => {
+  if (requestedTags.length === 0) {
+    const rows = await db
+      .prepare(
+        'SELECT substr(journal_date, 1, 7) AS month, COUNT(*) AS count FROM entries WHERE user_id = ? AND deleted_at IS NULL GROUP BY substr(journal_date, 1, 7) ORDER BY month DESC'
+      )
+      .bind(userId)
+      .all<ApiArchiveMonthStat>()
+
+    return rows.results
+  }
+
+  const entryIds = await loadMatchingEntryIdsByTags(db, userId, requestedTags)
+  if (entryIds.length === 0) {
+    return []
+  }
+
+  const placeholders = entryIds.map(() => '?').join(', ')
+  const rows = await db
+    .prepare(
+      `SELECT substr(journal_date, 1, 7) AS month, COUNT(*) AS count FROM entries WHERE user_id = ? AND deleted_at IS NULL AND id IN (${placeholders}) GROUP BY substr(journal_date, 1, 7) ORDER BY month DESC`
+    )
+    .bind(userId, ...entryIds)
+    .all<ApiArchiveMonthStat>()
+
+  return rows.results
 }
 
 const matchesEntryText = (entry: JournalEntryRow, query: string): boolean => {
@@ -266,6 +310,16 @@ apiRoutes.get('/entries', async (c) => {
 
   const items = await Promise.all(results.map((entry) => buildApiEntrySummary(c.env.DB, c.var.currentUser.id, entry)))
   return c.json({ items })
+})
+
+apiRoutes.get('/archive-stats', async (c) => {
+  const requestedTags = parseRequestedTags(c.req.raw)
+  const months = await loadArchiveMonthStats(c.env.DB, c.var.currentUser.id, requestedTags)
+
+  return c.json({
+    tags: requestedTags,
+    months,
+  })
 })
 
 apiRoutes.get('/entries/:id', async (c) => {
