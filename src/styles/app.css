@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "basecoat-css";
 
-@source "../**/*.{ts,tsx}";
+@source "./**/*.{ts,tsx}";
+@source "!../../public-site/**/*";
 
 :root {
   color-scheme: dark;
