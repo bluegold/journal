@@ -6,17 +6,17 @@
     "tags": ["journal"],
     "description": "General journal entries, planning notes, and daily reflections.",
     "summary": "A private writing surface for daily notes, experiments, and thoughts that do not need a public landing page.",
-    "heroImage": "/images/projects/journal-hero.jpg",
+    "heroImage": "/images/journal.jpg",
     "theme": "ink"
   },
   {
     "slug": "ldf",
-    "title": "LDF",
-    "subtitle": "A systems notebook for LDF.",
+    "title": "LDAP Search Filter",
+    "subtitle": "A systems notebook for LDAP Search Filter.",
     "tags": ["ldf"],
-    "description": "Project LDF related updates, implementation notes, and design decisions.",
-    "summary": "Logs from the LDF project, including architecture updates and implementation notes.",
-    "heroImage": "/images/projects/ldf-hero.jpg",
+    "description": "Project LDAP Search Filter related updates, implementation notes, and design decisions.",
+    "summary": "Logs from the LDAP Search Filter project, including architecture updates and implementation notes.",
+    "heroImage": "/images/ldf.jpg",
     "theme": "aurora"
   },
   {
@@ -26,7 +26,7 @@
     "tags": ["zoffy", "backend"],
     "description": "Backend development logs for Zoffy, including API work and service changes.",
     "summary": "Backend development logs for Zoffy, from API design to operational changes.",
-    "heroImage": "/images/projects/zoffy-backend-hero.jpg",
+    "heroImage": "/images/zoffy-backend.jpg",
     "theme": "matrix"
   }
 ]

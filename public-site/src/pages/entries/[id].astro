@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro'
 import _projects from '../../config/projects.json'
+import siteConfig from '../../config/site-config.json'
 import { getEntry, getEntries } from '../../lib/api'
 import { buildArchiveMonthPath } from '../../lib/archive'
 import { stripRedundantLeadingHeading } from '../../lib/markdown'
@@ -43,6 +44,7 @@ const { id: _id, project, prevId: _prevId, nextId: _nextId } = Astro.props
 
 void Layout
 void _projects
+void siteConfig
 
 if (!canUseAPI) {
   throw new Error('JOURNAL_BASE_URL and JOURNAL_API_TOKEN must be set to render article pages')
@@ -59,7 +61,7 @@ const _prevHref = _prevId ? `/entries/${_prevId}/` : null
 const _nextHref = _nextId ? `/entries/${_nextId}/` : null
 ---
 
-<Layout title={`${project.title} article | Archive`}>
+<Layout title={`${siteConfig.siteTitle} | ${project.title} | ${_articleTitle}`}>
   <article class="site-article-shell">
     <section class="site-pane site-article-head">
       <div class="site-page-heading">

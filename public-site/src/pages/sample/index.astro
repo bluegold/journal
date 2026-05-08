@@ -1,16 +1,18 @@
 ---
 import Layout from '../../layouts/Layout.astro'
 import projects from '../../config/projects.json'
+import siteConfig from '../../config/site-config.json'
 
 const topBadges = ['Centered', 'Sticky header', 'Matrix background', 'Translucent panel']
 
 void Layout
 void projects
+void siteConfig
 void topBadges
 
 ---
 
-<Layout title="Archive">
+<Layout title={`${siteConfig.siteTitle} | Home`}>
   <div class="site-stack">
     <section class="site-pane site-pane--strong site-top-hero">
       <div class="site-pane-inner site-top-hero-copy">

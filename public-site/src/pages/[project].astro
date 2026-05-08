@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro'
 import _projects from '../config/projects.json'
+import siteConfig from '../config/site-config.json'
 import { getArchiveStats, getEntries } from '../lib/api'
 import { buildArchiveMonthPath, buildArchiveMonths, buildArchiveYearGroups } from '../lib/archive'
 import { buildSampleArchiveMonths, buildSampleEntries } from '../lib/sample-content'
@@ -9,6 +10,7 @@ const canUseAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JO
 
 void Layout
 void _projects
+void siteConfig
 
 export function getStaticPaths() {
   return _projects.map((project) => ({
@@ -51,6 +53,7 @@ const _archiveYears = buildArchiveYearGroups(_archiveMonths).map((group) => ({
     href: buildArchiveMonthPath(project.slug, month.month),
   })),
 }))
+const _heroImageStyle = project.heroImage ? `--site-hero-image: url('${project.heroImage}')` : undefined
 
 void _entries
 void _displayEntries
@@ -58,24 +61,22 @@ void _archiveMonths
 void _archiveYears
 ---
 
-<Layout title={`${project.title} | Archive`}>
+<Layout title={`${siteConfig.siteTitle} | ${project.title}`}>
   <div class="site-stack">
     <section class="site-pane site-project-hero-shell">
-      <div class="site-pane-inner">
-        <div class="site-project-hero-grid">
-          <div class="site-project-hero-copy">
-            <p class="site-eyebrow">Project page</p>
-            <h1 class="site-title">{project.title}</h1>
-            <p class="site-project-subtitle">{project.subtitle}</p>
-            <p class="site-copy">{project.summary}</p>
-            <div class="site-badge-row">
-              {project.tags.map((tag) => <span class="site-badge">{tag}</span>)}
-            </div>
+      <div class="site-project-hero-grid">
+        <div class="site-pane-inner site-project-hero-copy">
+          <p class="site-eyebrow">Project page</p>
+          <h1 class="site-title">{project.title}</h1>
+          <p class="site-project-subtitle">{project.subtitle}</p>
+          <p class="site-copy">{project.summary}</p>
+          <div class="site-badge-row">
+            {project.tags.map((tag) => <span class="site-badge">{tag}</span>)}
           </div>
+        </div>
 
-          <div class="site-pane site-pane--strong site-project-hero-panel" aria-hidden="true">
-            <div class="site-project-hero-image"></div>
-          </div>
+        <div class="site-pane site-pane--strong site-project-hero-panel" aria-hidden="true">
+          <div class="site-project-hero-image" style={_heroImageStyle}></div>
         </div>
       </div>
     </section>

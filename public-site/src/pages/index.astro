@@ -1,21 +1,29 @@
 ---
 import Layout from '../layouts/Layout.astro'
 import _projects from '../config/projects.json'
+import siteConfig from '../config/site-config.json'
 
 const _topBadges = ['Centered', 'Sticky header', 'Matrix background', 'Translucent panel']
+const _topHeroImageStyle = siteConfig.topHeroImage
+  ? `--site-hero-image: url('${siteConfig.topHeroImage}')`
+  : undefined
+const _editUrl = siteConfig.editUrl
 
 void Layout
 void _projects
 void _topBadges
+void siteConfig
+void _topHeroImageStyle
+void _editUrl
 ---
 
-<Layout title="Archive">
+<Layout title={`${siteConfig.siteTitle} | Home`}>
   <div class="site-stack">
     <section class="site-pane site-pane--strong site-top-hero">
       <div class="site-pane-inner site-top-hero-copy">
         <div class="site-page-heading">
           <p class="site-eyebrow">Top page</p>
-          <h1 class="site-title">Archive</h1>
+          <h1 class="site-title">{siteConfig.siteTitle}</h1>
         </div>
         <p class="site-copy">
           これはプロジェクトと記事に入るための入口。暗い背景、matrix rain、中央寄せの透過パネルを共通の土台にする。
@@ -25,16 +33,20 @@ void _topBadges
         </div>
       </div>
 
-      <div class="site-pane site-pane--strong">
+      <div class="site-pane site-pane--strong site-top-hero-panel">
+        <div class="site-top-hero-panel-image" aria-hidden="true" style={_topHeroImageStyle}></div>
         <div class="site-pane-inner site-stack">
-          <div class="site-project-tile-image" aria-hidden="true"></div>
           <div class="site-meta-row">
-            <span class="site-date">Project index</span>
-            <span class="site-chip">Latest notes first</span>
+            <span class="site-date">Posting site</span>
           </div>
           <p class="site-summary">
-            Top は入口として、プロジェクト一覧へ進むための summary surface を置く。
+            ここから記事を投稿する。日々の記録やメモを、必要なときにそのまま追加できる。
           </p>
+          <div class="site-action-row">
+            <a class="site-detail-button" href={_editUrl} target="_blank" rel="noreferrer">
+              Open posting site
+            </a>
+          </div>
         </div>
       </div>
     </section>
@@ -42,16 +54,22 @@ void _topBadges
     <section class="site-project-grid" aria-label="Projects">
       {_projects.map((project) => (
         <a class="site-pane site-project-tile" href={`/${project.slug}/`}>
-          <div class="site-pane-inner site-stack">
-            <div class="site-meta-row">
-              <div class="site-date">{project.title}</div>
-              <div class="site-tag-row">
-                {project.tags.map((tag) => <span class="site-tag">{tag}</span>)}
+          <div class="site-project-tile-image-wrap">
+            <div
+              class="site-project-tile-image"
+              aria-hidden="true"
+              style={project.heroImage ? `--site-hero-image: url('${project.heroImage}')` : undefined}
+            ></div>
+            <div class="site-project-tile-titlebar">
+              <div class="site-meta-row">
+                <div class="site-date">{project.title}</div>
+                <div class="site-tag-row">
+                  {project.tags.map((tag) => <span class="site-tag">{tag}</span>)}
+                </div>
               </div>
             </div>
-
-            <div class="site-project-tile-image" aria-hidden="true"></div>
-
+          </div>
+          <div class="site-pane-inner site-stack">
             <div>
               <h2 class="site-project-tile-title">{project.subtitle}</h2>
               <p class="site-project-tile-summary">{project.summary}</p>
