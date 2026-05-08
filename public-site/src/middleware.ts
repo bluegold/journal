@@ -14,7 +14,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   if (!authHeader) {
-    return new Response('Unauthorized', {
+    return new Response('Unauthorized: journal public site', {
       status: 401,
       headers: {
         'WWW-Authenticate': 'Basic realm="Journal Public Site"',
