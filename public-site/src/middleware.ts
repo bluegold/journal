@@ -17,6 +17,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return new Response('Unauthorized: journal public site', {
       status: 401,
       headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
         'WWW-Authenticate': 'Basic realm="Journal Public Site"',
       },
     })
@@ -41,6 +42,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   return new Response('Invalid credentials', {
     status: 401,
     headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
       'WWW-Authenticate': 'Basic realm="Journal Public Site"',
     },
   })
