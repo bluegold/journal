@@ -4,6 +4,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const request = context.request
   const authHeader = request.headers.get('Authorization')
   const env = context.locals.runtime?.env ?? {}
+  const timestamp = new Date().toISOString()
 
   const JOURNAL_USER = env.JOURNAL_USER
   const JOURNAL_PASS = env.JOURNAL_PASS
@@ -14,7 +15,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   if (!authHeader) {
-    return new Response('Unauthorized: journal public site', {
+    return new Response(`Unauthorized: journal public site @ ${timestamp}`, {
       status: 401,
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
@@ -39,7 +40,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return new Response('Bad Request', { status: 400 })
   }
 
-  return new Response('Invalid credentials', {
+  return new Response(`Invalid credentials @ ${timestamp}`, {
     status: 401,
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
