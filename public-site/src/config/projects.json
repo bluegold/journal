@@ -31,5 +31,16 @@
     "summary": "Backend development logs for Zoffy, from API design to operational changes.",
     "heroImage": "/images/zoffy-backend.jpg",
     "theme": "matrix"
+  },
+  {
+    "slug": "other",
+    "title": "その他",
+    "subtitle": "Everything that does not fit the named project buckets.",
+    "requireAuth": false,
+    "tags": [],
+    "description": "Entries that are not tagged for the named public project pages.",
+    "summary": "A catch-all project bucket for entries outside the named project tags.",
+    "heroImage": "/images/journal-site.jpg",
+    "theme": "ink"
   }
 ]

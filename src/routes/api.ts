@@ -103,39 +103,17 @@ const loadApiEntryRows = async (db: D1Database, userId: string): Promise<Journal
   return rows.results
 }
 
-const loadApiEntryRowsByIds = async (
-  db: D1Database,
-  userId: string,
-  entryIds: string[]
-): Promise<JournalEntryRow[]> => {
-  if (entryIds.length === 0) {
-    return []
-  }
-
-  const placeholders = entryIds.map(() => '?').join(', ')
-  const rows = await db
-    .prepare(
-      `SELECT * FROM entries WHERE user_id = ? AND deleted_at IS NULL AND id IN (${placeholders}) ORDER BY journal_date DESC, created_at DESC`
-    )
-    .bind(userId, ...entryIds)
-    .all<JournalEntryRow>()
-
-  return rows.results
-}
-
 const findApiEntryById = (entries: JournalEntryRow[], entryId: string): JournalEntryRow | null => {
   return entries.find((entry) => entry.id === entryId && entry.deleted_at == null) ?? null
 }
 
-const parseRequestedTags = (request: Request): string[] => {
-  const url = new URL(request.url)
-  const rawValues = [
-    ...url.searchParams.getAll('tags[]'),
-    ...url.searchParams.getAll('tags'),
-    ...url.searchParams.getAll('tag'),
-  ]
+type RequestedTagFilters = {
+  includeTags: string[]
+  excludeTags: string[]
+}
 
-  const tags = rawValues
+const normalizeRequestedTags = (values: string[]): string[] => {
+  const tags = values
     .flatMap((value) => value.split(','))
     .map((value) => value.trim().toLowerCase())
     .filter((value) => value.length > 0)
@@ -143,88 +121,111 @@ const parseRequestedTags = (request: Request): string[] => {
   return [...new Set(tags)]
 }
 
+const parseRequestedTagFilters = (request: Request): RequestedTagFilters => {
+  const url = new URL(request.url)
+  return {
+    includeTags: normalizeRequestedTags([
+      ...url.searchParams.getAll('tags[]'),
+      ...url.searchParams.getAll('tags'),
+      ...url.searchParams.getAll('tag'),
+    ]),
+    excludeTags: normalizeRequestedTags([
+      ...url.searchParams.getAll('exclude_tags[]'),
+      ...url.searchParams.getAll('exclude_tags'),
+      ...url.searchParams.getAll('exclude_tag'),
+    ]),
+  }
+}
+
 const loadMatchingEntryRowsByTags = async (
   db: D1Database,
   userId: string,
-  requestedTags: string[]
+  filters: RequestedTagFilters
 ): Promise<JournalEntryRow[]> => {
-  const entryIds = await loadMatchingEntryIdsByTags(db, userId, requestedTags)
+  const clauses: string[] = []
+  const params: string[] = [userId]
 
-  if (requestedTags.length === 0) {
-    return entryIds.length === 0 ? [] : loadApiEntryRowsByIds(db, userId, entryIds)
+  for (const tag of filters.includeTags) {
+    clauses.push(`
+      EXISTS (
+        SELECT 1
+        FROM entry_tags et
+        JOIN tags t ON t.id = et.tag_id
+        WHERE et.entry_id = entries.id
+          AND t.user_id = ?
+          AND t.name = ?
+      )
+    `.trim())
+    params.push(userId, tag)
   }
 
-  return loadApiEntryRowsByIds(db, userId, entryIds)
-}
-
-const loadMatchingEntryIdsByTags = async (
-  db: D1Database,
-  userId: string,
-  requestedTags: string[]
-): Promise<string[]> => {
-  if (requestedTags.length === 0) {
-    const entries = await loadApiEntryRows(db, userId)
-    return entries.map((entry) => entry.id)
+  for (const tag of filters.excludeTags) {
+    clauses.push(`
+      NOT EXISTS (
+        SELECT 1
+        FROM entry_tags et
+        JOIN tags t ON t.id = et.tag_id
+        WHERE et.entry_id = entries.id
+          AND t.user_id = ?
+          AND t.name = ?
+      )
+    `.trim())
+    params.push(userId, tag)
   }
 
-  const tagPlaceholders = requestedTags.map(() => '?').join(', ')
-  const tagIdRows = await db
-    .prepare(`SELECT id FROM tags WHERE user_id = ? AND name IN (${tagPlaceholders})`)
-    .bind(userId, ...requestedTags)
-    .all<{ id: number }>()
-
-  const tagIds = tagIdRows.results.map((row) => row.id)
-  if (tagIds.length !== requestedTags.length) {
-    return []
-  }
-
-  if (tagIds.length === 1) {
-    const entryIdRows = await db
-      .prepare('SELECT entry_id FROM entry_tags WHERE tag_id = ? GROUP BY entry_id')
-      .bind(tagIds[0])
-      .all<{ entry_id: string }>()
-
-    return entryIdRows.results.map((row) => row.entry_id)
-  }
-
-  const entryTagPlaceholders = tagIds.map(() => '?').join(', ')
-  const entryIdRows = await db
+  const whereClause = clauses.length > 0 ? ` AND ${clauses.join(' AND ')}` : ''
+  const rows = await db
     .prepare(
-      `SELECT entry_id FROM entry_tags WHERE tag_id IN (${entryTagPlaceholders}) GROUP BY entry_id HAVING COUNT(tag_id) = ?`
+      `SELECT * FROM entries WHERE user_id = ? AND deleted_at IS NULL${whereClause} ORDER BY journal_date DESC, created_at DESC`
     )
-    .bind(...tagIds, tagIds.length)
-    .all<{ entry_id: string }>()
+    .bind(...params)
+    .all<JournalEntryRow>()
 
-  return entryIdRows.results.map((row) => row.entry_id)
+  return rows.results
 }
 
 const loadArchiveMonthStats = async (
   db: D1Database,
   userId: string,
-  requestedTags: string[]
+  filters: RequestedTagFilters
 ): Promise<ApiArchiveMonthStat[]> => {
-  if (requestedTags.length === 0) {
-    const rows = await db
-      .prepare(
-        'SELECT substr(journal_date, 1, 7) AS month, COUNT(*) AS count FROM entries WHERE user_id = ? AND deleted_at IS NULL GROUP BY substr(journal_date, 1, 7) ORDER BY month DESC'
+  const clauses: string[] = []
+  const params: string[] = [userId]
+
+  for (const tag of filters.includeTags) {
+    clauses.push(`
+      EXISTS (
+        SELECT 1
+        FROM entry_tags et
+        JOIN tags t ON t.id = et.tag_id
+        WHERE et.entry_id = entries.id
+          AND t.user_id = ?
+          AND t.name = ?
       )
-      .bind(userId)
-      .all<ApiArchiveMonthStat>()
-
-    return rows.results
+    `.trim())
+    params.push(userId, tag)
   }
 
-  const entryIds = await loadMatchingEntryIdsByTags(db, userId, requestedTags)
-  if (entryIds.length === 0) {
-    return []
+  for (const tag of filters.excludeTags) {
+    clauses.push(`
+      NOT EXISTS (
+        SELECT 1
+        FROM entry_tags et
+        JOIN tags t ON t.id = et.tag_id
+        WHERE et.entry_id = entries.id
+          AND t.user_id = ?
+          AND t.name = ?
+      )
+    `.trim())
+    params.push(userId, tag)
   }
 
-  const placeholders = entryIds.map(() => '?').join(', ')
+  const whereClause = clauses.length > 0 ? ` AND ${clauses.join(' AND ')}` : ''
   const rows = await db
     .prepare(
-      `SELECT substr(journal_date, 1, 7) AS month, COUNT(*) AS count FROM entries WHERE user_id = ? AND deleted_at IS NULL AND id IN (${placeholders}) GROUP BY substr(journal_date, 1, 7) ORDER BY month DESC`
+      `SELECT substr(journal_date, 1, 7) AS month, COUNT(*) AS count FROM entries WHERE user_id = ? AND deleted_at IS NULL${whereClause} GROUP BY substr(journal_date, 1, 7) ORDER BY month DESC`
     )
-    .bind(userId, ...entryIds)
+    .bind(...params)
     .all<ApiArchiveMonthStat>()
 
   return rows.results
@@ -304,7 +305,7 @@ apiRoutes.get('/ping', (c) => {
 })
 
 apiRoutes.get('/entries', async (c) => {
-  const requestedTags = parseRequestedTags(c.req.raw)
+  const requestedTags = parseRequestedTagFilters(c.req.raw)
   const entries = await loadMatchingEntryRowsByTags(c.env.DB, c.var.currentUser.id, requestedTags)
   const results = filterEntryRows(entries, c.req.query('q') ?? '', c.req.query('month'), c.req.query('date'))
 
@@ -313,11 +314,12 @@ apiRoutes.get('/entries', async (c) => {
 })
 
 apiRoutes.get('/archive-stats', async (c) => {
-  const requestedTags = parseRequestedTags(c.req.raw)
+  const requestedTags = parseRequestedTagFilters(c.req.raw)
   const months = await loadArchiveMonthStats(c.env.DB, c.var.currentUser.id, requestedTags)
 
   return c.json({
-    tags: requestedTags,
+    tags: requestedTags.includeTags,
+    excludeTags: requestedTags.excludeTags,
     months,
   })
 })

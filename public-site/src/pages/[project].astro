@@ -4,6 +4,7 @@ import _projects from '../config/projects.json'
 import siteConfig from '../config/site-config.json'
 import { getArchiveStats, getEntries } from '../lib/api'
 import { buildArchiveMonthPath, buildArchiveMonths, buildArchiveYearGroups } from '../lib/archive'
+import { getProjectExcludeTags } from '../lib/project-filters'
 import { buildSampleArchiveMonths, buildSampleEntries } from '../lib/sample-content'
 
 const canUseAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
@@ -20,6 +21,7 @@ export function getStaticPaths() {
 }
 
 const { project } = Astro.props
+const projectExcludeTags = getProjectExcludeTags(project)
 
 let _entries = buildSampleEntries(project)
 let _archiveMonths = buildArchiveMonths(buildSampleArchiveMonths(_entries))
@@ -27,8 +29,8 @@ let _archiveMonths = buildArchiveMonths(buildSampleArchiveMonths(_entries))
 if (canUseAPI) {
   try {
     const [apiEntries, archiveStats] = await Promise.all([
-      getEntries(project.tags),
-      getArchiveStats(project.tags),
+      getEntries(project.tags, undefined, projectExcludeTags),
+      getArchiveStats(project.tags, projectExcludeTags),
     ])
 
     _entries = apiEntries.map((entry) => ({

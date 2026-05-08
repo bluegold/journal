@@ -23,6 +23,7 @@ export interface ArchiveMonthStat {
 
 export interface ArchiveStats {
   tags: string[]
+  excludeTags?: string[]
   months: ArchiveMonthStat[]
 }
 
@@ -45,20 +46,24 @@ async function fetchAPI(endpoint: string) {
   return response.json()
 }
 
-export async function getEntries(tags?: string[], month?: string): Promise<EntrySummary[]> {
+export async function getEntries(tags?: string[], month?: string, excludeTags?: string[]): Promise<EntrySummary[]> {
   let endpoint = '/api/entries'
-  if (tags && tags.length > 0) {
+  if ((tags && tags.length > 0) || (excludeTags && excludeTags.length > 0) || (month && month.length > 0)) {
     const params = new URLSearchParams()
-    for (const tag of tags) {
-      params.append('tags[]', tag)
+
+    if (tags && tags.length > 0) {
+      for (const tag of tags) {
+        params.append('tags[]', tag)
+      }
+    }
+    if (excludeTags && excludeTags.length > 0) {
+      for (const tag of excludeTags) {
+        params.append('exclude_tags[]', tag)
+      }
     }
     if (month && month.length > 0) {
       params.set('month', month)
     }
-    endpoint += `?${params.toString()}`
-  } else if (month && month.length > 0) {
-    const params = new URLSearchParams()
-    params.set('month', month)
     endpoint += `?${params.toString()}`
   }
 
@@ -77,12 +82,20 @@ export async function getEntry(id: string): Promise<EntryDetail> {
   return fetchAPI(`/api/entries/${id}`)
 }
 
-export async function getArchiveStats(tags?: string[]): Promise<ArchiveStats> {
+export async function getArchiveStats(tags?: string[], excludeTags?: string[]): Promise<ArchiveStats> {
   let endpoint = '/api/archive-stats'
-  if (tags && tags.length > 0) {
+  if ((tags && tags.length > 0) || (excludeTags && excludeTags.length > 0)) {
     const params = new URLSearchParams()
-    for (const tag of tags) {
-      params.append('tags[]', tag)
+
+    if (tags && tags.length > 0) {
+      for (const tag of tags) {
+        params.append('tags[]', tag)
+      }
+    }
+    if (excludeTags && excludeTags.length > 0) {
+      for (const tag of excludeTags) {
+        params.append('exclude_tags[]', tag)
+      }
     }
     endpoint += `?${params.toString()}`
   }
@@ -91,7 +104,7 @@ export async function getArchiveStats(tags?: string[]): Promise<ArchiveStats> {
     return await fetchAPI(endpoint)
   } catch (error) {
     if (error instanceof Error && error.message.includes('404')) {
-      return { tags: tags ?? [], months: [] }
+      return { tags: tags ?? [], excludeTags: excludeTags ?? [], months: [] }
     }
     throw error
   }

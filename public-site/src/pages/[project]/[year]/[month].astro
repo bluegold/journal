@@ -4,6 +4,7 @@ import _projects from '../../../config/projects.json'
 import siteConfig from '../../../config/site-config.json'
 import { getArchiveStats, getEntries } from '../../../lib/api'
 import { buildArchiveMonthPath, buildArchiveMonths, buildArchiveYearGroups } from '../../../lib/archive'
+import { getProjectExcludeTags } from '../../../lib/project-filters'
 import { buildSampleArchiveMonths, buildSampleEntries } from '../../../lib/sample-content'
 
 void Layout
@@ -61,7 +62,7 @@ export async function getStaticPaths() {
     }
 
     try {
-      const archiveStats = await getArchiveStats(project.tags)
+      const archiveStats = await getArchiveStats(project.tags, getProjectExcludeTags(project))
       const archiveMonths = buildArchiveMonths(archiveStats.months)
 
       for (const currentMonth of archiveMonths) {
@@ -100,6 +101,7 @@ export async function getStaticPaths() {
 }
 
 const { project, archiveMonths, currentMonth } = Astro.props as StaticPathProps
+const projectExcludeTags = getProjectExcludeTags(project)
 
 const monthKey = currentMonth.month
 const canUseMonthAPI = Boolean(import.meta.env.JOURNAL_BASE_URL && import.meta.env.JOURNAL_API_TOKEN)
@@ -108,7 +110,7 @@ let _entries = buildSampleEntries(project).filter((entry) => entry.date.startsWi
 
 if (canUseMonthAPI) {
   try {
-    const apiEntries = await getEntries(project.tags, monthKey)
+    const apiEntries = await getEntries(project.tags, monthKey, projectExcludeTags)
     _entries = apiEntries.map((entry) => ({
       id: entry.id,
       date: entry.journalDate,

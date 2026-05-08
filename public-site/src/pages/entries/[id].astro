@@ -4,6 +4,7 @@ import _projects from '../../config/projects.json'
 import siteConfig from '../../config/site-config.json'
 import { getEntry, getEntries } from '../../lib/api'
 import { buildArchiveMonthPath } from '../../lib/archive'
+import { getProjectExcludeTags } from '../../lib/project-filters'
 import { stripRedundantLeadingHeading } from '../../lib/markdown'
 import { renderMarkdown } from '../../lib/render-markdown'
 
@@ -18,7 +19,7 @@ export async function getStaticPaths() {
 
   for (const project of _projects) {
     try {
-      const entries = await getEntries(project.tags)
+      const entries = await getEntries(project.tags, undefined, getProjectExcludeTags(project))
       const sortedEntries = [...entries].sort((left, right) => right.journalDate.localeCompare(left.journalDate))
 
       sortedEntries.forEach((entry, index) => {

@@ -250,6 +250,46 @@ describe('api routes', () => {
     expect(body.items[0]).toEqual(expect.objectContaining({ id: 'entry-1', tags: ['backend', 'zoffy'] }))
   })
 
+  it('filters entries excluding requested tags from repeated exclude_tags[] query params', async () => {
+    const plaintextToken = 'jrnl_listentries_exclude_tags'
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialApiTokens: [createApiTokenRow({ token_hash: await hashApiToken(plaintextToken) })],
+        initialTags: [
+          createTagRow({ id: 1, name: 'zoffy' }),
+          createTagRow({ id: 2, name: 'backend' }),
+          createTagRow({ id: 3, name: 'design' }),
+        ],
+        initialEntries: [
+          createEntryRow({ id: 'entry-1', title: 'Zoffy backend log', summary: 'Project notes', journal_date: '2026-05-05' }),
+          createEntryRow({ id: 'entry-2', title: 'Zoffy only', summary: 'Private summary', journal_date: '2026-04-21' }),
+          createEntryRow({ id: 'entry-3', title: 'Backend only', summary: 'Backend summary', journal_date: '2026-04-03' }),
+          createEntryRow({ id: 'entry-4', title: 'Design only', summary: 'Design summary', journal_date: '2026-03-30' }),
+        ],
+        initialEntryTags: [
+          createEntryTagRow({ entry_id: 'entry-1', tag_id: 1 }),
+          createEntryTagRow({ entry_id: 'entry-1', tag_id: 2 }),
+          createEntryTagRow({ entry_id: 'entry-2', tag_id: 1 }),
+          createEntryTagRow({ entry_id: 'entry-3', tag_id: 2 }),
+          createEntryTagRow({ entry_id: 'entry-4', tag_id: 3 }),
+        ],
+      },
+    })
+
+    const response = await app.request(
+      '/api/entries?exclude_tags[]=backend',
+      { headers: { authorization: `Bearer ${plaintextToken}` } },
+      env
+    )
+    const body = await response.json<{ items: Array<{ id: string; tags: string[] }> }>()
+
+    expect(response.status).toBe(200)
+    expect(body.items).toHaveLength(2)
+    expect(body.items[0]).toEqual(expect.objectContaining({ id: 'entry-2', tags: ['zoffy'] }))
+    expect(body.items[1]).toEqual(expect.objectContaining({ id: 'entry-4', tags: ['design'] }))
+  })
+
   it('returns project archive stats grouped by month and echoes requested tags', async () => {
     const plaintextToken = 'jrnl_archive_stats'
     const env = await createMockEnv({
@@ -293,6 +333,53 @@ describe('api routes', () => {
     expect(body.months).toEqual([
       { month: '2026-05', count: 1 },
       { month: '2026-04', count: 1 },
+    ])
+  })
+
+  it('returns archive stats excluding requested tags', async () => {
+    const plaintextToken = 'jrnl_archive_stats_exclude_tags'
+    const env = await createMockEnv({
+      db: {
+        initialUsers: [createUserRow()],
+        initialApiTokens: [createApiTokenRow({ token_hash: await hashApiToken(plaintextToken) })],
+        initialTags: [
+          createTagRow({ id: 1, name: 'zoffy' }),
+          createTagRow({ id: 2, name: 'backend' }),
+          createTagRow({ id: 3, name: 'design' }),
+        ],
+        initialEntries: [
+          createEntryRow({ id: 'entry-1', journal_date: '2026-05-05', title: 'May log' }),
+          createEntryRow({ id: 'entry-2', journal_date: '2026-04-21', title: 'April zoffy log' }),
+          createEntryRow({ id: 'entry-3', journal_date: '2026-04-03', title: 'April backend log' }),
+          createEntryRow({ id: 'entry-4', journal_date: '2026-03-30', title: 'March design log' }),
+        ],
+        initialEntryTags: [
+          createEntryTagRow({ entry_id: 'entry-1', tag_id: 1 }),
+          createEntryTagRow({ entry_id: 'entry-1', tag_id: 2 }),
+          createEntryTagRow({ entry_id: 'entry-2', tag_id: 1 }),
+          createEntryTagRow({ entry_id: 'entry-3', tag_id: 2 }),
+          createEntryTagRow({ entry_id: 'entry-4', tag_id: 3 }),
+        ],
+      },
+    })
+
+    const response = await app.request(
+      '/api/archive-stats?exclude_tags[]=backend',
+      { headers: { authorization: `Bearer ${plaintextToken}` } },
+      env
+    )
+    const body = await response.json<{
+      tags: string[]
+      excludeTags?: string[]
+      months: Array<{ month: string; count: number }>
+    }>()
+
+    expect(response.status).toBe(200)
+    expect(body.tags).toEqual([])
+    expect(body.excludeTags).toEqual(['backend'])
+    expect(body.months).toEqual([
+      { month: '2026-04', count: 1 },
+      { month: '2026-03', count: 1 },
     ])
   })
 

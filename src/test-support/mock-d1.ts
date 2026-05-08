@@ -118,6 +118,46 @@ const sortEntriesByJournalDateDesc = (items: EntryRow[]): EntryRow[] => {
   })
 }
 
+const applyEntryTagExistenceFilters = (
+  entries: EntryRow[],
+  normalizedSql: string,
+  params: unknown[],
+  startIndex: number,
+  state: MockD1State
+): { entries: EntryRow[]; nextParamIndex: number } => {
+  const tagClausePattern = /(NOT )?EXISTS \( SELECT 1 FROM entry_tags et JOIN tags t ON t.id = et.tag_id WHERE et.entry_id = entries\.id AND t.user_id = \? AND t.name = \? \)/g
+  const tagClauses = [...normalizedSql.matchAll(tagClausePattern)]
+
+  if (tagClauses.length === 0) {
+    return { entries, nextParamIndex: startIndex }
+  }
+
+  let filtered = [...entries]
+  let paramIndex = startIndex
+
+  for (const clause of tagClauses) {
+    const isExclude = clause[1] === 'NOT '
+    const tagUserId = String(params[paramIndex] ?? '')
+    const tagName = String(params[paramIndex + 1] ?? '')
+    paramIndex += 2
+
+    filtered = filtered.filter((entry) => {
+      const hasTag = state.entryTags.some((entryTag) => {
+        if (entryTag.entry_id !== entry.id) {
+          return false
+        }
+
+        const tag = state.tags.find((current) => current.id === entryTag.tag_id)
+        return tag?.user_id === tagUserId && tag.name === tagName
+      })
+
+      return isExclude ? !hasTag : hasTag
+    })
+  }
+
+  return { entries: filtered, nextParamIndex: paramIndex }
+}
+
 const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
   const normalizedSql = normalizeSql(sql)
   state.queries.push({ sql: normalizedSql, params: [...params] })
@@ -435,11 +475,10 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
     normalizedSql.startsWith('SELECT * FROM entries WHERE user_id = ? AND deleted_at IS NULL ORDER BY journal_date DESC, created_at DESC')
   ) {
     const userId = String(params[0] ?? '')
-    return {
-      results: sortEntriesByJournalDateDesc(
-        state.entries.filter((entry) => entry.user_id === userId && entry.deleted_at == null)
-      ) as T[],
-    }
+    let filtered = state.entries.filter((entry) => entry.user_id === userId && entry.deleted_at == null)
+    const tagFilterResult = applyEntryTagExistenceFilters(filtered, normalizedSql, params, 1, state)
+    filtered = tagFilterResult.entries
+    return { results: sortEntriesByJournalDateDesc(filtered) as T[] }
   }
 
   if (
@@ -495,6 +534,30 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
         continue
       }
 
+      const month = entry.journal_date.slice(0, 7)
+      counts.set(month, (counts.get(month) ?? 0) + 1)
+    }
+
+    return {
+      results: [...counts.entries()]
+        .sort(([monthA], [monthB]) => monthB.localeCompare(monthA))
+        .map(([month, count]) => ({ month, count })) as T[],
+    }
+  }
+
+  if (
+    normalizedSql.startsWith(
+      'SELECT substr(journal_date, 1, 7) AS month, COUNT(*) AS count FROM entries WHERE user_id = ? AND deleted_at IS NULL'
+    ) &&
+    normalizedSql.includes('GROUP BY substr(journal_date, 1, 7) ORDER BY month DESC')
+  ) {
+    const userId = String(params[0] ?? '')
+    let filtered = state.entries.filter((entry) => entry.user_id === userId && entry.deleted_at == null)
+    const tagFilterResult = applyEntryTagExistenceFilters(filtered, normalizedSql, params, 1, state)
+    filtered = tagFilterResult.entries
+    const counts = new Map<string, number>()
+
+    for (const entry of filtered) {
       const month = entry.journal_date.slice(0, 7)
       counts.set(month, (counts.get(month) ?? 0) + 1)
     }
@@ -592,24 +655,8 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
       paramIndex += 2
     }
 
-    if (
-      normalizedSql.includes(
-        'EXISTS ( SELECT 1 FROM entry_tags et JOIN tags t ON t.id = et.tag_id WHERE et.entry_id = entries.id AND t.user_id = ? AND t.name = ? )'
-      )
-    ) {
-      const tagUserId = String(params[paramIndex] ?? '')
-      const tagName = String(params[paramIndex + 1] ?? '')
-      filtered = filtered.filter((entry) =>
-        state.entryTags.some((entryTag) => {
-          if (entryTag.entry_id !== entry.id) {
-            return false
-          }
-
-          const tag = state.tags.find((current) => current.id === entryTag.tag_id)
-          return tag?.user_id === tagUserId && tag.name === tagName
-        })
-      )
-    }
+    const tagFilterResult = applyEntryTagExistenceFilters(filtered, normalizedSql, params, paramIndex, state)
+    filtered = tagFilterResult.entries
 
     return { results: sortEntriesByJournalDateDesc(filtered) as T[] }
   }
