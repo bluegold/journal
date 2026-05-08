@@ -6,9 +6,10 @@ type EntryCardProps = {
   active?: boolean
   href?: string
   showDate?: boolean
+  workspaceTarget?: string | null
 }
 
-export const EntryCard = ({ entry, active = false, href, showDate = false }: EntryCardProps) => {
+export const EntryCard = ({ entry, active = false, href, showDate = false, workspaceTarget = '#journal-workspace' }: EntryCardProps) => {
   const classes = [
     'block rounded-xl border p-3 transition',
     active
@@ -36,8 +37,30 @@ export const EntryCard = ({ entry, active = false, href, showDate = false }: Ent
     )
   }
 
+  if (workspaceTarget == null) {
+    return (
+      <a href={href} class={classes}>
+        <article class={active ? 'cursor-default' : 'cursor-pointer'}>
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h3 class="truncate text-sm font-semibold text-slate-100">{entry.title || 'Untitled'}</h3>
+              {showDate ? <p class="mt-1 text-[11px] text-slate-400">{entry.journal_date}</p> : null}
+            </div>
+            <span class={[
+              'badge badge-outline mt-0.5 text-[10px]',
+              entry.status === 'private' ? 'badge-private' : ''
+            ].join(' ')}>
+              {entry.status}
+            </span>
+          </div>
+          <p class="mt-2 line-clamp-2 text-xs leading-5 text-slate-300">{entry.summary ?? 'No summary yet'}</p>
+        </article>
+      </a>
+    )
+  }
+
   return (
-    <a {...createWorkspaceLinkAttrs(href)} class={classes}>
+    <a {...createWorkspaceLinkAttrs(href, { target: workspaceTarget })} class={classes}>
       <article class={active ? 'cursor-default' : 'cursor-pointer'}>
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">

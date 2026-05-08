@@ -212,6 +212,7 @@ const SearchWorkspace = ({ calendarView, query, tag, month, date, results, tagSt
                   <EntryCard
                     entry={result.entry}
                     showDate
+                    workspaceTarget={null}
                     href={buildEntriesHref({
                       monthKey: result.entry.journal_date.slice(0, 7),
                       dateKey: result.entry.journal_date,
