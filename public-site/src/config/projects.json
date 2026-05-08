@@ -40,7 +40,7 @@
     "tags": [],
     "description": "Entries that are not tagged for the named public project pages.",
     "summary": "A catch-all project bucket for entries outside the named project tags.",
-    "heroImage": "/images/journal-site.jpg",
+    "heroImage": "/images/other.jpg",
     "theme": "ink"
   }
 ]
