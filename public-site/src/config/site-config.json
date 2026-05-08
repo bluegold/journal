@@ -1,6 +1,7 @@
 {
   "siteTitle": "青金灯下録",
   "siteSubTitle": "日々の作業ログ",
+  "requireAuthAll": false,
   "topHeroImage": "/images/journal-site.jpg",
   "editUrl": "https://journal.bluegold.me"
 }

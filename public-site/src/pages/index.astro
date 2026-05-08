@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro'
 import _projects from '../config/projects.json'
+import { isProjectProtected } from '../config/auth-rules'
 import siteConfig from '../config/site-config.json'
 
 const _topBadges = ['Centered', 'Sticky header', 'Matrix background', 'Translucent panel']
@@ -8,7 +9,6 @@ const _topHeroImageStyle = siteConfig.topHeroImage
   ? `--site-hero-image: url('${siteConfig.topHeroImage}')`
   : undefined
 const _editUrl = siteConfig.editUrl
-
 void Layout
 void _projects
 void _topBadges
@@ -63,11 +63,15 @@ void _editUrl
             <div class="site-project-tile-titlebar">
               <div class="site-meta-row">
                 <div class="site-date">{project.title}</div>
-                <div class="site-tag-row">
-                  {project.tags.map((tag) => <span class="site-tag">{tag}</span>)}
-                </div>
+                <div class="site-meta-spacer"></div>
+                <div class="site-tag-row">{project.tags.map((tag) => <span class="site-tag">{tag}</span>)}</div>
               </div>
             </div>
+            {isProjectProtected(project) ? (
+              <div class="site-protected-ribbon" aria-label="Protected">
+                <span>Protected</span>
+              </div>
+            ) : null}
           </div>
           <div class="site-pane-inner site-stack">
             <div>

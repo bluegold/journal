@@ -1,9 +1,17 @@
+import { shouldRequireAuthForPathname } from '../src/config/auth-rules'
+
 export async function onRequest(context) {
   const { request, env } = context
   const authHeader = request.headers.get('Authorization')
+  const pathname = new URL(request.url).pathname
 
   const JOURNAL_USER = env.JOURNAL_USER
   const JOURNAL_PASS = env.JOURNAL_PASS
+  const requireAuth = shouldRequireAuthForPathname(pathname)
+
+  if (!requireAuth) {
+    return await context.next()
+  }
 
   if (!JOURNAL_USER || !JOURNAL_PASS) {
     return await context.next()

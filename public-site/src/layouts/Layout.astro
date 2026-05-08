@@ -449,6 +449,33 @@ const _columns = Array.from({ length: 14 }, (_, columnIndex) =>
         width: 100%;
       }
 
+      .site-protected-ribbon {
+        position: absolute;
+        top: 1rem;
+        right: -3.8rem;
+        z-index: 2;
+        width: 12.5rem;
+        transform: rotate(38deg);
+        transform-origin: center;
+        pointer-events: none;
+      }
+
+      .site-protected-ribbon span {
+        display: block;
+        padding: 0.52rem 0;
+        border-top: 1px solid rgba(74, 222, 128, 0.72);
+        border-bottom: 1px solid rgba(74, 222, 128, 0.72);
+        background: linear-gradient(90deg, rgba(2, 6, 23, 0.92), rgba(74, 222, 128, 0.34), rgba(2, 6, 23, 0.92));
+        color: rgba(236, 253, 245, 0.99);
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.34em;
+        text-align: center;
+        text-transform: uppercase;
+        text-shadow: 0 0 12px rgba(74, 222, 128, 0.45);
+        box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.2) inset, 0 12px 28px rgba(2, 6, 23, 0.34);
+      }
+
       .site-project-hero-panel > .site-project-tile-image {
         min-height: 100%;
         border-radius: 0;
@@ -605,6 +632,11 @@ const _columns = Array.from({ length: 14 }, (_, columnIndex) =>
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
+      }
+
+      .site-meta-spacer {
+        flex: 1 1 auto;
+        min-width: 0.75rem;
       }
 
       .site-tag {
