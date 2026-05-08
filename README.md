@@ -91,7 +91,7 @@ npm run dev
 
 ### 特徴
 - **Astro + Tailwind CSS**: 高速な静的サイト生成と柔軟なデザイン。
-- **Anglefeint-inspired Design**: [Anglefeint](https://astro.build/themes/details/anglefeint/) テーマから着想を得た「シネマティック・マルチアトモスフィア」デザイン。
+  - **視認性重視のダークUI**: 章立てとカードの対比を強め、読みやすさを優先した見た目。
     - **AI (Journal)**: 清潔感のあるミニマルスタイル。
     - **Cyber (LDF)**: ネオンカラーとグロー効果のサイバーパンクスタイル。
     - **Matrix (Zoffy)**: 緑のモノスペースとスキャンラインのターミナルスタイル。
