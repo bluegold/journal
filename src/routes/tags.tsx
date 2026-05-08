@@ -1,21 +1,11 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../types/bindings'
-import type { JournalContextVariables, JournalEntryRow, JournalEntryTagRow, JournalTagRow } from '../types/journal'
-import { buildTagStats } from '../lib/tag-stats'
+import type { JournalContextVariables } from '../types/journal'
+import { loadTagStats, type JournalTagStat } from '../lib/tag-stats'
 import { formatTagList, splitTagInput, normalizeTagName } from '../lib/tags'
 import { TagAutocompleteField, TagAutocompleteSuggestions } from '../templates/tag-autocomplete-field'
 
 export const tagsRoutes = new Hono<{ Bindings: Bindings; Variables: JournalContextVariables }>()
-
-const loadTagStats = async (db: D1Database, userId: string) => {
-  const [tagRows, entryTagRows, entryRows] = await Promise.all([
-    db.prepare('SELECT * FROM tags').all<JournalTagRow>(),
-    db.prepare('SELECT * FROM entry_tags').all<JournalEntryTagRow>(),
-    db.prepare('SELECT * FROM entries').all<JournalEntryRow>(),
-  ])
-
-  return buildTagStats(tagRows.results, entryTagRows.results, entryRows.results, userId)
-}
 
 const getTagFieldId = (value: string | null | undefined): string => {
   return value?.trim().length ? value.trim() : 'entry-tags'
@@ -30,7 +20,7 @@ const getTagFormId = (fieldId: string, fallback: string | null | undefined): str
   return fieldId.endsWith('-tags') ? `${fieldId.slice(0, -5)}-form` : `${fieldId}-form`
 }
 
-const getAutocompleteSuggestions = (tags: ReturnType<typeof buildTagStats>, query: string, selectedTags: string[]) => {
+const getAutocompleteSuggestions = (tags: JournalTagStat[], query: string, selectedTags: string[]) => {
   const selectedSet = new Set(selectedTags)
   const normalizedQuery = query.trim().toLowerCase()
 

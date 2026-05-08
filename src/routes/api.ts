@@ -333,7 +333,7 @@ apiRoutes.get('/entries/:id', async (c) => {
   const [body, tags, aiTagCandidates] = await Promise.all([
     loadEntryBody(c.env.JOURNAL_BUCKET, entry.body_key),
     loadEntryTagNames(c.env.DB, c.var.currentUser.id, entry.id),
-    loadEntryAiTagCandidateNames(c.env.DB, entry.id),
+    loadEntryAiTagCandidateNames(c.env.DB, c.var.currentUser.id, entry.id),
   ])
 
   return c.json({
@@ -411,10 +411,10 @@ apiRoutes.post('/entries', async (c) => {
     const executionCtx = getExecutionCtx(c)
     if (executionCtx && isLocalRequest(c.req.url)) {
       executionCtx.waitUntil(
-        processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(entryId, timestamp, timestamp))
+        processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(c.var.currentUser.id, entryId, timestamp, timestamp))
       )
     } else {
-      await enqueueAiSummary(c.env.AI_QUEUE, entryId, timestamp, timestamp)
+      await enqueueAiSummary(c.env.AI_QUEUE, c.var.currentUser.id, entryId, timestamp, timestamp)
     }
 
     return c.json(
@@ -516,10 +516,13 @@ apiRoutes.patch('/entries/:id', async (c) => {
     const executionCtx = getExecutionCtx(c)
     if (executionCtx && isLocalRequest(c.req.url)) {
       executionCtx.waitUntil(
-        processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(currentEntry.id, timestamp, timestamp))
+        processAiSummaryQueueMessage(
+          c.env,
+          createAiSummaryQueueMessage(c.var.currentUser.id, currentEntry.id, timestamp, timestamp)
+        )
       )
     } else {
-      await enqueueAiSummary(c.env.AI_QUEUE, currentEntry.id, timestamp, timestamp)
+      await enqueueAiSummary(c.env.AI_QUEUE, c.var.currentUser.id, currentEntry.id, timestamp, timestamp)
     }
 
     if (nextBodyKey !== previousBodyKey) {
@@ -610,7 +613,7 @@ apiRoutes.post('/entries/:id/ai-tags/:tagName/accept', async (c) => {
   return c.json({
     id: entry.id,
     tags: await loadEntryTagNames(c.env.DB, c.var.currentUser.id, entry.id),
-    aiTagCandidates: await loadEntryAiTagCandidateNames(c.env.DB, entry.id),
+    aiTagCandidates: await loadEntryAiTagCandidateNames(c.env.DB, c.var.currentUser.id, entry.id),
   })
 })
 
@@ -624,6 +627,7 @@ apiRoutes.post('/entries/:id/ai-tags/:tagName/discard', async (c) => {
 
   const discarded = await discardAiTagCandidate({
     db: c.env.DB,
+    userId: c.var.currentUser.id,
     entryId: entry.id,
     tagName: c.req.param('tagName'),
   })
@@ -634,7 +638,7 @@ apiRoutes.post('/entries/:id/ai-tags/:tagName/discard', async (c) => {
 
   return c.json({
     id: entry.id,
-    aiTagCandidates: await loadEntryAiTagCandidateNames(c.env.DB, entry.id),
+    aiTagCandidates: await loadEntryAiTagCandidateNames(c.env.DB, c.var.currentUser.id, entry.id),
   })
 })
 
@@ -648,6 +652,7 @@ apiRoutes.post('/entries/:id/ai-tags/discard-all', async (c) => {
 
   await discardAllAiTagCandidates({
     db: c.env.DB,
+    userId: c.var.currentUser.id,
     entryId: entry.id,
   })
 

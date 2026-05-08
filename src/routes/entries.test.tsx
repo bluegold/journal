@@ -438,6 +438,7 @@ describe('entries route', () => {
     expect(env.AI_QUEUE.state.messages).toEqual([
       {
         type: 'summarize_entry',
+        userId: 'user-1',
         entryId: 'entry-2',
         entryUpdatedAt: env.DB.state.entries[0].updated_at,
         requestedAt: env.DB.state.entries[0].updated_at,
@@ -524,6 +525,7 @@ describe('entries route', () => {
     expect(env.AI_QUEUE.state.messages).toEqual([
       {
         type: 'summarize_entry',
+        userId: 'user-1',
         entryId: 'entry-2',
         entryUpdatedAt: env.DB.state.entries[0].updated_at,
         requestedAt: env.DB.state.entries[0].updated_at,
@@ -651,6 +653,7 @@ describe('entries route', () => {
     expect(env.AI_QUEUE.state.messages).toEqual([
       {
         type: 'summarize_entry',
+        userId: env.DB.state.entries[0].user_id,
         entryId: env.DB.state.entries[0].id,
         entryUpdatedAt: env.DB.state.entries[0].updated_at,
         requestedAt: env.DB.state.entries[0].updated_at,

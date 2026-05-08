@@ -49,3 +49,30 @@ export const buildTagStats = (
       return a.name.localeCompare(b.name)
     })
 }
+
+export const loadTagStats = async (db: D1Database, userId: string): Promise<JournalTagStat[]> => {
+  const rows = await db
+    .prepare(
+      `
+        SELECT
+          t.id,
+          t.name,
+          COUNT(e.id) AS usage_count
+        FROM tags t
+        LEFT JOIN entry_tags et ON et.tag_id = t.id
+        LEFT JOIN entries e ON e.id = et.entry_id AND e.user_id = ? AND e.deleted_at IS NULL
+        WHERE t.user_id = ?
+        GROUP BY t.id, t.name
+        ORDER BY usage_count DESC, t.name ASC
+      `
+    )
+    .bind(userId, userId)
+    .all<{ id: number; name: string; usage_count: number }>()
+
+  return rows.results.map((row) => ({
+    id: row.id,
+    name: row.name,
+    usage_count: row.usage_count,
+    weight: row.usage_count,
+  }))
+}

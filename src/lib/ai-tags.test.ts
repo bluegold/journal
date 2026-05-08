@@ -60,7 +60,7 @@ describe('ai tag recommendations', () => {
     const messages = env.AI.state.calls[0].inputs.messages as Array<{ role: string; content: string }>
     expect(messages[0].content).toContain('JSON のみ')
     expect(tagNames).toEqual(['ui', 'queue'])
-    expect(await loadEntryAiTagCandidateNames(env.DB, 'entry-1')).toEqual(['ui', 'queue'])
+    expect(await loadEntryAiTagCandidateNames(env.DB, 'user-1', 'entry-1')).toEqual(['ui', 'queue'])
   })
 
   it('accepts a candidate tag into canonical tags', async () => {
@@ -134,6 +134,7 @@ describe('ai tag recommendations', () => {
 
     const discarded = await discardAiTagCandidate({
       db: env.DB,
+      userId: 'user-1',
       entryId: 'entry-1',
       tagName: 'ideas',
     })
@@ -142,6 +143,7 @@ describe('ai tag recommendations', () => {
 
     await discardAllAiTagCandidates({
       db: env.DB,
+      userId: 'user-1',
       entryId: 'entry-1',
     })
 

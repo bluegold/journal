@@ -85,7 +85,7 @@ export const registerEntriesReadRoutes = (app: Hono<{ Bindings: Bindings; Variab
 
     const body = (await loadEntryBody(c.env.JOURNAL_BUCKET, entry.body_key)) ?? ''
     const tagNames = await loadEntryTagNames(c.env.DB, c.var.currentUser.id, entry.id)
-    const aiTagCandidates = await loadEntryAiTagCandidateNames(c.env.DB, entry.id)
+    const aiTagCandidates = await loadEntryAiTagCandidateNames(c.env.DB, c.var.currentUser.id, entry.id)
 
     if (isHtmxRequest(c.req.raw)) {
       return c.html(

@@ -89,10 +89,10 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
 
     if (executionCtx && isLocalRequest(c.req.url)) {
       executionCtx.waitUntil(
-        processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(entryId, timestamp, timestamp))
+        processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(c.var.currentUser.id, entryId, timestamp, timestamp))
       )
     } else {
-      await enqueueAiSummary(c.env.AI_QUEUE, entryId, timestamp, timestamp)
+      await enqueueAiSummary(c.env.AI_QUEUE, c.var.currentUser.id, entryId, timestamp, timestamp)
     }
 
     const href = buildEntriesHref({
@@ -214,10 +214,13 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
 
     if (executionCtx && isLocalRequest(c.req.url)) {
       executionCtx.waitUntil(
-        processAiSummaryQueueMessage(c.env, createAiSummaryQueueMessage(currentEntry.id, timestamp, timestamp))
+        processAiSummaryQueueMessage(
+          c.env,
+          createAiSummaryQueueMessage(c.var.currentUser.id, currentEntry.id, timestamp, timestamp)
+        )
       )
     } else {
-      await enqueueAiSummary(c.env.AI_QUEUE, currentEntry.id, timestamp, timestamp)
+      await enqueueAiSummary(c.env.AI_QUEUE, c.var.currentUser.id, currentEntry.id, timestamp, timestamp)
     }
 
     if (nextBodyKey !== previousBodyKey) {
@@ -305,6 +308,7 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
 
     const discarded = await discardAiTagCandidate({
       db: c.env.DB,
+      userId: c.var.currentUser.id,
       entryId: currentEntry.id,
       tagName,
     })
@@ -330,6 +334,7 @@ export const registerEntriesWriteRoutes = (app: Hono<{ Bindings: Bindings; Varia
 
     await discardAllAiTagCandidates({
       db: c.env.DB,
+      userId: c.var.currentUser.id,
       entryId: currentEntry.id,
     })
 

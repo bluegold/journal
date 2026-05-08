@@ -1,10 +1,10 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../types/bindings'
-import type { JournalContextVariables, JournalEntryRow, JournalEntryTagRow, JournalTagRow } from '../types/journal'
+import type { JournalContextVariables } from '../types/journal'
 import { isHtmxRequest } from '../lib/htmx'
-import { searchEntries } from '../lib/search'
+import { loadSearchEntryMatches } from '../lib/search'
 import { SearchContentPane, SearchPage } from '../templates/pages/search-page'
-import { buildTagStats } from '../lib/tag-stats'
+import { loadTagStats } from '../lib/tag-stats'
 import { buildCalendarMonthView } from '../templates/calendar-month'
 import {
   formatDateKey,
@@ -49,24 +49,13 @@ searchRoutes.get('/search', async (c) => {
     return serialized.length > 0 ? `/search?${serialized}` : '/search'
   }
 
-  const [entryRows, tagRows, entryTagRows] = await Promise.all([
-    c.env.DB.prepare('SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC')
+  const [results, tagStats, journalDateRows] = await Promise.all([
+    loadSearchEntryMatches(c.env.DB, c.var.currentUser.id, { query: q, tag, month, date }),
+    loadTagStats(c.env.DB, c.var.currentUser.id),
+    c.env.DB.prepare('SELECT journal_date FROM entries WHERE user_id = ? AND deleted_at IS NULL ORDER BY journal_date DESC')
       .bind(c.var.currentUser.id)
-      .all<JournalEntryRow>(),
-    c.env.DB.prepare('SELECT * FROM tags').all<JournalTagRow>(),
-    c.env.DB.prepare('SELECT * FROM entry_tags').all<JournalEntryTagRow>(),
+      .all<{ journal_date: string }>(),
   ])
-  const results = searchEntries({
-    entries: entryRows.results,
-    tags: tagRows.results,
-    entryTags: entryTagRows.results,
-    userId: c.var.currentUser.id,
-    query: q,
-    tag,
-    month,
-    date,
-  })
-  const tagStats = buildTagStats(tagRows.results, entryTagRows.results, entryRows.results, c.var.currentUser.id)
   const monthDate = parseMonthKey(month) ?? parseDateKey(date) ?? new Date()
   const monthKey = formatMonthKey(monthDate)
   const previousMonthDate = shiftMonth(monthDate, -1)
@@ -74,7 +63,7 @@ searchRoutes.get('/search', async (c) => {
   const selectedDateKey = date.startsWith(monthKey) ? date : null
   const calendarView = buildCalendarMonthView(
     monthDate,
-    entryRows.results.map((entry) => entry.journal_date),
+    journalDateRows.results.map((entry) => entry.journal_date),
     selectedDateKey,
     {
       todayHref: buildSearchHref({ q, tag, month: formatMonthKey(monthDate), date: formatDateKey(monthDate) }),

@@ -1,13 +1,16 @@
 import { parseTagList } from './tags'
 import type { JournalEntryTagRow, JournalTagRow } from '../types/journal'
 
-const loadTagRows = async (db: D1Database): Promise<JournalTagRow[]> => {
-  const rows = await db.prepare('SELECT * FROM tags').all<JournalTagRow>()
+const loadTagRows = async (db: D1Database, userId: string): Promise<JournalTagRow[]> => {
+  const rows = await db.prepare('SELECT * FROM tags WHERE user_id = ? ORDER BY created_at ASC, id ASC').bind(userId).all<JournalTagRow>()
   return rows.results
 }
 
-const loadEntryTagRows = async (db: D1Database): Promise<JournalEntryTagRow[]> => {
-  const rows = await db.prepare('SELECT * FROM entry_tags').all<JournalEntryTagRow>()
+const loadEntryTagRows = async (db: D1Database, entryId: string): Promise<JournalEntryTagRow[]> => {
+  const rows = await db
+    .prepare('SELECT * FROM entry_tags WHERE entry_id = ? ORDER BY created_at ASC, tag_id ASC')
+    .bind(entryId)
+    .all<JournalEntryTagRow>()
   return rows.results
 }
 
@@ -16,17 +19,20 @@ export const loadEntryTagNames = async (
   userId: string,
   entryId: string
 ): Promise<string[]> => {
-  const [tagRows, entryTagRows] = await Promise.all([loadTagRows(db), loadEntryTagRows(db)])
-  const tagNameById = new Map(
-    tagRows.filter((tag) => tag.user_id === userId).map((tag) => [tag.id, tag.name] as const)
-  )
+  const rows = await db
+    .prepare(
+      `
+        SELECT DISTINCT t.name
+        FROM entry_tags et
+        JOIN tags t ON t.id = et.tag_id
+        WHERE et.entry_id = ? AND t.user_id = ?
+        ORDER BY t.name ASC
+      `
+    )
+    .bind(entryId, userId)
+    .all<{ name: string }>()
 
-  const tagNames = entryTagRows
-    .filter((entryTag) => entryTag.entry_id === entryId)
-    .map((entryTag) => tagNameById.get(entryTag.tag_id))
-    .filter((tagName): tagName is string => typeof tagName === 'string')
-
-  return [...new Set(tagNames)].sort((a, b) => a.localeCompare(b))
+  return rows.results.map((row) => row.name)
 }
 
 export const replaceEntryTags = async (options: {
@@ -37,11 +43,12 @@ export const replaceEntryTags = async (options: {
   timestamp: string
 }): Promise<string[]> => {
   const desiredTagNames = parseTagList(options.tagText)
-  const [tagRows, entryTagRows] = await Promise.all([loadTagRows(options.db), loadEntryTagRows(options.db)])
-  const tagsByName = new Map(
-    tagRows.filter((tag) => tag.user_id === options.userId).map((tag) => [tag.name, tag] as const)
-  )
-  const previousEntryTags = entryTagRows.filter((entryTag) => entryTag.entry_id === options.entryId)
+  const [tagRows, entryTagRows] = await Promise.all([
+    loadTagRows(options.db, options.userId),
+    loadEntryTagRows(options.db, options.entryId),
+  ])
+  const tagsByName = new Map(tagRows.map((tag) => [tag.name, tag] as const))
+  const previousEntryTags = entryTagRows
   const createdTagIds: number[] = []
 
   try {
@@ -56,9 +63,8 @@ export const replaceEntryTags = async (options: {
           .bind(options.userId, tagName, options.timestamp)
           .run()
 
-        const refreshedTags = await loadTagRows(options.db)
-        tag =
-          refreshedTags.find((current) => current.user_id === options.userId && current.name === tagName) ?? null
+        const refreshedTags = await loadTagRows(options.db, options.userId)
+        tag = refreshedTags.find((current) => current.name === tagName) ?? null
 
         if (!tag) {
           throw new Error(`Failed to create tag: ${tagName}`)

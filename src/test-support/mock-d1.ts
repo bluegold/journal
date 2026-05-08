@@ -370,20 +370,48 @@ const runStatement = (sql: string, params: unknown[], state: MockD1State) => {
 
   if (normalizedSql.startsWith('DELETE FROM entry_ai_tag_candidates')) {
     const entryId = String(params[0] ?? '')
-    const tagName = params[1] != null ? String(params[1]) : null
     const before = state.entryAiTagCandidates.length
 
-    state.entryAiTagCandidates = state.entryAiTagCandidates.filter((candidate) => {
-      if (candidate.entry_id !== entryId) {
-        return true
-      }
+    if (normalizedSql.includes('AND tag_name = ?')) {
+      const tagName = params[1] != null ? String(params[1]) : null
+      const userId = params.length >= 3 ? String(params[2] ?? '') : null
 
-      if (tagName == null) {
+      state.entryAiTagCandidates = state.entryAiTagCandidates.filter((candidate) => {
+        if (candidate.entry_id !== entryId) {
+          return true
+        }
+
+        if (userId != null) {
+          const entry = state.entries.find((current) => current.id === candidate.entry_id)
+          if (!entry || entry.user_id !== userId) {
+            return true
+          }
+        }
+
+        if (tagName == null) {
+          return false
+        }
+
+        return candidate.tag_name !== tagName
+      })
+    } else {
+      const userId = params.length >= 2 ? String(params[1] ?? '') : null
+
+      state.entryAiTagCandidates = state.entryAiTagCandidates.filter((candidate) => {
+        if (candidate.entry_id !== entryId) {
+          return true
+        }
+
+        if (userId != null) {
+          const entry = state.entries.find((current) => current.id === candidate.entry_id)
+          if (!entry || entry.user_id !== userId) {
+            return true
+          }
+        }
+
         return false
-      }
-
-      return candidate.tag_name !== tagName
-    })
+      })
+    }
 
     return { success: true, meta: { changes: before - state.entryAiTagCandidates.length } }
   }
@@ -478,6 +506,48 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
     }
   }
 
+  if (
+    normalizedSql ===
+    'SELECT t.id, t.name, COUNT(e.id) AS usage_count FROM tags t LEFT JOIN entry_tags et ON et.tag_id = t.id LEFT JOIN entries e ON e.id = et.entry_id AND e.user_id = ? AND e.deleted_at IS NULL WHERE t.user_id = ? GROUP BY t.id, t.name ORDER BY usage_count DESC, t.name ASC'
+  ) {
+    const userId = String(params[0] ?? '')
+    const counts = new Map<number, number>()
+
+    for (const tag of state.tags) {
+      if (tag.user_id === userId) {
+        counts.set(tag.id, 0)
+      }
+    }
+
+    for (const entryTag of state.entryTags) {
+      const tag = state.tags.find((current) => current.id === entryTag.tag_id)
+      const entry = state.entries.find((current) => current.id === entryTag.entry_id)
+
+      if (!tag || !entry || tag.user_id !== userId || entry.user_id !== userId || entry.deleted_at != null) {
+        continue
+      }
+
+      counts.set(entryTag.tag_id, (counts.get(entryTag.tag_id) ?? 0) + 1)
+    }
+
+    return {
+      results: state.tags
+        .filter((tag) => tag.user_id === userId)
+        .map((tag) => ({
+          id: tag.id,
+          name: tag.name,
+          usage_count: counts.get(tag.id) ?? 0,
+        }))
+        .sort((a, b) => {
+          if (b.usage_count !== a.usage_count) {
+            return b.usage_count - a.usage_count
+          }
+
+          return a.name.localeCompare(b.name)
+        }) as T[],
+    }
+  }
+
   if (normalizedSql.startsWith('SELECT * FROM entries WHERE user_id = ? ORDER BY journal_date DESC, created_at DESC')) {
     const userId = String(params[0] ?? '')
     return {
@@ -487,12 +557,86 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
     }
   }
 
+  if (normalizedSql.startsWith('SELECT journal_date FROM entries WHERE user_id = ? AND deleted_at IS NULL ORDER BY journal_date DESC')) {
+    const userId = String(params[0] ?? '')
+    return {
+      results: sortEntriesByJournalDateDesc(
+        state.entries.filter((entry) => entry.user_id === userId && entry.deleted_at == null)
+      ).map((entry) => ({ journal_date: entry.journal_date })) as T[],
+    }
+  }
+
+  if (
+    normalizedSql.startsWith('SELECT * FROM entries WHERE user_id = ? AND deleted_at IS NULL') &&
+    normalizedSql.includes('ORDER BY journal_date DESC, created_at DESC')
+  ) {
+    const userId = String(params[0] ?? '')
+    let filtered = state.entries.filter((entry) => entry.user_id === userId && entry.deleted_at == null)
+    let paramIndex = 1
+
+    if (normalizedSql.includes('journal_date = ?')) {
+      const targetDate = String(params[paramIndex] ?? '')
+      filtered = filtered.filter((entry) => entry.journal_date === targetDate)
+      paramIndex += 1
+    } else if (normalizedSql.includes('journal_date LIKE ?')) {
+      const monthPrefix = String(params[paramIndex] ?? '').replace(/%$/, '')
+      filtered = filtered.filter((entry) => entry.journal_date.startsWith(monthPrefix))
+      paramIndex += 1
+    }
+
+    if (normalizedSql.includes('(LOWER(title) LIKE ? OR LOWER(COALESCE(summary, \'\')) LIKE ?)')) {
+      const queryPattern = String(params[paramIndex] ?? '').replace(/^%|%$/g, '')
+      filtered = filtered.filter((entry) =>
+        [entry.title, entry.summary ?? ''].some((value) => value.toLowerCase().includes(queryPattern))
+      )
+      paramIndex += 2
+    }
+
+    if (
+      normalizedSql.includes(
+        'EXISTS ( SELECT 1 FROM entry_tags et JOIN tags t ON t.id = et.tag_id WHERE et.entry_id = entries.id AND t.user_id = ? AND t.name = ? )'
+      )
+    ) {
+      const tagUserId = String(params[paramIndex] ?? '')
+      const tagName = String(params[paramIndex + 1] ?? '')
+      filtered = filtered.filter((entry) =>
+        state.entryTags.some((entryTag) => {
+          if (entryTag.entry_id !== entry.id) {
+            return false
+          }
+
+          const tag = state.tags.find((current) => current.id === entryTag.tag_id)
+          return tag?.user_id === tagUserId && tag.name === tagName
+        })
+      )
+    }
+
+    return { results: sortEntriesByJournalDateDesc(filtered) as T[] }
+  }
+
   if (normalizedSql.startsWith('SELECT * FROM entries')) {
     return { results: sortEntriesByJournalDateDesc(state.entries) as T[] }
   }
 
   if (normalizedSql.startsWith('SELECT * FROM users')) {
     return { results: sortByCreatedAtDesc(state.users) as T[] }
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM tags WHERE user_id = ? ORDER BY created_at ASC, id ASC')) {
+    const userId = String(params[0] ?? '')
+    return {
+      results: [...state.tags]
+        .filter((tag) => tag.user_id === userId)
+        .sort((a, b) => {
+          const createdAtA = parseStoredDate(a.created_at)
+          const createdAtB = parseStoredDate(b.created_at)
+          if (createdAtA !== createdAtB) {
+            return createdAtA - createdAtB
+          }
+
+          return a.id - b.id
+        }) as T[],
+    }
   }
 
   if (normalizedSql.startsWith('SELECT * FROM tags')) {
@@ -506,6 +650,68 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
       results: state.tags
         .filter((tag) => tag.user_id === userId && requestedNames.includes(tag.name))
         .map((tag) => ({ id: tag.id })) as T[],
+    }
+  }
+
+  if (
+    normalizedSql.startsWith(
+      'SELECT DISTINCT t.name FROM entry_tags et JOIN tags t ON t.id = et.tag_id WHERE et.entry_id = ? AND t.user_id = ? ORDER BY t.name ASC'
+    )
+  ) {
+    const entryId = String(params[0] ?? '')
+    const userId = String(params[1] ?? '')
+    return {
+      results: [...new Set(
+        state.entryTags
+          .filter((entryTag) => entryTag.entry_id === entryId)
+          .map((entryTag) => state.tags.find((tag) => tag.id === entryTag.tag_id && tag.user_id === userId)?.name)
+          .filter((name): name is string => typeof name === 'string')
+      )]
+        .sort((a, b) => a.localeCompare(b))
+        .map((name) => ({ name })) as T[],
+    }
+  }
+
+  if (
+    normalizedSql.startsWith(
+      'SELECT et.entry_id, t.name FROM entry_tags et JOIN tags t ON t.id = et.tag_id WHERE et.entry_id IN ('
+    ) &&
+    normalizedSql.includes('AND t.user_id = ? ORDER BY et.entry_id ASC, t.name ASC')
+  ) {
+    const userId = String(params[params.length - 1] ?? '')
+    const entryIds = params.slice(0, -1).map((value) => String(value))
+    return {
+      results: [...state.entryTags]
+        .filter((entryTag) => entryIds.includes(entryTag.entry_id))
+        .map((entryTag) => {
+          const tag = state.tags.find((current) => current.id === entryTag.tag_id && current.user_id === userId)
+          return tag ? { entry_id: entryTag.entry_id, name: tag.name } : null
+        })
+        .filter((value): value is { entry_id: string; name: string } => value != null)
+        .sort((a, b) => {
+          if (a.entry_id !== b.entry_id) {
+            return a.entry_id.localeCompare(b.entry_id)
+          }
+
+          return a.name.localeCompare(b.name)
+        }) as T[],
+    }
+  }
+
+  if (normalizedSql.startsWith('SELECT * FROM entry_tags WHERE entry_id = ? ORDER BY created_at ASC, tag_id ASC')) {
+    const entryId = String(params[0] ?? '')
+    return {
+      results: [...state.entryTags]
+        .filter((entryTag) => entryTag.entry_id === entryId)
+        .sort((a, b) => {
+          const createdAtA = parseStoredDate(a.created_at)
+          const createdAtB = parseStoredDate(b.created_at)
+          if (createdAtA !== createdAtB) {
+            return createdAtA - createdAtB
+          }
+
+          return a.tag_id - b.tag_id
+        }) as T[],
     }
   }
 
@@ -549,6 +755,24 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
     }
   }
 
+  if (
+    normalizedSql.startsWith(
+      'SELECT candidate.tag_name FROM entry_ai_tag_candidates candidate JOIN entries entry ON entry.id = candidate.entry_id WHERE candidate.entry_id = ? AND entry.user_id = ? ORDER BY candidate.id ASC'
+    )
+  ) {
+    const entryId = String(params[0] ?? '')
+    const userId = String(params[1] ?? '')
+    return {
+      results: state.entryAiTagCandidates
+        .filter((candidate) => {
+          const entry = state.entries.find((current) => current.id === candidate.entry_id)
+          return candidate.entry_id === entryId && entry?.user_id === userId
+        })
+        .sort((a, b) => a.id - b.id)
+        .map((candidate) => ({ tag_name: candidate.tag_name })) as T[],
+    }
+  }
+
   if (normalizedSql.startsWith('SELECT * FROM entry_ai_tag_candidates WHERE entry_id = ? ORDER BY id ASC')) {
     const entryId = String(params[0] ?? '')
     return {
@@ -573,6 +797,12 @@ const allStatement = <T>(sql: string, params: unknown[], state: MockD1State) => 
 const firstStatement = <T>(sql: string, params: unknown[], state: MockD1State) => {
   const normalizedSql = normalizeSql(sql)
   state.queries.push({ sql: normalizedSql, params: [...params] })
+
+  if (normalizedSql.startsWith('SELECT * FROM entries WHERE id = ? AND user_id = ? LIMIT 1')) {
+    const entryId = String(params[0] ?? '')
+    const userId = String(params[1] ?? '')
+    return (state.entries.find((entry) => entry.id === entryId && entry.user_id === userId) ?? null) as T | null
+  }
 
   if (normalizedSql.startsWith('SELECT * FROM entries WHERE id = ? LIMIT 1')) {
     const entryId = String(params[0] ?? '')

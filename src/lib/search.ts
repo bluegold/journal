@@ -1,102 +1,99 @@
-import type { JournalEntryRow, JournalEntryTagRow, JournalTagRow } from '../types/journal'
+import type { JournalEntryRow } from '../types/journal'
 import { normalizeTagName } from './tags'
-
-type SearchEntriesOptions = {
-  entries: JournalEntryRow[]
-  userId: string
-  query: string
-  requestedTags?: string[]
-  tag?: string
-  tagRows?: JournalTagRow[]
-  entryTagRows?: JournalEntryTagRow[]
-  tags?: JournalTagRow[]
-  entryTags?: JournalEntryTagRow[]
-  month?: string | null
-  date?: string | null
-}
 
 export type SearchEntryMatch = {
   entry: JournalEntryRow
   tagNames: string[]
 }
 
-const matchesFreeText = (entry: JournalEntryRow, query: string): boolean => {
-  const normalizedQuery = query.trim().toLowerCase()
-  if (normalizedQuery.length === 0) {
-    return true
-  }
-
-  return [entry.title, entry.summary ?? ''].some((value) => value.toLowerCase().includes(normalizedQuery))
+export type SearchEntryFilters = {
+  query: string
+  tag?: string
+  month?: string | null
+  date?: string | null
 }
 
-const buildTagNamesByEntryId = (
-  tags: JournalTagRow[],
-  entryTags: JournalEntryTagRow[],
-  userId: string
-): Map<string, string[]> => {
-  const tagNameById = new Map(tags.filter((tag) => tag.user_id === userId).map((tag) => [tag.id, tag.name] as const))
+export const loadSearchEntryMatches = async (
+  db: D1Database,
+  userId: string,
+  filters: SearchEntryFilters
+): Promise<SearchEntryMatch[]> => {
+  const normalizedQuery = filters.query.trim().toLowerCase()
+  const normalizedTag = normalizeTagName(filters.tag ?? '') ?? ''
+  const normalizedMonth = filters.month?.trim() ?? ''
+  const normalizedDate = filters.date?.trim() ?? ''
+
+  const clauses = ['user_id = ?', 'deleted_at IS NULL']
+  const params: (string | number)[] = [userId]
+
+  if (normalizedDate.length > 0) {
+    clauses.push('journal_date = ?')
+    params.push(normalizedDate)
+  } else if (normalizedMonth.length > 0) {
+    clauses.push('journal_date LIKE ?')
+    params.push(`${normalizedMonth}%`)
+  }
+
+  if (normalizedQuery.length > 0) {
+    clauses.push('(LOWER(title) LIKE ? OR LOWER(COALESCE(summary, \'\')) LIKE ?)')
+    const queryPattern = `%${normalizedQuery}%`
+    params.push(queryPattern, queryPattern)
+  }
+
+  if (normalizedTag.length > 0) {
+    clauses.push(`
+      EXISTS (
+        SELECT 1
+        FROM entry_tags et
+        JOIN tags t ON t.id = et.tag_id
+        WHERE et.entry_id = entries.id
+          AND t.user_id = ?
+          AND t.name = ?
+      )
+    `.trim())
+    params.push(userId, normalizedTag)
+  }
+
+  const entryRows = await db
+    .prepare(
+      `
+        SELECT *
+        FROM entries
+        WHERE ${clauses.join(' AND ')}
+        ORDER BY journal_date DESC, created_at DESC
+      `
+    )
+    .bind(...params)
+    .all<JournalEntryRow>()
+
+  if (entryRows.results.length === 0) {
+    return []
+  }
+
+  const entryIds = entryRows.results.map((entry) => entry.id)
+  const placeholders = entryIds.map(() => '?').join(', ')
+  const tagRows = await db
+    .prepare(
+      `
+        SELECT et.entry_id, t.name
+        FROM entry_tags et
+        JOIN tags t ON t.id = et.tag_id
+        WHERE et.entry_id IN (${placeholders}) AND t.user_id = ?
+        ORDER BY et.entry_id ASC, t.name ASC
+      `
+    )
+    .bind(...entryIds, userId)
+    .all<{ entry_id: string; name: string }>()
+
   const tagNamesByEntryId = new Map<string, string[]>()
-
-  for (const entryTag of entryTags) {
-    const tagName = tagNameById.get(entryTag.tag_id)
-    if (!tagName) {
-      continue
-    }
-
-    const current = tagNamesByEntryId.get(entryTag.entry_id) ?? []
-    current.push(tagName)
-    tagNamesByEntryId.set(entryTag.entry_id, current)
+  for (const row of tagRows.results) {
+    const current = tagNamesByEntryId.get(row.entry_id) ?? []
+    current.push(row.name)
+    tagNamesByEntryId.set(row.entry_id, current)
   }
 
-  return tagNamesByEntryId
-}
-
-export const searchEntries = ({
-  entries,
-  userId,
-  query,
-  requestedTags,
-  tag,
-  tagRows,
-  entryTagRows,
-  tags,
-  entryTags,
-  month,
-  date,
-}: SearchEntriesOptions): SearchEntryMatch[] => {
-  const normalizedTags = (requestedTags ?? (tag ? [tag] : []))
-    .map((tagName) => normalizeTagName(tagName))
-    .filter((tagName): tagName is string => Boolean(tagName))
-  const normalizedMonth = month?.trim() ?? ''
-  const normalizedDate = date?.trim() ?? ''
-  const tagNamesByEntryId = buildTagNamesByEntryId(tagRows ?? tags ?? [], entryTagRows ?? entryTags ?? [], userId)
-
-  return entries
-    .filter((entry) => entry.user_id === userId && entry.deleted_at == null)
-    .filter((entry) => {
-      if (normalizedDate.length > 0) {
-        return entry.journal_date === normalizedDate
-      }
-
-      if (normalizedMonth.length > 0) {
-        return entry.journal_date.startsWith(normalizedMonth)
-      }
-
-      return true
-    })
-    .map((entry) => ({
-      entry,
-      tagNames: [...new Set(tagNamesByEntryId.get(entry.id) ?? [])].sort((a, b) => a.localeCompare(b)),
-    }))
-    .filter(({ entry, tagNames }) => {
-      if (!matchesFreeText(entry, query)) {
-        return false
-      }
-
-      if (normalizedTags.length === 0) {
-        return true
-      }
-
-      return normalizedTags.some((tag) => tagNames.includes(tag))
-    })
+  return entryRows.results.map((entry) => ({
+    entry,
+    tagNames: [...new Set(tagNamesByEntryId.get(entry.id) ?? [])].sort((a, b) => a.localeCompare(b)),
+  }))
 }

@@ -1,5 +1,5 @@
 import type { Bindings } from '../types/bindings'
-import type { JournalEntryAiTagCandidateRow, JournalEntryRow } from '../types/journal'
+import type { JournalEntryRow } from '../types/journal'
 import { AI_TAGS_SYSTEM_PROMPT } from './ai-prompts.generated'
 import { loadEntryTagNames, replaceEntryTags } from './entry-tags'
 import { normalizeTagName, parseTagList } from './tags'
@@ -125,11 +125,23 @@ const dedupeTagNames = (tagNames: string[]): string[] => {
   return nextTagNames.slice(0, MAX_SUGGESTED_TAGS)
 }
 
-export const loadEntryAiTagCandidateNames = async (db: D1Database, entryId: string): Promise<string[]> => {
+export const loadEntryAiTagCandidateNames = async (
+  db: D1Database,
+  userId: string,
+  entryId: string
+): Promise<string[]> => {
   const rows = await db
-    .prepare('SELECT * FROM entry_ai_tag_candidates WHERE entry_id = ? ORDER BY id ASC')
-    .bind(entryId)
-    .all<JournalEntryAiTagCandidateRow>()
+    .prepare(
+      `
+        SELECT candidate.tag_name
+        FROM entry_ai_tag_candidates candidate
+        JOIN entries entry ON entry.id = candidate.entry_id
+        WHERE candidate.entry_id = ? AND entry.user_id = ?
+        ORDER BY candidate.id ASC
+      `
+    )
+    .bind(entryId, userId)
+    .all<{ tag_name: string }>()
   return rows.results.map((candidate) => candidate.tag_name)
 }
 
@@ -174,8 +186,19 @@ export const recommendAiTagCandidatesForEntry = async (options: {
     (tagName) => !approvedTagNames.includes(tagName)
   )
 
-  await options.env.DB.prepare('DELETE FROM entry_ai_tag_candidates WHERE entry_id = ?')
-    .bind(options.entry.id)
+  await options.env.DB.prepare(
+    `
+      DELETE FROM entry_ai_tag_candidates
+      WHERE entry_id = ?
+        AND EXISTS (
+          SELECT 1
+          FROM entries entry
+          WHERE entry.id = entry_ai_tag_candidates.entry_id
+            AND entry.user_id = ?
+        )
+    `
+  )
+    .bind(options.entry.id, options.entry.user_id)
     .run()
 
   if (nextTagNames.length === 0) {
@@ -214,7 +237,7 @@ export const acceptAiTagCandidate = async (options: {
   }
 
   const currentTags = await loadEntryTagNames(options.db, options.userId, options.entryId)
-  const currentCandidates = await loadEntryAiTagCandidateNames(options.db, options.entryId)
+  const currentCandidates = await loadEntryAiTagCandidateNames(options.db, options.userId, options.entryId)
   if (!currentCandidates.includes(normalizedTagName)) {
     return false
   }
@@ -230,8 +253,20 @@ export const acceptAiTagCandidate = async (options: {
   })
 
   await options.db
-    .prepare('DELETE FROM entry_ai_tag_candidates WHERE entry_id = ? AND tag_name = ?')
-    .bind(options.entryId, normalizedTagName)
+    .prepare(
+      `
+        DELETE FROM entry_ai_tag_candidates
+        WHERE entry_id = ?
+          AND tag_name = ?
+          AND EXISTS (
+            SELECT 1
+            FROM entries entry
+            WHERE entry.id = entry_ai_tag_candidates.entry_id
+              AND entry.user_id = ?
+          )
+      `
+    )
+    .bind(options.entryId, normalizedTagName, options.userId)
     .run()
 
   return true
@@ -239,6 +274,7 @@ export const acceptAiTagCandidate = async (options: {
 
 export const discardAiTagCandidate = async (options: {
   db: D1Database
+  userId: string
   entryId: string
   tagName: string
 }): Promise<boolean> => {
@@ -248,8 +284,20 @@ export const discardAiTagCandidate = async (options: {
   }
 
   await options.db
-    .prepare('DELETE FROM entry_ai_tag_candidates WHERE entry_id = ? AND tag_name = ?')
-    .bind(options.entryId, normalizedTagName)
+    .prepare(
+      `
+        DELETE FROM entry_ai_tag_candidates
+        WHERE entry_id = ?
+          AND tag_name = ?
+          AND EXISTS (
+            SELECT 1
+            FROM entries entry
+            WHERE entry.id = entry_ai_tag_candidates.entry_id
+              AND entry.user_id = ?
+          )
+      `
+    )
+    .bind(options.entryId, normalizedTagName, options.userId)
     .run()
 
   return true
@@ -257,7 +305,22 @@ export const discardAiTagCandidate = async (options: {
 
 export const discardAllAiTagCandidates = async (options: {
   db: D1Database
+  userId: string
   entryId: string
 }): Promise<void> => {
-  await options.db.prepare('DELETE FROM entry_ai_tag_candidates WHERE entry_id = ?').bind(options.entryId).run()
+  await options.db
+    .prepare(
+      `
+        DELETE FROM entry_ai_tag_candidates
+        WHERE entry_id = ?
+          AND EXISTS (
+            SELECT 1
+            FROM entries entry
+            WHERE entry.id = entry_ai_tag_candidates.entry_id
+              AND entry.user_id = ?
+          )
+      `
+    )
+    .bind(options.entryId, options.userId)
+    .run()
 }

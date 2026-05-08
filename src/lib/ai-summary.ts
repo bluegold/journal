@@ -7,6 +7,7 @@ import { recommendAiTagCandidatesForEntry } from './ai-tags'
 
 export type AiSummaryQueueMessage = {
   type: 'summarize_entry'
+  userId: string
   entryId: string
   entryUpdatedAt: string
   requestedAt: string
@@ -85,12 +86,14 @@ const normalizeSummary = (summary: string): string => {
 }
 
 export const createAiSummaryQueueMessage = (
+  userId: string,
   entryId: string,
   entryUpdatedAt: string,
   requestedAt: string = new Date().toISOString()
 ): AiSummaryQueueMessage => {
   return {
     type: 'summarize_entry',
+    userId,
     entryId,
     entryUpdatedAt,
     requestedAt,
@@ -99,11 +102,12 @@ export const createAiSummaryQueueMessage = (
 
 export const enqueueAiSummary = async (
   queue: Queue,
+  userId: string,
   entryId: string,
   entryUpdatedAt: string,
   requestedAt?: string
 ): Promise<void> => {
-  await queue.send(createAiSummaryQueueMessage(entryId, entryUpdatedAt, requestedAt)).catch((error: unknown) => {
+  await queue.send(createAiSummaryQueueMessage(userId, entryId, entryUpdatedAt, requestedAt)).catch((error: unknown) => {
     console.error('Failed to enqueue AI summary job', error)
     throw error
   })
@@ -114,17 +118,19 @@ export const processAiSummaryQueueMessage = async (
   message: AiSummaryQueueMessage
 ): Promise<void> => {
   console.log('AI entry enrichment job started', {
+    userId: message.userId,
     entryId: message.entryId,
     entryUpdatedAt: message.entryUpdatedAt,
     requestedAt: message.requestedAt,
   })
 
-  const currentEntry = await env.DB.prepare('SELECT * FROM entries WHERE id = ? LIMIT 1')
-    .bind(message.entryId)
+  const currentEntry = await env.DB.prepare('SELECT * FROM entries WHERE id = ? AND user_id = ? LIMIT 1')
+    .bind(message.entryId, message.userId)
     .first<JournalEntryRow>()
 
   if (!currentEntry || currentEntry.deleted_at != null) {
     console.log('AI entry enrichment job skipped: entry missing or deleted', {
+      userId: message.userId,
       entryId: message.entryId,
     })
     return
@@ -132,6 +138,7 @@ export const processAiSummaryQueueMessage = async (
 
   if (currentEntry.updated_at !== message.entryUpdatedAt) {
     console.log('AI entry enrichment job skipped: entry changed since enqueue', {
+      userId: message.userId,
       entryId: message.entryId,
       currentUpdatedAt: currentEntry.updated_at,
       queuedUpdatedAt: message.entryUpdatedAt,
@@ -142,6 +149,7 @@ export const processAiSummaryQueueMessage = async (
   const body = await loadEntryBody(env.JOURNAL_BUCKET, currentEntry.body_key)
   if (!body || body.trim().length === 0) {
     console.log('AI entry enrichment job skipped: entry body missing', {
+      userId: message.userId,
       entryId: message.entryId,
     })
     return
@@ -150,6 +158,7 @@ export const processAiSummaryQueueMessage = async (
   const bodyWithoutCodeBlocks = stripFencedCodeBlocks(body)
   if (bodyWithoutCodeBlocks.length === 0) {
     console.log('AI entry enrichment job skipped: entry body only contains code blocks', {
+      userId: message.userId,
       entryId: message.entryId,
     })
     return
@@ -157,6 +166,7 @@ export const processAiSummaryQueueMessage = async (
 
   console.log('AI summary job running model', {
     entryId: message.entryId,
+    userId: message.userId,
     model: AI_SUMMARY_MODEL,
     systemPrompt: AI_SUMMARY_SYSTEM_PROMPT,
     prompt: buildSummaryPromptPreview(currentEntry),
@@ -180,6 +190,7 @@ export const processAiSummaryQueueMessage = async (
 
     if (aiSummary.length === 0) {
       console.log('AI summary job skipped: model returned empty summary', {
+        userId: message.userId,
         entryId: message.entryId,
       })
     } else {
@@ -193,12 +204,14 @@ export const processAiSummaryQueueMessage = async (
       await updateStatement.run()
 
       console.log('AI summary job stored summary', {
+        userId: message.userId,
         entryId: message.entryId,
         generatedAt,
       })
     }
   } catch (error) {
     console.error('AI summary job failed', {
+      userId: message.userId,
       entryId: message.entryId,
       error,
     })
@@ -212,6 +225,7 @@ export const processAiSummaryQueueMessage = async (
     })
   } catch (error) {
     console.error('AI tag job failed', {
+      userId: message.userId,
       entryId: message.entryId,
       error,
     })

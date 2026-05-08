@@ -36,6 +36,7 @@ describe('ai summary queue processing', () => {
 
     await processAiSummaryQueueMessage(env, {
       type: 'summarize_entry',
+      userId: 'user-1',
       entryId: 'entry-1',
       entryUpdatedAt: '2026-04-22T08:00:00.000Z',
       requestedAt: '2026-04-22T08:01:00.000Z',
@@ -125,6 +126,7 @@ describe('ai summary queue processing', () => {
 
     await processAiSummaryQueueMessage(env, {
       type: 'summarize_entry',
+      userId: 'user-1',
       entryId: 'entry-1',
       entryUpdatedAt: '2026-04-22T08:00:00.000Z',
       requestedAt: '2026-04-22T08:01:00.000Z',
@@ -132,7 +134,7 @@ describe('ai summary queue processing', () => {
 
     expect(env.AI.state.calls).toHaveLength(2)
     expect(env.DB.state.entries[0].ai_summary).toBeNull()
-    expect(await loadEntryAiTagCandidateNames(env.DB, 'entry-1')).toEqual(['planning'])
+    expect(await loadEntryAiTagCandidateNames(env.DB, 'user-1', 'entry-1')).toEqual(['planning'])
   })
 
   it('skips entries whose body only contains fenced code blocks', async () => {
@@ -163,6 +165,7 @@ describe('ai summary queue processing', () => {
 
     await processAiSummaryQueueMessage(env, {
       type: 'summarize_entry',
+      userId: 'user-1',
       entryId: 'entry-1',
       entryUpdatedAt: '2026-04-22T08:00:00.000Z',
       requestedAt: '2026-04-22T08:01:00.000Z',
@@ -202,6 +205,7 @@ describe('ai summary queue processing', () => {
 
     await processAiSummaryQueueMessage(env, {
       type: 'summarize_entry',
+      userId: 'user-1',
       entryId: 'entry-1',
       entryUpdatedAt: '2026-04-22T08:00:00.000Z',
       requestedAt: '2026-04-22T08:01:00.000Z',
