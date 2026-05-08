@@ -1,7 +1,11 @@
 @import "tailwindcss";
 @import "basecoat-css";
 
-@source "./**/*.{ts,tsx}";
+@source "./src/{app,index,renderer}.{ts,tsx}";
+@source "./src/{client,layouts,lib,middleware,routes,templates}/**/*.{ts,tsx}";
+@source "!./src/**/*.test.ts";
+@source "!./src/**/*.test.tsx";
+@source "!./src/test-support/**/*";
 @source "!./public-site/**/*";
 
 :root {
