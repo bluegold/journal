@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro'
 import _projects from '../config/projects.json'
+import { isProjectProtected } from '../config/auth-rules'
 import siteConfig from '../config/site-config.json'
 
 const _topBadges = ['Centered', 'Sticky header', 'Matrix background', 'Translucent panel']
@@ -10,6 +11,7 @@ const _topHeroImageStyle = siteConfig.topHeroImage
 const _editUrl = siteConfig.editUrl
 void Layout
 void _projects
+void isProjectProtected
 void _topBadges
 void siteConfig
 void _topHeroImageStyle
